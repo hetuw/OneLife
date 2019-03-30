@@ -1736,7 +1736,29 @@ void drawFrame( char inUpdate ) {
                     
                     if( versionNumber < requiredVersion ) {
 
-                        if( SettingsManager::getIntSetting( 
+						if (true) { // we never want to update - cancel auto update - hetuw mod
+               				lastScreenViewCenter.x = 0;
+                			lastScreenViewCenter.y = 0;
+                			setViewCenterPosition( lastScreenViewCenter.x, lastScreenViewCenter.y );
+                
+               				currentGamePage = existingAccountPage;
+                
+                			char *message = autoSprintf( translate( "versionMismatch" ),
+                                             versionNumber,
+                                             livingLifePage->
+                                             getRequiredVersion() );
+
+                			if( SettingsManager::getIntSetting( "useCustomServer", 0 ) ) {
+                    			existingAccountPage->showDisableCustomServerButton( true );
+                    		}
+                
+               				existingAccountPage->setStatusDirect( message, true );
+                			delete [] message;
+                
+                			existingAccountPage->setStatusPositiion( true );
+                			currentGamePage->base_makeActive( true );
+						}
+                        else if( SettingsManager::getIntSetting( 
                                 "useSteamUpdate", 0 ) ) {
                             
                             // flag SteamGate that app needs update
