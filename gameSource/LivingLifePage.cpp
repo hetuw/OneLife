@@ -8107,6 +8107,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
 
+	// cords hetuw mod
 	setDrawColor( 0, 0, 0, 1 );
 	doublePair jDrawPos = lastScreenViewCenter;
 	jDrawPos.x -= HetuwMod::viewWidth/2 - 40;
@@ -8114,10 +8115,16 @@ void LivingLifePage::draw( doublePair inViewCenter,
 	char sBuf[64];
  	//LiveObject *ourLiveObject = getOurLiveObject();
 	sprintf(sBuf, "%d %d", (int)ourLiveObject->currentPos.x , (int)ourLiveObject->currentPos.y);
-	//handwritingFont->drawString( sBuf, jDrawPos, alignLeft );
 	int jWidthLimit = 250;
 	double jFade = 1.0;
 	drawChalkBackgroundString( jDrawPos, sBuf, jFade, jWidthLimit );
+
+	// age hetuw mod
+	sprintf(sBuf, "%d", (int)(getOurLiveObject()->age));
+	jDrawPos = lastScreenViewCenter;
+	jDrawPos.x += 330;
+	jDrawPos.y -= HetuwMod::viewHeight/2 - 25;
+	handwritingFont->drawString( sBuf, jDrawPos, alignLeft );
 
     if( vogMode ) {
         // draw again, so we can see picker
