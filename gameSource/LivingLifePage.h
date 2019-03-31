@@ -400,6 +400,8 @@ class LivingLifePage : public GamePage, public ActionListener {
 
         LivingLifePage();
         ~LivingLifePage();
+
+		void hetuwSetPanelOffsets();
         
         void clearMap();
         

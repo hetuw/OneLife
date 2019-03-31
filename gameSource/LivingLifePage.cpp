@@ -48,6 +48,8 @@
 #define OHOL_NON_EDITOR 1
 #include "ObjectPickable.h"
 
+#include "hetuwmod.h"
+
 static ObjectPickable objectPickable;
 
 
@@ -2067,16 +2069,16 @@ LivingLifePage::LivingLifePage()
     
     
     mNotePaperHideOffset.x = -242;
-    mNotePaperHideOffset.y = -420;
+    mNotePaperHideOffset.y = -420 - HetuwMod::panelOffsetY;
 
 
     mHomeSlipHideOffset.x = 0;
-    mHomeSlipHideOffset.y = -360;
+    mHomeSlipHideOffset.y = -360 - HetuwMod::panelOffsetY;
 
 
     for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
         mYumSlipHideOffset[i].x = -600;
-        mYumSlipHideOffset[i].y = -330;
+        mYumSlipHideOffset[i].y = -330 - HetuwMod::panelOffsetY;
         }
     
     mYumSlipHideOffset[2].x += 70;
@@ -2090,21 +2092,21 @@ LivingLifePage::LivingLifePage()
 
     for( int i=0; i<3; i++ ) {    
         mHungerSlipShowOffsets[i].x = -540;
-        mHungerSlipShowOffsets[i].y = -250;
+        mHungerSlipShowOffsets[i].y = -250 - HetuwMod::panelOffsetY;
     
         mHungerSlipHideOffsets[i].x = -540;
-        mHungerSlipHideOffsets[i].y = -370;
+        mHungerSlipHideOffsets[i].y = -370 - HetuwMod::panelOffsetY;
         
         mHungerSlipWiggleTime[i] = 0;
         mHungerSlipWiggleAmp[i] = 0;
         mHungerSlipWiggleSpeed[i] = 0.05;
         }
-    mHungerSlipShowOffsets[2].y += 20;
-    mHungerSlipHideOffsets[2].y -= 20;
+    mHungerSlipShowOffsets[2].y += 20 * HetuwMod::zoomScale;
+    mHungerSlipHideOffsets[2].y -= 20 * HetuwMod::zoomScale;
 
-    mHungerSlipShowOffsets[2].y -= 50;
-    mHungerSlipShowOffsets[1].y -= 30;
-    mHungerSlipShowOffsets[0].y += 18;
+    mHungerSlipShowOffsets[2].y -= 50 * HetuwMod::zoomScale;
+    mHungerSlipShowOffsets[1].y -= 30 * HetuwMod::zoomScale;
+    mHungerSlipShowOffsets[0].y += 18 * HetuwMod::zoomScale;
 
 
     mHungerSlipWiggleAmp[1] = 0.5;
@@ -2130,8 +2132,11 @@ LivingLifePage::LivingLifePage()
         mHintSheetSprites[i] = loadSprite( name, false );
         delete [] name;
         
-        mHintHideOffset[i].x = 900;
-        mHintHideOffset[i].y = -370;
+        mHintHideOffset[i].x = 900 + HetuwMod::panelOffsetX;
+        mHintHideOffset[i].y = -370 - HetuwMod::panelOffsetY;
+		if (HetuwMod::zoomScale >= 2.0f) {
+			mHintHideOffset[i].y -= 60;
+		}
         
         mHintTargetOffset[i] = mHintHideOffset[i];
         mHintPosOffset[i] = mHintHideOffset[i];
@@ -2181,7 +2186,7 @@ LivingLifePage::LivingLifePage()
             mTutorialFlips[i] = true;
             }
         
-        mTutorialHideOffset[i].y = 430;
+        mTutorialHideOffset[i].y = 430 + HetuwMod::panelOffsetY;
         
         mTutorialTargetOffset[i] = mTutorialHideOffset[i];
         mTutorialPosOffset[i] = mTutorialHideOffset[i];
@@ -2296,8 +2301,48 @@ LivingLifePage::LivingLifePage()
         }
     }
 
+// hetuw mod
+void LivingLifePage::hetuwSetPanelOffsets() {
+    mNotePaperHideOffset.y = -420 - HetuwMod::panelOffsetY;
+    mHomeSlipHideOffset.y = -360 - HetuwMod::panelOffsetY;
+    for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
+        mYumSlipHideOffset[i].y = -330 - HetuwMod::panelOffsetY;
+	}
+    for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
+        mYumSlipPosOffset[i] = mYumSlipHideOffset[i];
+        mYumSlipPosTargetOffset[i] = mYumSlipHideOffset[i];
+	}
+    for( int i=0; i<3; i++ ) {    
+        mHungerSlipShowOffsets[i].y = -250 - HetuwMod::panelOffsetY;
+        mHungerSlipHideOffsets[i].y = -370 - HetuwMod::panelOffsetY;
+	}
+    mHungerSlipShowOffsets[2].y += 20 * HetuwMod::zoomScale;
+    mHungerSlipHideOffsets[2].y -= 20 * HetuwMod::zoomScale;
 
-
+    mHungerSlipShowOffsets[2].y -= 50 * HetuwMod::zoomScale;
+    mHungerSlipShowOffsets[1].y -= 30 * HetuwMod::zoomScale;
+    mHungerSlipShowOffsets[0].y += 18 * HetuwMod::zoomScale;
+    for( int i=0; i<3; i++ ) {    
+        mHungerSlipPosOffset[i] = mHungerSlipHideOffsets[i];
+        mHungerSlipPosTargetOffset[i] = mHungerSlipPosOffset[i];
+    }
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        mHintHideOffset[i].x = 900 + HetuwMod::panelOffsetX;
+        mHintHideOffset[i].y = -370 - HetuwMod::panelOffsetY;
+		if (HetuwMod::zoomScale >= 2.0f) {
+			mHintHideOffset[i].y -= 60;
+		}
+        
+        mHintTargetOffset[i] = mHintHideOffset[i];
+        mHintPosOffset[i] = mHintHideOffset[i];
+	}
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        mTutorialHideOffset[i].y = 430 + HetuwMod::panelOffsetY;
+        
+        mTutorialTargetOffset[i] = mTutorialHideOffset[i];
+        mTutorialPosOffset[i] = mTutorialHideOffset[i];
+	}
+}
 
 void LivingLifePage::runTutorial() {
     mForceRunTutorial = true;
@@ -2706,8 +2751,8 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     
     double firstLineY =  inPos.y + ( lines->size() - 1 ) * lineSpacing;
     
-    if( firstLineY > lastScreenViewCenter.y + 330 ) {
-        firstLineY = lastScreenViewCenter.y + 330;
+    if( firstLineY > lastScreenViewCenter.y + 330 + HetuwMod::panelOffsetX) {
+        firstLineY = lastScreenViewCenter.y + 330 + HetuwMod::panelOffsetX;
         }
 
 
@@ -4186,7 +4231,7 @@ void LivingLifePage::drawHungerMaxFillLine( doublePair inAteWordsPos,
     
     
     doublePair barPos = { lastScreenViewCenter.x - 590, 
-                          lastScreenViewCenter.y - 334 };
+                          lastScreenViewCenter.y - 334 - HetuwMod::panelOffsetY };
     barPos.x -= 12;
     barPos.y -= 10;
     
@@ -4539,12 +4584,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
         lrintf( lastScreenViewCenter.y / CELL_D ) - mMapOffsetY + mMapD/2;
     
     // more on left and right of screen to avoid wide object tops popping in
-    int xStart = gridCenterX - 7;
-    int xEnd = gridCenterX + 7;
+    int xStart = gridCenterX - (int)(ceil(7*HetuwMod::zoomScale)); // hetuw mod
+    int xEnd = gridCenterX + (int)(ceil(7*HetuwMod::zoomScale)); // hetuw mod
 
     // more on bottom of screen so that tall objects don't pop in
-    int yStart = gridCenterY - 6;
-    int yEnd = gridCenterY + 4;
+    int yStart = gridCenterY - (int)(ceil(5*HetuwMod::zoomScale) + 1); // default: 6 / hetuw mod
+    int yEnd = gridCenterY + (int)(ceil(5*HetuwMod::zoomScale) - 1); // default: 4 / hetuw mod
 
     if( xStart < 0 ) {
         xStart = 0;
@@ -4586,11 +4631,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
     // tiles drawn on top).  However, given that we're not drawing anything
     // else out there, this should be okay from a performance standpoint.
 
-    int yStartFloor = gridCenterY - 4;
-    int yEndFloor = gridCenterY + 4;
+    int yStartFloor = gridCenterY - (int)(ceil(4*HetuwMod::zoomScale)); // default: 4 / hetuw mod
+    int yEndFloor = gridCenterY + (int)(ceil(4*HetuwMod::zoomScale)); // default: 4 / hetuw mod
 
-    int xStartFloor = gridCenterX - 6;
-    int xEndFloor = gridCenterX + 6;
+    int xStartFloor = gridCenterX - (int)(ceil(6*HetuwMod::zoomScale)); // default: 6 / hetuw mod
+    int xEndFloor = gridCenterX + (int)(ceil(6*HetuwMod::zoomScale)); // default: 6 / hetuw mod
 
     
 
@@ -7575,6 +7620,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     setDrawColor( 1, 1, 1, 1 );
     doublePair panelPos = lastScreenViewCenter;
     panelPos.y -= 242 + 32 + 16 + 6;
+	panelPos.y -= HetuwMod::panelOffsetY;
     drawSprite( mGuiPanelSprite, panelPos );
 
     if( ourLiveObject != NULL &&
@@ -7605,7 +7651,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         // show as a sigil to right of temp meter
         doublePair curseTokenPos = { lastScreenViewCenter.x + 621, 
-                                     lastScreenViewCenter.y - 316 };
+                                     lastScreenViewCenter.y - 316 - HetuwMod::panelOffsetY };
         curseTokenFont->drawString( "C", curseTokenPos, alignCenter );
         curseTokenFont->drawString( "+", curseTokenPos, alignCenter );
         curseTokenPos.x += 6;
@@ -7632,7 +7678,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         for( int i=0; i<ourLiveObject->foodCapacity; i++ ) {
             doublePair pos = { lastScreenViewCenter.x - 590, 
-                               lastScreenViewCenter.y - 334 };
+                               lastScreenViewCenter.y - 334 - HetuwMod::panelOffsetY };
         
             pos.x += i * 30;
             drawSprite( 
@@ -7653,7 +7699,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         for( int i=ourLiveObject->foodCapacity; 
              i < ourLiveObject->maxFoodCapacity; i++ ) {
             doublePair pos = { lastScreenViewCenter.x - 590, 
-                               lastScreenViewCenter.y - 334 };
+                               lastScreenViewCenter.y - 334 - HetuwMod::panelOffsetY };
             
             pos.x += i * 30;
             drawSprite( 
@@ -7671,7 +7717,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 
         
         doublePair pos = { lastScreenViewCenter.x + 546, 
-                           lastScreenViewCenter.y - 319 };
+                           lastScreenViewCenter.y - 319 - HetuwMod::panelOffsetY };
 
         if( mCurrentArrowHeat != -1 ) {
             
@@ -7733,7 +7779,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         for( int i=0; i<mOldDesStrings.size(); i++ ) {
             doublePair pos = { lastScreenViewCenter.x, 
-                               lastScreenViewCenter.y - 313 };
+                               lastScreenViewCenter.y - 313 - HetuwMod::panelOffsetY };
             float fade =
                 mOldDesFades.getElementDirect( i );
             
@@ -7743,7 +7789,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
 
         doublePair yumPos = { lastScreenViewCenter.x - 480, 
-                              lastScreenViewCenter.y - 313 };
+                              lastScreenViewCenter.y - 313 - HetuwMod::panelOffsetY };
         
         setDrawColor( 0, 0, 0, 1 );
         if( mYumBonus > 0 ) {    
@@ -7767,7 +7813,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
         doublePair atePos = { lastScreenViewCenter.x, 
-                              lastScreenViewCenter.y - 347 };
+                              lastScreenViewCenter.y - 347 - HetuwMod::panelOffsetY };
         
         int shortestFill = 100;
         
@@ -7852,7 +7898,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             
             doublePair pos = { lastScreenViewCenter.x, 
-                               lastScreenViewCenter.y - 313 };
+                               lastScreenViewCenter.y - 313 - HetuwMod::panelOffsetY };
 
             char *des = NULL;
             char *desToDelete = NULL;
@@ -8061,7 +8107,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
 
-    
     if( vogMode ) {
         // draw again, so we can see picker
         PageComponent::base_draw( inViewCenter, inViewSize );

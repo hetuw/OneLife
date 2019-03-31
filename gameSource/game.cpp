@@ -96,6 +96,8 @@ CustomRandomSource randSource( 34957197 );
 
 #include "whiteSprites.h"
 
+#include "hetuwmod.h"
+
 
 // should we pull the map
 static char mapPullMode = 0;
@@ -171,7 +173,7 @@ double viewHeight = 720;
 // then we will put letterbox bars on the sides
 // Usually, if screen is not 16:9, it will be taller, not wider,
 // and we will put letterbox bars on the top and bottom 
-const double visibleViewWidth = viewWidth;
+double visibleViewWidth = viewWidth;
 
 
 
@@ -398,10 +400,21 @@ char *getHashSalt() {
     return stringDuplicate( SETTINGS_HASH_SALT );
     }
 
-
-
+void hetuwSetViewSize() {
+	viewWidth = HetuwMod::defaultScreenWidth * HetuwMod::zoomScale;
+	viewHeight = HetuwMod::defaultScreenHeight * HetuwMod::zoomScale;
+	visibleViewWidth = viewWidth;
+	setViewSize( viewWidth );
+	setLetterbox( visibleViewWidth, viewHeight );
+	if (livingLifePage != NULL) {
+		livingLifePage->hetuwSetPanelOffsets();
+	}
+}
 
 void initDrawString( int inWidth, int inHeight ) {
+
+	HetuwMod::init();
+	hetuwSetViewSize();
 
     toggleLinearMagFilter( true );
     toggleMipMapGeneration( true );
@@ -2154,6 +2167,16 @@ void keyDown( unsigned char inASCII ) {
         }
     */
 
+	if (inASCII == '+' && currentUserTypedMessage == NULL ) {
+		HetuwMod::zoomIncrease();
+		hetuwSetViewSize();
+		return;
+	}
+	if (inASCII == '-' && currentUserTypedMessage == NULL ) {
+		HetuwMod::zoomDecrease();
+		hetuwSetViewSize();
+		return;
+	}
     
     if( isPaused() ) {
         // block general keyboard control during pause
