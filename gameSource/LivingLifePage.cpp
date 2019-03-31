@@ -19527,7 +19527,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             break;
         case 13:  // enter
             // speak
-            if( ! TextField::isAnyFocused() ) {
+            if( ! mSayField.isFocused() ) { // cant talk bug fix - hetuw mod
                 
                 mSayField.setText( "" );
                 mSayField.focus();
