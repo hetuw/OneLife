@@ -5,8 +5,11 @@ class HetuwMod
 {
 
 public:
-	static const int defaultScreenWidth = 1280;
-	static const int defaultScreenHeight = 720;
+	static const int defaultViewWidth = 1280;
+	static const int defaultViewHeight = 720;
+
+	static int viewWidth;
+	static int viewHeight;
 
 	static float zoomScale;
 	static int panelOffsetX;

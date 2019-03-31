@@ -401,8 +401,8 @@ char *getHashSalt() {
     }
 
 void hetuwSetViewSize() {
-	viewWidth = HetuwMod::defaultScreenWidth * HetuwMod::zoomScale;
-	viewHeight = HetuwMod::defaultScreenHeight * HetuwMod::zoomScale;
+	viewWidth = HetuwMod::viewWidth;
+	viewHeight = HetuwMod::viewHeight;
 	visibleViewWidth = viewWidth;
 	setViewSize( viewWidth );
 	setLetterbox( visibleViewWidth, viewHeight );

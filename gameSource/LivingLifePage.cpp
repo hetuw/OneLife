@@ -8107,6 +8107,18 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
 
+	setDrawColor( 0, 0, 0, 1 );
+	doublePair jDrawPos = lastScreenViewCenter;
+	jDrawPos.x -= HetuwMod::viewWidth/2 - 40;
+	jDrawPos.y += HetuwMod::viewHeight/2 - 40;
+	char sBuf[64];
+ 	//LiveObject *ourLiveObject = getOurLiveObject();
+	sprintf(sBuf, "%d %d", (int)ourLiveObject->currentPos.x , (int)ourLiveObject->currentPos.y);
+	//handwritingFont->drawString( sBuf, jDrawPos, alignLeft );
+	int jWidthLimit = 250;
+	double jFade = 1.0;
+	drawChalkBackgroundString( jDrawPos, sBuf, jFade, jWidthLimit );
+
     if( vogMode ) {
         // draw again, so we can see picker
         PageComponent::base_draw( inViewCenter, inViewSize );

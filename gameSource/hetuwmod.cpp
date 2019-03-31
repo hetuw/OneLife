@@ -1,5 +1,8 @@
 #include "hetuwmod.h"
 
+int HetuwMod::viewWidth;
+int HetuwMod::viewHeight;
+
 float HetuwMod::zoomScale;
 int HetuwMod::panelOffsetX;
 int HetuwMod::panelOffsetY;
@@ -10,8 +13,10 @@ void HetuwMod::init() {
 }
 
 void HetuwMod::zoomCalc() {
-	panelOffsetX = (int)(defaultScreenWidth*zoomScale - defaultScreenWidth)/2;
-	panelOffsetY = (int)(defaultScreenHeight*zoomScale - defaultScreenHeight)/2;
+	viewWidth = defaultViewWidth*zoomScale;
+	viewHeight = defaultViewHeight*zoomScale;
+	panelOffsetX = (int)(viewWidth - defaultViewWidth)/2;
+	panelOffsetY = (int)(viewHeight - defaultViewHeight)/2;
 }
 
 void HetuwMod::zoomIncrease() {
