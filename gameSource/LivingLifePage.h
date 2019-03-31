@@ -448,7 +448,8 @@ class LivingLifePage : public GamePage, public ActionListener {
             return mRequiredVersion;
             }
 
-
+		bool hetuwSayFieldIsFocused() { return mSayField.isFocused(); }
+		
         virtual void actionPerformed( GUIComponent *inTarget );
         
 

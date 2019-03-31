@@ -2299,6 +2299,9 @@ LivingLifePage::LivingLifePage()
     if( ! tutorialDone ) {
         mTutorialNumber = 1;
         }
+
+	HetuwMod::setLivingLifePage(this);
+
     }
 
 // hetuw mod
@@ -19320,7 +19323,9 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         return;
         }
 
-    
+	if (HetuwMod::livingLifeKeyDown(inASCII))
+		return;
+
     switch( inASCII ) {
         /*
         // useful for testing

@@ -1,6 +1,8 @@
 #ifndef HETUWMOD_H
 #define HETUWMOD_H
 
+#include "LivingLifePage.h"
+
 class HetuwMod
 {
 
@@ -15,9 +17,16 @@ public:
 	static int panelOffsetX;
 	static int panelOffsetY;
 
+	static LivingLifePage *livingLifePage;
+
 	static void init();
+
+	static void setLivingLifePage(LivingLifePage *inLivingLifePage);
+
 	static void zoomIncrease();
 	static void zoomDecrease();
+
+	static bool livingLifeKeyDown(unsigned char inASCII);
 
 private:
 	static void zoomCalc();
