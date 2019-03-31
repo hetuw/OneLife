@@ -1,6 +1,7 @@
 #include "hetuwmod.h"
 
 #include "LivingLifePage.h"
+#include "objectBank.h"
 
 int HetuwMod::viewWidth;
 int HetuwMod::viewHeight;
@@ -37,6 +38,29 @@ void HetuwMod::zoomDecrease() {
 	zoomScale -= 0.25f;
 	if (zoomScale < 0.5f) zoomScale = 0.5f;
 	zoomCalc();
+}
+
+void HetuwMod::livingLifeDraw() {
+
+ 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
+
+	// cords 
+	setDrawColor( 0, 0, 0, 1 );
+	doublePair jDrawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	jDrawPos.x -= HetuwMod::viewWidth/2 - 40;
+	jDrawPos.y += HetuwMod::viewHeight/2 - 40;
+	char sBuf[64];
+	sprintf(sBuf, "%d %d", (int)ourLiveObject->currentPos.x , (int)ourLiveObject->currentPos.y);
+	int jWidthLimit = 250;
+	double jFade = 1.0;
+	livingLifePage->drawChalkBackgroundString( jDrawPos, sBuf, jFade, jWidthLimit );
+
+	// age
+	sprintf(sBuf, "%d", (int)(ourLiveObject->age));
+	jDrawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	jDrawPos.x += 330;
+	jDrawPos.y -= HetuwMod::viewHeight/2 - 25;
+	livingLifePage->hetuwDrawWithHandwritingFont( sBuf, jDrawPos );
 }
 
 // when return true -> end/return in keyDown function in LivingLife

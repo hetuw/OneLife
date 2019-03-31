@@ -26,6 +26,7 @@ public:
 	static void zoomIncrease();
 	static void zoomDecrease();
 
+	static void livingLifeDraw();
 	static bool livingLifeKeyDown(unsigned char inASCII);
 
 private:

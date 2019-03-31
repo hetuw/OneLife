@@ -69,12 +69,16 @@ extern Font *handwritingFont;
 extern Font *pencilFont;
 extern Font *pencilErasedFont;
 
+void LivingLifePage::hetuwDrawWithHandwritingFont(const char* str, doublePair drawPos) {
+	handwritingFont->drawString( str, drawPos, alignLeft );
+}
 
 // to make all erased pencil fonts lighter
 static float pencilErasedFontExtraFade = 0.75;
 
 
 extern doublePair lastScreenViewCenter;
+doublePair LivingLifePage::hetuwGetLastScreenViewCenter() { return lastScreenViewCenter; }
 
 static char shouldMoveCamera = true;
 
@@ -8110,24 +8114,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
 
-	// cords hetuw mod
-	setDrawColor( 0, 0, 0, 1 );
-	doublePair jDrawPos = lastScreenViewCenter;
-	jDrawPos.x -= HetuwMod::viewWidth/2 - 40;
-	jDrawPos.y += HetuwMod::viewHeight/2 - 40;
-	char sBuf[64];
- 	//LiveObject *ourLiveObject = getOurLiveObject();
-	sprintf(sBuf, "%d %d", (int)ourLiveObject->currentPos.x , (int)ourLiveObject->currentPos.y);
-	int jWidthLimit = 250;
-	double jFade = 1.0;
-	drawChalkBackgroundString( jDrawPos, sBuf, jFade, jWidthLimit );
-
-	// age hetuw mod
-	sprintf(sBuf, "%d", (int)(getOurLiveObject()->age));
-	jDrawPos = lastScreenViewCenter;
-	jDrawPos.x += 330;
-	jDrawPos.y -= HetuwMod::viewHeight/2 - 25;
-	handwritingFont->drawString( sBuf, jDrawPos, alignLeft );
+	HetuwMod::livingLifeDraw();
 
     if( vogMode ) {
         // draw again, so we can see picker

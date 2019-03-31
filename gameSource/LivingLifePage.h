@@ -449,6 +449,8 @@ class LivingLifePage : public GamePage, public ActionListener {
             }
 
 		bool hetuwSayFieldIsFocused() { return mSayField.isFocused(); }
+		doublePair hetuwGetLastScreenViewCenter();
+		void hetuwDrawWithHandwritingFont( const char* str, doublePair drawPos );
 		
         virtual void actionPerformed( GUIComponent *inTarget );
         
@@ -812,13 +814,14 @@ class LivingLifePage : public GamePage, public ActionListener {
         char mForceGroundClick;
         
 
-
+		public: // hetuw mod
         LiveObject *getOurLiveObject();
         LiveObject *getLiveObject( int inID );
-        
+        protected: // hetuw mod
 
         void clearLiveObjects();
         
+		public: // hetuw mod
         // inSpeaker can be NULL
         void drawChalkBackgroundString( doublePair inPos, 
                                         const char *inString,
@@ -826,7 +829,7 @@ class LivingLifePage : public GamePage, public ActionListener {
                                         double inMaxWidth,
                                         LiveObject *inSpeaker = NULL,
                                         int inForceMinChalkBlots = -1 );
-        
+        protected: // hetuw mod
 
         // returns an animation pack that can be used to draw the
         // held object.  The pack's object ID is -1 if nothing is held
