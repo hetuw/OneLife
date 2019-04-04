@@ -2168,12 +2168,12 @@ void keyDown( unsigned char inASCII ) {
     */
 
 	if (inASCII == '+' && currentUserTypedMessage == NULL ) {
-		HetuwMod::zoomIncrease();
+		HetuwMod::zoomDecrease();
 		hetuwSetViewSize();
 		return;
 	}
 	if (inASCII == '-' && currentUserTypedMessage == NULL ) {
-		HetuwMod::zoomDecrease();
+		HetuwMod::zoomIncrease();
 		hetuwSetViewSize();
 		return;
 	}

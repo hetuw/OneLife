@@ -1,6 +1,7 @@
 #ifndef EMOTION_INCLUDED
 #define EMOTION_INCLUDED
 
+#include "minorGems/util/SimpleVector.h" // hetuw mod
 
 typedef struct Emotion {
         char *triggerWord;
@@ -61,6 +62,6 @@ int getEmotionNumObjectSlots();
 
 int getEmotionObjectByIndex( Emotion *inEmote, int inIndex );
 
-
+SimpleVector<Emotion> hetuwGetEmotions();
 
 #endif

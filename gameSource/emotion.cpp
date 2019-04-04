@@ -115,6 +115,10 @@ int getEmotionIndex( const char *inSpeech ) {
     }
 
 
+SimpleVector<Emotion> hetuwGetEmotions() {
+	return emotions;
+}
+ 
 
 // returns NULL if index out of range
 Emotion *getEmotion( int inIndex ) {

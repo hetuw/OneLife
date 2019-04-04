@@ -2,6 +2,9 @@
 
 #include "LivingLifePage.h"
 #include "objectBank.h"
+#include "emotion.h"
+#include "minorGems/util/SimpleVector.h"
+#include "minorGems/game/drawUtils.h"
 
 int HetuwMod::viewWidth;
 int HetuwMod::viewHeight;
@@ -10,15 +13,53 @@ float HetuwMod::zoomScale;
 int HetuwMod::panelOffsetX;
 int HetuwMod::panelOffsetY;
 
+HetuwMod::RainbowColor *HetuwMod::colorRainbow;
+
 LivingLifePage *HetuwMod::livingLifePage;
+
+bool HetuwMod::bDrawHelp;
 
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	zoomCalc();
+	
+	colorRainbow = new RainbowColor();
+
+	bDrawHelp = false;
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage) {
 	livingLifePage = inLivingLifePage;
+}
+
+HetuwMod::RainbowColor::RainbowColor() {
+	color[0] = 1.0f;
+	color[1] = 0.0f;
+	color[2] = 0.0f;
+	increase = true;
+	cycle = 1;
+}
+
+void HetuwMod::RainbowColor::step() {
+	bool nextCycle = false;
+	if (increase) {
+		color[cycle] += stepSize;
+		if (color[cycle] >= 1.0f) {
+			color[cycle] = 1.0f;
+			nextCycle = true;
+		}
+	} else {
+		color[cycle] -= stepSize;
+		if (color[cycle] <= 0.0f) {
+			color[cycle] = 0.0f;
+			nextCycle = true;
+		}
+	}
+	if (nextCycle) {
+		increase = !increase;
+		cycle--;
+		if (cycle < 0) cycle = 2;
+	}
 }
 
 void HetuwMod::zoomCalc() {
@@ -42,6 +83,8 @@ void HetuwMod::zoomDecrease() {
 
 void HetuwMod::livingLifeDraw() {
 
+	colorRainbow->step();
+
  	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
 
 	// cords 
@@ -61,6 +104,8 @@ void HetuwMod::livingLifeDraw() {
 	jDrawPos.x += 330;
 	jDrawPos.y -= HetuwMod::viewHeight/2 - 25;
 	livingLifePage->hetuwDrawWithHandwritingFont( sBuf, jDrawPos );
+
+	if (bDrawHelp) drawHelp();
 }
 
 // when return true -> end/return in keyDown function in LivingLife
@@ -81,5 +126,67 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		return true;
 	}
 
+	if (inASCII == 'h') {
+		bDrawHelp = !bDrawHelp;
+		return true;
+	}
+
 	return false;
+}
+
+void HetuwMod::drawHelp() {
+	char str[64];
+	setDrawColor( 0, 0, 0, 0.8 );
+	drawRect( livingLifePage->hetuwGetLastScreenViewCenter(), viewWidth/2, viewHeight/2 );
+
+	setDrawColor( colorRainbow->color[0], colorRainbow->color[1], colorRainbow->color[2], 1 );
+
+	double lineHeight = 30;
+
+	// emotion words
+	doublePair drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	drawPos.x -= viewWidth/2 - 20;
+	drawPos.y += viewHeight/2 - 80;
+	SimpleVector<Emotion> emotions = hetuwGetEmotions();
+    for( int i=0; i<emotions.size(); i++ ) {
+		if (i == 7 || i == 8) continue;
+		int id = i;
+		if (i > 6) id -= 2;
+
+		if (id < 10) sprintf(str, " %i: %s", id, emotions.getElement(i)->triggerWord);
+		else sprintf(str, "%i: %s", id, emotions.getElement(i)->triggerWord);
+
+		livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+		drawPos.y -= lineHeight;
+	}
+
+	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	drawPos.x -= viewWidth/2 - 250;
+	drawPos.y += viewHeight/2 - 80;
+
+	livingLifePage->hetuwDrawWithHandwritingFont( "H TOGGLE SHOW HELP", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "= MAKE SCREENSHOT", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "+ ZOOM IN", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "- ZOOM OUT", drawPos );
+	drawPos.y -= lineHeight;
+
+	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	drawPos.x -= viewWidth/2 - 570;
+	drawPos.y += viewHeight/2 - 80;
+
+	sprintf(str, "%s - BABY SUICIDE", translate( "dieCommand" ));
+	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	drawPos.y -= lineHeight;
+	sprintf(str, "%s - TOGGLE SHOW FPS", translate( "fpsCommand" ));
+	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	drawPos.y -= lineHeight;
+	sprintf(str, "%s - TOGGLE SHOW NETWORK", translate( "netCommand" ));
+	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	drawPos.y -= lineHeight;
+	sprintf(str, "%s - SHOW PING", translate( "pingCommand" ));
+	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	drawPos.y -= lineHeight;
 }
