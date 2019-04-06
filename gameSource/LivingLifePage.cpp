@@ -1879,6 +1879,10 @@ static double remapPeakSeconds = 60;
 static double remapDelaySeconds = 30;
 
 
+void LivingLifePage::hetuwSetNextActionMessage(const char* msg) {
+	nextActionMessageToSend = autoSprintf( "%s", msg );
+}
+
 static Image *expandToPowersOfTwoWhite( Image *inImage ) {
     
     int w = 1;

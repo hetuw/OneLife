@@ -108,6 +108,41 @@ void HetuwMod::livingLifeDraw() {
 	if (bDrawHelp) drawHelp();
 }
 
+void HetuwMod::useTileRelativeToMe( int x, int y ) {
+ 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
+	char msg[32];
+	x += ourLiveObject->currentPos.x;
+	y += ourLiveObject->currentPos.y;
+	x = livingLifePage->sendX(x);
+	y = livingLifePage->sendY(y);
+	sprintf( msg, "USE %d %d", x, y);
+	livingLifePage->hetuwSetNextActionMessage( msg );
+}
+
+void HetuwMod::dropTileRelativeToMe( int x, int y ) {
+ 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
+	char msg[32];
+	x += ourLiveObject->currentPos.x;
+	y += ourLiveObject->currentPos.y;
+	x = livingLifePage->sendX(x);
+	y = livingLifePage->sendY(y);
+	sprintf( msg, "USE %d %d", x, y);
+	sprintf( msg, "DROP %d %d -1#", x, y);
+	livingLifePage->hetuwSetNextActionMessage( msg );
+}
+
+void HetuwMod::remvTileRelativeToMe( int x, int y ) {
+	char msg[32];
+ 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
+	x += ourLiveObject->currentPos.x;
+	y += ourLiveObject->currentPos.y;
+	x = livingLifePage->sendX(x);
+	y = livingLifePage->sendY(y);
+	sprintf( msg, "USE %d %d", x, y);
+	sprintf( msg, "REMV %d %d -1#", x, y);
+	livingLifePage->hetuwSetNextActionMessage( msg );
+}
+
 // when return true -> end/return in keyDown function in LivingLife
 bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 
@@ -129,6 +164,22 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	if (inASCII == 'h') {
 		bDrawHelp = !bDrawHelp;
 		return true;
+	}
+
+	if (inASCII == 'u') {
+		useTileRelativeToMe(1, 0);
+		return true;
+	}
+	if (inASCII == 'd') {
+		dropTileRelativeToMe(1, 0);
+		return true;
+	}
+	if (inASCII == 'r') {
+		remvTileRelativeToMe(1, 0);
+		return true;
+	}
+	if (inASCII == ' ') {
+		//return true;
 	}
 
 	return false;

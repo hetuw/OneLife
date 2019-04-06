@@ -401,7 +401,6 @@ class LivingLifePage : public GamePage, public ActionListener {
         LivingLifePage();
         ~LivingLifePage();
 
-		void hetuwSetPanelOffsets();
         
         void clearMap();
         
@@ -448,9 +447,11 @@ class LivingLifePage : public GamePage, public ActionListener {
             return mRequiredVersion;
             }
 
+		void hetuwSetPanelOffsets();
 		bool hetuwSayFieldIsFocused() { return mSayField.isFocused(); }
 		doublePair hetuwGetLastScreenViewCenter();
 		void hetuwDrawWithHandwritingFont( const char* str, doublePair drawPos );
+		void hetuwSetNextActionMessage( const char* str );
 		
         virtual void actionPerformed( GUIComponent *inTarget );
         
@@ -488,9 +489,11 @@ class LivingLifePage : public GamePage, public ActionListener {
 
         // conversion function for received coordinates into local coords
         void applyReceiveOffset( int *inX, int *inY );
+		public: // hetuw mod
         // converts local coors for sending back to server
         int sendX( int inX );
         int sendY( int inY );
+		protected: // hetuw mod
 
 
         int mMapD;

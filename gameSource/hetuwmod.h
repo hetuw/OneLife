@@ -38,6 +38,10 @@ public:
 
 	static void zoomIncrease();
 	static void zoomDecrease();
+	
+	static void useTileRelativeToMe( int x, int y );
+	static void dropTileRelativeToMe( int x, int y );
+	static void remvTileRelativeToMe( int x, int y );
 
 	static void livingLifeDraw();
 	static bool livingLifeKeyDown(unsigned char inASCII);
