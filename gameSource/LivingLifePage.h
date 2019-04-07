@@ -451,7 +451,9 @@ class LivingLifePage : public GamePage, public ActionListener {
 		bool hetuwSayFieldIsFocused() { return mSayField.isFocused(); }
 		doublePair hetuwGetLastScreenViewCenter();
 		void hetuwDrawWithHandwritingFont( const char* str, doublePair drawPos );
-		void hetuwSetNextActionMessage( const char* str );
+		void hetuwSetNextActionMessage( const char* str, int x, int y );
+		int hetuwGetObjId( int mapX, int mapY );
+		void hetuwClickMove( float x, float y );
 		
         virtual void actionPerformed( GUIComponent *inTarget );
         

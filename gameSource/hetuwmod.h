@@ -45,13 +45,26 @@ public:
 
 	static void livingLifeDraw();
 	static bool livingLifeKeyDown(unsigned char inASCII);
+	static bool livingLifeKeyUp(unsigned char inASCII);
 
 private:
-	static bool bDrawHelp;
-
 	static void zoomCalc();
 
+	static bool bDrawHelp;
 	static void drawHelp();
+
+	static float lastPosX;
+	static float lastPosY;
+
+	static bool upKeyDown;
+	static bool downKeyDown;
+	static bool leftKeyDown;
+	static bool rightKeyDown;
+
+	static void move(); // called only once on frame - dont use
+
+	static doublePair debugRecPos;
+	static doublePair debugRecPos2;
 
 };
 

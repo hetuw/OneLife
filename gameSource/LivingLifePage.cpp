@@ -1910,8 +1910,24 @@ static double remapPeakSeconds = 60;
 static double remapDelaySeconds = 30;
 
 
-void LivingLifePage::hetuwSetNextActionMessage(const char* msg) {
+void LivingLifePage::hetuwSetNextActionMessage(const char* msg, int x, int y) {
+	if( nextActionMessageToSend != NULL ) {
+		delete [] nextActionMessageToSend;
+		nextActionMessageToSend = NULL;
+	}
+    lastMouseX = x;
+    lastMouseY = y;
+    mLastMouseOverID = 0;
+	playerActionTargetX = x;
+	playerActionTargetY = y;
+	playerActionTargetNotAdjacent = true;
 	nextActionMessageToSend = autoSprintf( "%s", msg );
+}
+
+int LivingLifePage::hetuwGetObjId( int tileX, int tileY ) {
+	int mapX = tileX - mMapOffsetX + mMapD / 2;
+	int mapY = tileY - mMapOffsetY + mMapD / 2;
+	return mMap[ mapY * mMapD + mapX ];
 }
 
 static Image *expandToPowersOfTwoWhite( Image *inImage ) {
@@ -15869,7 +15885,7 @@ void LivingLifePage::step() {
         doublePair screenTargetPos = 
             mult( targetObjectPos, CELL_D );
         
-        if( vogMode ) {
+        if( vogMode || true ) { // hetuw mod || true
             // don't adjust camera
             }
         else if( 
@@ -15963,7 +15979,7 @@ void LivingLifePage::step() {
             
             }
 
-        if( ! vogMode ) {
+        if( ! vogMode && false ) { // hetuw mod && false
             
             screenTargetPos.x = 
                 CELL_D * targetObjectPos.x - 
@@ -15988,8 +16004,8 @@ void LivingLifePage::step() {
         
         char viewChange = false;
         
-        int maxRX = viewWidth / 15;
-        int maxRY = viewHeight / 15;
+        int maxRX = 1; // hetuw mod default: viewWidth / 15
+        int maxRY = 1; // hetuw mod default: viewHeight / 15
         int maxR = 0;
         double moveSpeedFactor = 20 * cameraFollowsObject->currentSpeed;
         
@@ -18058,7 +18074,14 @@ char LivingLifePage::getCellBlocksWalking( int inMapX, int inMapY ) {
         }
     }
 
-
+void LivingLifePage::hetuwClickMove( float x, float y ) {
+	mouseDownFrames = 10;
+	mouseDown = true;
+	pointerDown( x, y );
+	pointerUp( x, y );
+	mouseDownFrames = 0;
+	mouseDown = false;
+}
 
 
 void LivingLifePage::pointerDown( float inX, float inY ) {
@@ -20076,6 +20099,9 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
 
         
 void LivingLifePage::keyUp( unsigned char inASCII ) {
+
+	if (HetuwMod::livingLifeKeyUp(inASCII))
+		return;
 
     switch( inASCII ) {
         case 'e':
