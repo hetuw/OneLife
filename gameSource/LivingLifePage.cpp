@@ -19704,9 +19704,9 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 mZKeyDown = true;
                 }
             break;
-        case ' ':
+        case 'f': // hetuw mod
             if( ! mSayField.isFocused() ) {
-                shouldMoveCamera = false;
+                shouldMoveCamera = !shouldMoveCamera; // hetuw mod
                 }
             break;
         case 9: // tab
@@ -19809,6 +19809,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                             int emotIndex = getEmotionIndex( typedText );
                             
                             if( emotIndex != -1 ) {
+								HetuwMod::setEmote( emotIndex );
                                 char *message = 
                                     autoSprintf( "EMOT 0 0 %d#", emotIndex );
                                 
@@ -20117,7 +20118,7 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
             mZKeyDown = false;
             break;
         case ' ':
-            shouldMoveCamera = true;
+            //shouldMoveCamera = true; // hetuw mod
             break;
         }
 

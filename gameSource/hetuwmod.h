@@ -28,6 +28,7 @@ public:
 	static int panelOffsetX;
 	static int panelOffsetY;
 
+
 	static RainbowColor *colorRainbow;
 
 	static LivingLifePage *livingLifePage;
@@ -46,6 +47,8 @@ public:
 	static void livingLifeDraw();
 	static bool livingLifeKeyDown(unsigned char inASCII);
 	static bool livingLifeKeyUp(unsigned char inASCII);
+
+	static void setEmote(int id);
 
 private:
 	static void zoomCalc();
@@ -66,6 +69,8 @@ private:
 	static doublePair debugRecPos;
 	static doublePair debugRecPos2;
 
+	static int currentEmote;
+	static time_t lastEmoteTime;
 };
 
 

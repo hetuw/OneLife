@@ -33,6 +33,9 @@ bool HetuwMod::rightKeyDown;
 doublePair HetuwMod::debugRecPos;
 doublePair HetuwMod::debugRecPos2;
 
+int HetuwMod::currentEmote;
+time_t HetuwMod::lastEmoteTime;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	zoomCalc();
@@ -51,6 +54,8 @@ void HetuwMod::init() {
 
 	debugRecPos = { 0.0, 0.0 };
 	debugRecPos2 = { 0.0, 0.0 };
+
+	currentEmote = -1;
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage) {
@@ -141,6 +146,13 @@ void HetuwMod::livingLifeDraw() {
 	//drawRect( debugRecPos, 10, 10 );
 	//setDrawColor( 0.0, 1.0, 0, 1.0 );
 	//drawRect( debugRecPos2, 10, 10 );
+
+	if (currentEmote >= 0 && lastEmoteTime+8 < time(NULL)) {
+		lastEmoteTime = time(NULL);
+		char message[64];
+		sprintf( message, "EMOT 0 0 %i#", currentEmote);
+        livingLifePage->sendToServerSocket( message );
+	}
 }
 
 void HetuwMod::useTileRelativeToMe( int x, int y ) {
@@ -176,6 +188,12 @@ void HetuwMod::remvTileRelativeToMe( int x, int y ) {
 	livingLifePage->hetuwSetNextActionMessage( msg, x, y );
 }
 
+void HetuwMod::setEmote(int id) {
+	lastEmoteTime = time(NULL);
+	currentEmote = id;
+	std::cout << "hetuw setEmote: " << id << "\n";
+}
+
 // when return true -> end/return in keyDown function in LivingLife
 bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 
@@ -188,6 +206,8 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	int jic = (int)inASCII - 48;
 	if (jic >= 0 && jic <= 9) {
 		if (jic > 6) jic += 2;
+		currentEmote = -1;
+		std::cout << "hetuw setEmote: " << currentEmote << "\n";
 		char message[64];
 		sprintf( message, "EMOT 0 0 %i#", jic);
         livingLifePage->sendToServerSocket( message );
@@ -204,8 +224,8 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		return true;
 	}
 	if (inASCII == 'f') {
-		dropTileRelativeToMe(1, 0);
-		return true;
+		//dropTileRelativeToMe(1, 0);
+		//return true;
 	}
 	if (inASCII == 'r') {
 		remvTileRelativeToMe(1, 0);
@@ -325,6 +345,10 @@ void HetuwMod::drawHelp() {
 		livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
 		drawPos.y -= lineHeight;
 	}
+	livingLifePage->hetuwDrawWithHandwritingFont( "PRESS NUMBER KEY FOR SHORT EMOTE", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "WRITE EMOTE FOR PERMANENT EMOTE", drawPos );
+	drawPos.y -= lineHeight;
 
 	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
 	drawPos.x -= viewWidth/2 - 250;
@@ -337,6 +361,8 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawWithHandwritingFont( "+ ZOOM IN", drawPos );
 	drawPos.y -= lineHeight;
 	livingLifePage->hetuwDrawWithHandwritingFont( "- ZOOM OUT", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "F TOGGLE FIX CAMERA", drawPos );
 	drawPos.y -= lineHeight;
 	livingLifePage->hetuwDrawWithHandwritingFont( "WASD MOVE", drawPos );
 	drawPos.y -= lineHeight;
