@@ -302,7 +302,7 @@ void HetuwMod::drawHelp() {
 	setDrawColor( 0, 0, 0, 0.8 );
 	drawRect( livingLifePage->hetuwGetLastScreenViewCenter(), viewWidth/2, viewHeight/2 );
 
-	setDrawColor( colorRainbow->color[0], colorRainbow->color[1], colorRainbow->color[2], 1 );
+	setDrawColor( colorRainbow->color[0], 1.0f, colorRainbow->color[2], 1 );
 
 	double lineHeight = 30;
 
