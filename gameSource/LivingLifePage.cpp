@@ -73,6 +73,10 @@ void LivingLifePage::hetuwDrawWithHandwritingFont(const char* str, doublePair dr
 	handwritingFont->drawString( str, drawPos, alignLeft );
 }
 
+double LivingLifePage::hetuwMeasureStringHandwritingFont(const char* str) {
+	return handwritingFont->measureString( str );
+}
+
 // to make all erased pencil fonts lighter
 static float pencilErasedFontExtraFade = 0.75;
 

@@ -120,9 +120,12 @@ void HetuwMod::livingLifeDraw() {
 	jDrawPos.x -= HetuwMod::viewWidth/2 - 40;
 	jDrawPos.y += HetuwMod::viewHeight/2 - 40;
 	char sBuf[64];
-	sprintf(sBuf, "%d %d", (int)ourLiveObject->currentPos.x , (int)ourLiveObject->currentPos.y);
 	int jWidthLimit = 250;
 	double jFade = 1.0;
+	sprintf(sBuf, "%d", (int)ourLiveObject->currentPos.x );
+	livingLifePage->drawChalkBackgroundString( jDrawPos, sBuf, jFade, jWidthLimit );
+	jDrawPos.x += 45 + livingLifePage->hetuwMeasureStringHandwritingFont( sBuf );
+	sprintf(sBuf, "%d", (int)ourLiveObject->currentPos.y);
 	livingLifePage->drawChalkBackgroundString( jDrawPos, sBuf, jFade, jWidthLimit );
 
 	// age
