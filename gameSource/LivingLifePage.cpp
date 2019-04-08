@@ -18079,12 +18079,10 @@ char LivingLifePage::getCellBlocksWalking( int inMapX, int inMapY ) {
     }
 
 void LivingLifePage::hetuwClickMove( float x, float y ) {
-	mouseDownFrames = 10;
-	mouseDown = true;
+	mForceGroundClick = true;
 	pointerDown( x, y );
 	pointerUp( x, y );
-	mouseDownFrames = 0;
-	mouseDown = false;
+	mForceGroundClick = false;
 }
 
 
@@ -18107,7 +18105,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     char modClick = false;
     
-    if( ( mEKeyDown && mEKeyEnabled ) || isLastMouseButtonRight() ) {
+    if( ( mEKeyDown && mEKeyEnabled ) || ( isLastMouseButtonRight() && !mForceGroundClick ) ) { // hetuw mod && !mForceGroundClick
         modClick = true;
         }
     

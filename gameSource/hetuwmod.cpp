@@ -36,6 +36,9 @@ doublePair HetuwMod::debugRecPos2;
 int HetuwMod::currentEmote;
 time_t HetuwMod::lastEmoteTime;
 
+int* HetuwMod::dangerousAnimals;
+int HetuwMod::dangerousAnimalsLength;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	zoomCalc();
@@ -56,6 +59,56 @@ void HetuwMod::init() {
 	debugRecPos2 = { 0.0, 0.0 };
 
 	currentEmote = -1;
+
+	initDangerousAnimals();	
+}
+
+void HetuwMod::initDangerousAnimals() {
+	if (dangerousAnimals != NULL) {
+		delete[] dangerousAnimals;
+		dangerousAnimals = NULL;
+	}
+	dangerousAnimalsLength = 35;
+	dangerousAnimals = new int[dangerousAnimalsLength];
+	dangerousAnimals[0] = 2156; // Mosquito swarm
+
+	dangerousAnimals[1] = 764; // Rattle Snake
+	dangerousAnimals[2] = 1385; // Attacking Rattle Snake
+
+	dangerousAnimals[3] = 1323; // Wild Boar
+	dangerousAnimals[4] = 1328; // Wild Boar with Piglet 
+	dangerousAnimals[5] = 1333; // Attacking Wild Boar
+	dangerousAnimals[6] = 1334; // Attacking Wild Boar with Piglet
+	dangerousAnimals[7] = 1339; // Domestic Boar
+	dangerousAnimals[8] = 1341; // Domestic Boar with Piglet
+	dangerousAnimals[9] = 1347; // Attacking Boar# domestic
+	dangerousAnimals[10] = 1348; // Attacking Boar with Piglet# domestic
+
+	dangerousAnimals[11] = 418; // Wolf
+	dangerousAnimals[12] = 1630; // Semi-tame Wolf
+	dangerousAnimals[13] = 420; // Shot Wolf
+	dangerousAnimals[14] = 428; // Attacking Shot Wolf
+	dangerousAnimals[15] = 429; // Dying Shot Wolf
+	dangerousAnimals[16] = 1761; // Dying Semi-tame Wolf
+	dangerousAnimals[17] = 1640; // Semi-tame Wolf# just fed
+	dangerousAnimals[18] = 1642; // Semi-tame Wolf# pregnant
+	dangerousAnimals[19] = 1636; // Semi-tame Wolf with Puppy#1
+	dangerousAnimals[20] = 1635; // Semi-tame Wolf with Puppies#2
+	dangerousAnimals[21] = 1631; // Semi-tame Wolf with Puppies#3
+	dangerousAnimals[22] = 1748; // Old Semi-tame Wolf
+	dangerousAnimals[23] = 1641; // @ Deadly Wolf
+	
+	dangerousAnimals[24] = 628; // Grizzly Bear
+	dangerousAnimals[25] = 655; // Shot Grizzly Bear#2 attacking
+	dangerousAnimals[26] = 653; // Hungry Grizzly Bear#attacking
+	dangerousAnimals[27] = 644; // Dying Shot Grizzly Bear#3
+	dangerousAnimals[28] = 631; // Hungry Grizzly Bear
+	dangerousAnimals[29] = 646; // @ Unshot Grizzly Bear
+	dangerousAnimals[30] = 635; // Shot Grizzly Bear#2
+	dangerousAnimals[31] = 645; // Fed Grizzly Bear
+	dangerousAnimals[32] = 632; // Shot Grizzly Bear#1
+	dangerousAnimals[33] = 637; // Shot Grizzly Bear#3
+	dangerousAnimals[34] = 654; // Shot Grizzly Bear#1 attacking
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage) {
@@ -191,7 +244,6 @@ void HetuwMod::remvTileRelativeToMe( int x, int y ) {
 void HetuwMod::setEmote(int id) {
 	lastEmoteTime = time(NULL);
 	currentEmote = id;
-	std::cout << "hetuw setEmote: " << id << "\n";
 }
 
 // when return true -> end/return in keyDown function in LivingLife
@@ -207,7 +259,6 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	if (jic >= 0 && jic <= 9) {
 		if (jic > 6) jic += 2;
 		currentEmote = -1;
-		std::cout << "hetuw setEmote: " << currentEmote << "\n";
 		char message[64];
 		sprintf( message, "EMOT 0 0 %i#", jic);
         livingLifePage->sendToServerSocket( message );
@@ -257,24 +308,78 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 
 bool HetuwMod::livingLifeKeyUp(unsigned char inASCII) {
 
+	bool r = false;
+
 	if (inASCII == 'w') {
 		upKeyDown = false;
-		return true;
+		r = true;
 	}
 	if (inASCII == 'a') {
 		leftKeyDown = false;
-		return true;
+		r = true;
 	}
 	if (inASCII == 's') {
 		downKeyDown = false;
-		return true;
+		r = true;
 	}
 	if (inASCII == 'd') {
 		rightKeyDown = false;
-		return true;
+		r = true;
 	}
 
-	return false;
+	if (!upKeyDown && !leftKeyDown && !downKeyDown && !rightKeyDown) {
+		lastPosX = 9999;
+		lastPosY = 9999;
+	}
+
+	return r;
+}
+
+bool HetuwMod::tileIsSafeToWalk(int x, int y) {
+	int objId = livingLifePage->hetuwGetObjId( x, y);
+	if (objId > 0) {
+		for (int i = 0; i < dangerousAnimalsLength; i++) {
+			if (objId == dangerousAnimals[i]) return false;
+		}
+		ObjectRecord* obj = getObject(objId);
+		if (obj->blocksWalking) return false;
+	}
+	return true;
+}
+
+bool HetuwMod::tileHasNoDangerousAnimals(int x, int y) {
+	int objId = livingLifePage->hetuwGetObjId( x, y);
+	if (objId > 0) {
+		for (int i = 0; i < dangerousAnimalsLength; i++) {
+			if (objId == dangerousAnimals[i]) return false;
+		}
+	}
+	return true;
+}
+
+bool HetuwMod::cornerTileIsSafeToWalk( int sX, int sY, bool up, bool down, bool right, bool left) {
+	bool tileNextIsSafe = true;
+	if (up && ( right || left )) {
+		tileNextIsSafe = tileHasNoDangerousAnimals( sX, sY+1 );
+		if (tileNextIsSafe) {
+			if (right) {
+				tileNextIsSafe = tileHasNoDangerousAnimals( sX+1, sY );
+			} else {
+				tileNextIsSafe = tileHasNoDangerousAnimals( sX-1, sY );
+			}
+		}	
+	}
+	else if (down && ( right || left )) {
+		tileNextIsSafe = tileHasNoDangerousAnimals( sX, sY-1 );
+		if (tileNextIsSafe) {
+			if (right) {
+				tileNextIsSafe = tileHasNoDangerousAnimals( sX+1, sY );
+			} else {
+				tileNextIsSafe = tileHasNoDangerousAnimals( sX-1, sY );
+			}
+		}
+	}
+	return tileNextIsSafe;
 }
 
 void HetuwMod::move() {
@@ -289,27 +394,111 @@ void HetuwMod::move() {
 	if (x == lastPosX && y == lastPosY && ourLiveObject->inMotion)
 		return;
 
-	lastPosX = x;
-	lastPosY = y;
+	float sX = x;
+	float sY = y;
 
 	//debugRecPos2.x = x*CELL_D;
 	//debugRecPos2.y = y*CELL_D;
 
-	const float stepSizePlus = 1.4f;
-	const float stepSizeMinus = 0.6f;
 	if (upKeyDown)
-		y += stepSizePlus;
+		y += 1.0f;
 	else if (downKeyDown)
-		y -= stepSizeMinus;
+		y -= 1.0f;
 
 	if (rightKeyDown)
-		x += stepSizePlus;
+		x += 1.0f;
 	else if (leftKeyDown)
-		x -= stepSizeMinus;
+		x -= 1.0f;
 
-	//int objId = livingLifePage->hetuwGetObjId((int)x, (int)y);
-	//if (objId > 0) std::cout << "hetuw objId: " << objId << " xy: " << x << ", " << y << "\n";
-	//if (objId > 0 && getObject(objId)->blocksWalking) return;
+	bool tileIsSafe = false;
+	bool tileNextIsSafe = true;
+
+	tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, upKeyDown, downKeyDown, rightKeyDown, leftKeyDown );
+
+	if (tileNextIsSafe)
+		tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
+
+	if (!tileIsSafe && upKeyDown && !downKeyDown) {
+		x = sX;
+		y = sY + 1;
+		tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
+		if (!tileIsSafe && !leftKeyDown) {
+			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, true, false, true, false );
+			if (tileNextIsSafe) {
+				x = sX + 1;
+				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
+			}
+		}
+		if (!tileIsSafe && !rightKeyDown) {
+			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, true, false, false, true );
+			if (tileNextIsSafe) {
+				x = sX - 1;
+				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
+			}
+		}
+	}
+	if (!tileIsSafe && downKeyDown && !upKeyDown) {
+		x = sX;
+		y = sY - 1;
+		tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
+		if (!tileIsSafe && !leftKeyDown) {
+			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, false, true, true, false );
+			if (tileNextIsSafe) {
+				x = sX + 1;
+				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
+			}
+		}
+		if (!tileIsSafe && !rightKeyDown) {
+			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, false, true, false, true );
+			if (tileNextIsSafe) {
+				x = sX - 1;
+				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
+			}
+		}
+	}
+	if (!tileIsSafe && rightKeyDown && !leftKeyDown) {
+		x = sX + 1;
+		y = sY;
+		tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
+		if (!tileIsSafe && !downKeyDown) {
+			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, true, false, true, false );
+			if (tileNextIsSafe) {
+				y = sY + 1;
+				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
+			}
+		}
+		if (!tileIsSafe && !upKeyDown) {
+			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, false, true, true, false );
+			if (tileNextIsSafe) {
+				y = sY - 1;
+				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
+			}
+		}
+	}
+	if (!tileIsSafe && leftKeyDown && !rightKeyDown) {
+		x = sX - 1;
+		y = sY;
+		tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
+		if (!tileIsSafe && !downKeyDown) {
+			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, true, false, false, true );
+			if (tileNextIsSafe) {
+				y = sY + 1;
+				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
+			}
+		}
+		if (!tileIsSafe && !upKeyDown) {
+			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, false, true, false, true );
+			if (tileNextIsSafe) {
+				y = sY - 1;
+				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
+			}
+		}
+	}
+
+	if (!tileIsSafe || !tileNextIsSafe) return;
+
+	lastPosX = sX;
+	lastPosY = sY;
 
 	x *= CELL_D;
 	y *= CELL_D;

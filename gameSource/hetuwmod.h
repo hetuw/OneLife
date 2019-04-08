@@ -21,6 +21,9 @@ public:
 	static const int defaultViewWidth = 1280;
 	static const int defaultViewHeight = 720;
 
+	static int dangerousAnimalsLength;
+	static int* dangerousAnimals;
+
 	static int viewWidth;
 	static int viewHeight;
 
@@ -34,6 +37,7 @@ public:
 	static LivingLifePage *livingLifePage;
 
 	static void init();
+	static void initDangerousAnimals();
 
 	static void setLivingLifePage(LivingLifePage *inLivingLifePage);
 
@@ -50,6 +54,9 @@ public:
 
 	static void setEmote(int id);
 
+	static bool tileIsSafeToWalk(int x, int y); 
+	static bool tileHasNoDangerousAnimals(int x, int y);
+
 private:
 	static void zoomCalc();
 
@@ -65,6 +72,7 @@ private:
 	static bool rightKeyDown;
 
 	static void move(); // called only once on frame - dont use
+	static bool cornerTileIsSafeToWalk( int sX, int sY, bool up, bool down, bool right, bool left);
 
 	static doublePair debugRecPos;
 	static doublePair debugRecPos2;
