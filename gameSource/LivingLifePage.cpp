@@ -15131,10 +15131,20 @@ void LivingLifePage::step() {
                         if( gameObjects.getElement(j)->id == id ) {
                             
                             LiveObject *existing = gameObjects.getElement(j);
+            				LiveObject *ourObject = getOurLiveObject();
                             
                             Emotion *oldEmot = existing->currentEmot;
                             
                             existing->currentEmot = getEmotion( emotIndex );
+
+							if (ourObject != existing && distance(existing->currentPos, ourObject->currentPos) < 10) {
+								if (oldEmot != NULL && strstr(existing->currentEmot->triggerWord, "/HAPPY") && strstr(oldEmot->triggerWord, "/YOOHOO")) {
+									int emotId = getEmotionIndex(oldEmot->triggerWord);
+									char message[64];
+									sprintf( message, "EMOT 0 0 %i#", emotId);
+       								sendToServerSocket( message );
+								}
+							}
                             
                             if( numRead == 3 && ttlSec > 0 ) {
                                 existing->emotClearETATime = 
