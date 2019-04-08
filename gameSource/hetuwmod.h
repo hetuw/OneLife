@@ -47,6 +47,8 @@ public:
 	static void useTileRelativeToMe( int x, int y );
 	static void dropTileRelativeToMe( int x, int y );
 	static void remvTileRelativeToMe( int x, int y );
+	
+	static void useBackpack( bool replace=false);
 
 	static void livingLifeDraw();
 	static bool livingLifeKeyDown(unsigned char inASCII);

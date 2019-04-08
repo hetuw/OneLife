@@ -453,6 +453,8 @@ class LivingLifePage : public GamePage, public ActionListener {
 		void hetuwDrawWithHandwritingFont( const char* str, doublePair drawPos );
 		double hetuwMeasureStringHandwritingFont(const char* str);
 		void hetuwSetNextActionMessage( const char* str, int x, int y );
+		void hetuwSetNextActionDropping( bool b );
+		void hetuwSetNextActionEating( bool b );
 		int hetuwGetObjId( int mapX, int mapY );
 		void hetuwClickMove( float x, float y );
 		

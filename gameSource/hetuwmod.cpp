@@ -241,6 +241,31 @@ void HetuwMod::remvTileRelativeToMe( int x, int y ) {
 	livingLifePage->hetuwSetNextActionMessage( msg, x, y );
 }
 
+void HetuwMod::useBackpack(bool replace) {
+	int clothingSlot = 5; // backpack clothing slot
+
+ 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
+	int x = round( ourLiveObject->xd );
+	int y = round( ourLiveObject->yd );
+	x = livingLifePage->sendX(x);
+	y = livingLifePage->sendY(y);
+
+	if( ourLiveObject->holdingID > 0 ) {
+		char msg[32];
+		if (replace) {
+			sprintf( msg, "DROP %d %d %d#", x, y, clothingSlot );
+		} else {
+			sprintf( msg, "SELF %d %d %d#", x, y, clothingSlot );
+		}
+		livingLifePage->hetuwSetNextActionMessage( msg, x, y );
+		livingLifePage->hetuwSetNextActionDropping(true);
+	} else {
+		char msg[32];
+		sprintf( msg, "SREMV %d %d %d %d#", x, y, clothingSlot, -1 );
+		livingLifePage->hetuwSetNextActionMessage( msg, x, y );
+	}
+}
+
 void HetuwMod::setEmote(int id) {
 	lastEmoteTime = time(NULL);
 	currentEmote = id;
@@ -300,6 +325,15 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	}
 	if (inASCII == 'd') {
 		rightKeyDown = true;
+		return true;
+	}
+
+	if (inASCII == 'q') {
+		useBackpack();
+		return true;
+	}
+	if (inASCII == 'Q') {
+		useBackpack(true);
 		return true;
 	}
 
@@ -554,6 +588,10 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawWithHandwritingFont( "F TOGGLE FIX CAMERA", drawPos );
 	drawPos.y -= lineHeight;
 	livingLifePage->hetuwDrawWithHandwritingFont( "WASD MOVE", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "Q USE BACKPACK", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "SHIFT+Q USE BACKPACK", drawPos );
 	drawPos.y -= lineHeight;
 
 	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();

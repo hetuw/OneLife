@@ -1925,7 +1925,17 @@ void LivingLifePage::hetuwSetNextActionMessage(const char* msg, int x, int y) {
 	playerActionTargetX = x;
 	playerActionTargetY = y;
 	playerActionTargetNotAdjacent = true;
+	nextActionDropping = false;
+	nextActionEating = false;
 	nextActionMessageToSend = autoSprintf( "%s", msg );
+}
+
+void LivingLifePage::hetuwSetNextActionDropping( bool b ) {
+	nextActionDropping = b;
+}
+
+void LivingLifePage::hetuwSetNextActionEating( bool b ) {
+	nextActionEating = b;
 }
 
 int LivingLifePage::hetuwGetObjId( int tileX, int tileY ) {
