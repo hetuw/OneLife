@@ -266,6 +266,23 @@ void HetuwMod::useBackpack(bool replace) {
 	}
 }
 
+void HetuwMod::useOnSelf() {
+ 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
+	int x = round( ourLiveObject->xd );
+	int y = round( ourLiveObject->yd );
+	x = livingLifePage->sendX(x);
+	y = livingLifePage->sendY(y);
+
+	if( ourLiveObject->holdingID <= 0 ) return;
+
+	char msg[32];
+	sprintf( msg, "SELF %d %d %d#", x, y, -1 );
+	livingLifePage->hetuwSetNextActionMessage( msg, x, y );
+
+	if( getObject( ourLiveObject->holdingID )->foodValue > 0)
+		livingLifePage->hetuwSetNextActionEating(true);
+}
+
 void HetuwMod::setEmote(int id) {
 	lastEmoteTime = time(NULL);
 	currentEmote = id;
@@ -334,6 +351,10 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	}
 	if (inASCII == 'Q') {
 		useBackpack(true);
+		return true;
+	}
+	if (inASCII == 'E' || inASCII == 'e') {
+		useOnSelf();
 		return true;
 	}
 
@@ -592,6 +613,8 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawWithHandwritingFont( "Q USE BACKPACK", drawPos );
 	drawPos.y -= lineHeight;
 	livingLifePage->hetuwDrawWithHandwritingFont( "SHIFT+Q USE BACKPACK", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "E EAT / PUT CLOTHES ON", drawPos );
 	drawPos.y -= lineHeight;
 
 	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();

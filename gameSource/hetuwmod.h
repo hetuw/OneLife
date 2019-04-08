@@ -49,6 +49,7 @@ public:
 	static void remvTileRelativeToMe( int x, int y );
 	
 	static void useBackpack( bool replace=false);
+	static void useOnSelf();
 
 	static void livingLifeDraw();
 	static bool livingLifeKeyDown(unsigned char inASCII);
