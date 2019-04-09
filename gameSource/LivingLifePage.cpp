@@ -15156,12 +15156,15 @@ void LivingLifePage::step() {
                             
                             existing->currentEmot = getEmotion( emotIndex );
 
-							if (ourObject != existing && distance(existing->currentPos, ourObject->currentPos) < 10) {
+							if (ourObject != existing && distance(existing->currentPos, ourObject->currentPos) < 5) {
 								if (oldEmot != NULL && strstr(existing->currentEmot->triggerWord, "/HAPPY") && strstr(oldEmot->triggerWord, "/YOOHOO")) {
-									int emotId = getEmotionIndex(oldEmot->triggerWord);
-									char message[64];
-									sprintf( message, "EMOT 0 0 %i#", emotId);
-       								sendToServerSocket( message );
+									if (HetuwMod::lastSpecialEmote+120 < time(NULL)) {
+										HetuwMod::lastSpecialEmote = time(NULL);
+										int emotId = getEmotionIndex(oldEmot->triggerWord);
+										char message[64];
+										sprintf( message, "EMOT 0 0 %i#", emotId);
+       									sendToServerSocket( message );
+									}
 								}
 							}
                             

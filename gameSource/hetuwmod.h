@@ -45,6 +45,8 @@ public:
 
 	static bool isCharKey( char c, char charKey );
 
+	static time_t lastSpecialEmote;
+
 	static RainbowColor *colorRainbow;
 
 	static LivingLifePage *livingLifePage;

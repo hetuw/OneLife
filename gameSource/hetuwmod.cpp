@@ -47,6 +47,7 @@ doublePair HetuwMod::debugRecPos2;
 
 int HetuwMod::currentEmote;
 time_t HetuwMod::lastEmoteTime;
+time_t HetuwMod::lastSpecialEmote;
 
 int* HetuwMod::dangerousAnimals;
 int HetuwMod::dangerousAnimalsLength;
@@ -137,6 +138,7 @@ void HetuwMod::initWithLivingLifePage() {
 	rightKeyDown = false;
 
 	currentEmote = -1;
+	lastSpecialEmote = 0;
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage) {
@@ -776,7 +778,7 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
 
 	drawPos.y -= lineHeight;
-	sprintf(str, "%c - TOGGLE SHOW HELP", toupper(charKey_ShowHelp));
+	sprintf(str, "%c TOGGLE SHOW HELP", toupper(charKey_ShowHelp));
 	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
 	drawPos.y -= lineHeight;
 	livingLifePage->hetuwDrawWithHandwritingFont( "= MAKE SCREENSHOT", drawPos );
