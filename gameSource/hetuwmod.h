@@ -47,6 +47,10 @@ public:
 
 	static time_t lastSpecialEmote;
 
+	static bool stopAutoRoadRun;
+	static time_t stopAutoRoadRunTime;
+	static bool activateAutoRoadRun;
+
 	static RainbowColor *colorRainbow;
 
 	static LivingLifePage *livingLifePage;

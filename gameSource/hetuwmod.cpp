@@ -52,6 +52,10 @@ time_t HetuwMod::lastSpecialEmote;
 int* HetuwMod::dangerousAnimals;
 int HetuwMod::dangerousAnimalsLength;
 
+bool HetuwMod::stopAutoRoadRun;
+time_t HetuwMod::stopAutoRoadRunTime;
+bool HetuwMod::activateAutoRoadRun;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	zoomCalc();
@@ -139,6 +143,10 @@ void HetuwMod::initWithLivingLifePage() {
 
 	currentEmote = -1;
 	lastSpecialEmote = 0;
+
+	stopAutoRoadRun = false;
+	activateAutoRoadRun = false;
+	stopAutoRoadRunTime = 0;
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage) {
@@ -200,6 +208,14 @@ void HetuwMod::livingLifeDraw() {
 	move();
 
 	colorRainbow->step();
+
+	if (activateAutoRoadRun) {
+		if (time(NULL) > stopAutoRoadRunTime+2) {
+			stopAutoRoadRun = false;
+			stopAutoRoadRunTime = 0;
+			activateAutoRoadRun = false;
+		}
+	}
 
  	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
 
@@ -442,18 +458,22 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	if (!shiftKey && !commandKey) {
 		if (inASCII == charKey_Up || inASCII == toupper(charKey_Up)) {
 			upKeyDown = true;
+			stopAutoRoadRun = true;
 			return true;
 		}
 		if (inASCII == charKey_Left || inASCII == toupper(charKey_Left)) {
 			leftKeyDown = true;
+			stopAutoRoadRun = true;
 			return true;
 		}
 		if (inASCII == charKey_Down || inASCII == toupper(charKey_Down)) {
 			downKeyDown = true;
+			stopAutoRoadRun = true;
 			return true;
 		}
 		if (inASCII == charKey_Right || inASCII == toupper(charKey_Right)) {
 			rightKeyDown = true;
+			stopAutoRoadRun = true;
 			return true;
 		}
 	} else if (commandKey) {
@@ -552,6 +572,8 @@ bool HetuwMod::livingLifeKeyUp(unsigned char inASCII) {
 	if (!upKeyDown && !leftKeyDown && !downKeyDown && !rightKeyDown) {
 		lastPosX = 9999;
 		lastPosY = 9999;
+		stopAutoRoadRunTime = time(NULL);
+		activateAutoRoadRun = true;
 	}
 
 	return r;

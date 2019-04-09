@@ -16495,7 +16495,7 @@ void LivingLifePage::step() {
                         }
                     }
                 else if( o->id == ourID && o->pathLength >= 2 &&
-                         nextActionMessageToSend == NULL &&
+                         nextActionMessageToSend == NULL && !HetuwMod::stopAutoRoadRun &&
                          distance( endPos, o->currentPos )
                          < o->currentSpeed ) {
 
