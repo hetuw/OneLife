@@ -30,7 +30,11 @@ public:
 	static float zoomScale;
 	static int panelOffsetX;
 	static int panelOffsetY;
-
+	
+	static char charKey_Up;
+	static char charKey_Down;
+	static char charKey_Left;
+	static char charKey_Right;
 
 	static RainbowColor *colorRainbow;
 
@@ -48,6 +52,9 @@ public:
 	static void dropTileRelativeToMe( int x, int y );
 	static void remvTileRelativeToMe( int x, int y );
 	
+	static void actionAlphaRelativeToMe( int x, int y );
+	static void actionBetaRelativeToMe( int x, int y );
+
 	static void useBackpack( bool replace=false);
 	static void useOnSelf();
 

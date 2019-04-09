@@ -25,6 +25,11 @@ bool HetuwMod::bDrawHelp;
 float HetuwMod::lastPosX;
 float HetuwMod::lastPosY;
 
+char HetuwMod::charKey_Up;
+char HetuwMod::charKey_Down;
+char HetuwMod::charKey_Left;
+char HetuwMod::charKey_Right;
+
 bool HetuwMod::upKeyDown;
 bool HetuwMod::downKeyDown;
 bool HetuwMod::leftKeyDown;
@@ -49,6 +54,11 @@ void HetuwMod::init() {
 
 	lastPosX = 9999;
 	lastPosY = 9999;
+
+	charKey_Up = 'w';
+	charKey_Down = 's';
+	charKey_Left = 'a';
+	charKey_Right = 'd';
 
 	upKeyDown = false;
 	downKeyDown = false;
@@ -210,19 +220,19 @@ void HetuwMod::livingLifeDraw() {
 
 void HetuwMod::useTileRelativeToMe( int x, int y ) {
  	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
-	x += ourLiveObject->currentPos.x;
-	y += ourLiveObject->currentPos.y;
+	x += ourLiveObject->xd;
+	y += ourLiveObject->yd;
 	x = livingLifePage->sendX(x);
 	y = livingLifePage->sendY(y);
 	char msg[32];
-	sprintf( msg, "USE %d %d", x, y);
+	sprintf( msg, "USE %d %d#", x, y);
 	livingLifePage->hetuwSetNextActionMessage( msg, x, y );
 }
 
 void HetuwMod::dropTileRelativeToMe( int x, int y ) {
  	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
-	x += ourLiveObject->currentPos.x;
-	y += ourLiveObject->currentPos.y;
+	x += ourLiveObject->xd;
+	y += ourLiveObject->yd;
 	x = livingLifePage->sendX(x);
 	y = livingLifePage->sendY(y);
 	char msg[32];
@@ -232,13 +242,78 @@ void HetuwMod::dropTileRelativeToMe( int x, int y ) {
 
 void HetuwMod::remvTileRelativeToMe( int x, int y ) {
  	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
-	x += ourLiveObject->currentPos.x;
-	y += ourLiveObject->currentPos.y;
+	x += ourLiveObject->xd;
+	y += ourLiveObject->yd;
 	x = livingLifePage->sendX(x);
 	y = livingLifePage->sendY(y);
 	char msg[32];
 	sprintf( msg, "REMV %d %d -1#", x, y);
 	livingLifePage->hetuwSetNextActionMessage( msg, x, y );
+}
+
+void HetuwMod::actionAlphaRelativeToMe( int x, int y ) {
+ 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
+	x += ourLiveObject->xd;
+	y += ourLiveObject->yd;
+
+	int objId = livingLifePage->hetuwGetObjId( x, y);
+	bool use = false;
+	if( ourLiveObject->holdingID > 0 ) {
+		ObjectRecord *held = getObject( ourLiveObject->holdingID );
+
+		char foundAlt = false;                
+		if( held->foodValue == 0 ) {
+			TransRecord *r = getTrans( ourLiveObject->holdingID, -1 );
+			if( r != NULL && r->newTarget != 0 ) {
+				// a use-on-ground transition exists!
+				// override the drop action
+                use = true;
+				foundAlt = true;
+			}
+		}
+		if( !foundAlt && objId > 0 ) {
+			// check if use on floor exists
+			TransRecord *r = getTrans( ourLiveObject->holdingID, objId );
+			if( r != NULL ) {
+				// a use-on-floor transition exists!
+				// override the drop action
+                use = true;
+			}
+		}
+	} else { // holding no item
+		use = true;
+	}
+	
+	if (objId > 0 && getNumContainerSlots( objId ) > 0)  {
+		use = true; // always do USE on conatiners
+	} 
+
+	x = livingLifePage->sendX(x);
+	y = livingLifePage->sendY(y);
+	char msg[32];
+	if (use) sprintf( msg, "USE %d %d#", x, y);
+	else sprintf( msg, "DROP %d %d -1#", x, y);
+	livingLifePage->hetuwSetNextActionMessage( msg, x, y );
+}
+
+void HetuwMod::actionBetaRelativeToMe( int x, int y ) {
+ 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
+	x += ourLiveObject->xd;
+	y += ourLiveObject->yd;
+
+	bool remove = false;
+	int objId = livingLifePage->hetuwGetObjId( x, y);
+	if (ourLiveObject->holdingID <= 0 && objId > 0 && getNumContainerSlots( objId ) > 0) { // is a container 
+		remove = true;
+	}
+
+	x = livingLifePage->sendX(x);
+	y = livingLifePage->sendY(y);
+	char msg[32];
+	if (remove) sprintf( msg, "REMV %d %d -1#", x, y);
+	else sprintf( msg, "DROP %d %d -1#", x, y);
+	livingLifePage->hetuwSetNextActionMessage( msg, x, y );
+	if (!remove) livingLifePage->hetuwSetNextActionDropping( true );
 }
 
 void HetuwMod::useBackpack(bool replace) {
@@ -296,6 +371,9 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	}
 	// player is not trying to say something
 
+	bool commandKey = isCommandKeyDown();
+	bool shiftKey = isShiftKeyDown();
+
 	// emotes
 	int jic = (int)inASCII - 48;
 	if (jic >= 0 && jic <= 9) {
@@ -316,33 +394,78 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		useTileRelativeToMe(1, 0);
 		return true;
 	}
-	if (inASCII == 'f') {
-		//dropTileRelativeToMe(1, 0);
-		//return true;
+	if (inASCII == 't') {
+		dropTileRelativeToMe(1, 0);
+		return true;
 	}
 	if (inASCII == 'r') {
 		remvTileRelativeToMe(1, 0);
 		return true;
 	}
-	if (inASCII == ' ') {
-		//return true;
+	
+	if (commandKey) {
+		if (inASCII == ' ') {
+			actionBetaRelativeToMe( 0, 0 );
+			return true;
+		}
+	} else {
+		if (inASCII == ' ') {
+			actionAlphaRelativeToMe( 0, 0 );
+			return true;
+		}
 	}
 
-	if (inASCII == 'w') {
-		upKeyDown = true;
-		return true;
-	}
-	if (inASCII == 'a') {
-		leftKeyDown = true;
-		return true;
-	}
-	if (inASCII == 's') {
-		downKeyDown = true;
-		return true;
-	}
-	if (inASCII == 'd') {
-		rightKeyDown = true;
-		return true;
+	if (!shiftKey && !commandKey) {
+		if (inASCII == charKey_Up || inASCII == toupper(charKey_Up)) {
+			upKeyDown = true;
+			return true;
+		}
+		if (inASCII == charKey_Left || inASCII == toupper(charKey_Left)) {
+			leftKeyDown = true;
+			return true;
+		}
+		if (inASCII == charKey_Down || inASCII == toupper(charKey_Down)) {
+			downKeyDown = true;
+			return true;
+		}
+		if (inASCII == charKey_Right || inASCII == toupper(charKey_Right)) {
+			rightKeyDown = true;
+			return true;
+		}
+	} else if (commandKey) {
+		if (inASCII == charKey_Up || inASCII == toupper(charKey_Up) || inASCII+64 == toupper(charKey_Up)) {
+			actionBetaRelativeToMe( 0, 1 );
+			return true;
+		}
+		if (inASCII == charKey_Left || inASCII == toupper(charKey_Left) || inASCII+64 == toupper(charKey_Left)) {
+			actionBetaRelativeToMe( -1, 0 );
+			return true;
+		}
+		if (inASCII == charKey_Down || inASCII == toupper(charKey_Down) || inASCII+64 == toupper(charKey_Down)) {
+			actionBetaRelativeToMe( 0, -1 );
+			return true;
+		}
+		if (inASCII == charKey_Right || inASCII == toupper(charKey_Right) || inASCII+64 == toupper(charKey_Right)) {
+			actionBetaRelativeToMe( 1, 0 );
+			return true;
+		}
+	} else if (shiftKey) {
+		if (inASCII == charKey_Up || inASCII == toupper(charKey_Up)) {
+			actionAlphaRelativeToMe( 0, 1 );
+			return true;
+		}
+		if (inASCII == charKey_Left || inASCII == toupper(charKey_Left)) {
+			actionAlphaRelativeToMe( -1, 0 );
+			return true;
+		}
+		if (inASCII == charKey_Down || inASCII == toupper(charKey_Down)) {
+			actionAlphaRelativeToMe( 0, -1 );
+			return true;
+		}
+		if (inASCII == charKey_Right || inASCII == toupper(charKey_Right)) {
+			actionAlphaRelativeToMe( 1, 0 );
+			return true;
+		}
 	}
 
 	if (inASCII == 'q') {
@@ -365,21 +488,41 @@ bool HetuwMod::livingLifeKeyUp(unsigned char inASCII) {
 
 	bool r = false;
 
-	if (inASCII == 'w') {
+	bool commandKey = isCommandKeyDown();
+
+	if (inASCII == charKey_Up || inASCII == toupper(charKey_Up)) {
 		upKeyDown = false;
 		r = true;
 	}
-	if (inASCII == 'a') {
+	if (inASCII == charKey_Left || inASCII == toupper(charKey_Left)) {
 		leftKeyDown = false;
 		r = true;
 	}
-	if (inASCII == 's') {
+	if (inASCII == charKey_Down || inASCII == toupper(charKey_Down)) {
 		downKeyDown = false;
 		r = true;
 	}
-	if (inASCII == 'd') {
+	if (inASCII == charKey_Right || inASCII == toupper(charKey_Right)) {
 		rightKeyDown = false;
 		r = true;
+	}
+	if (commandKey) {
+		if (inASCII+64 == toupper(charKey_Up)) {
+			upKeyDown = false;
+			r = true;
+		}
+		if (inASCII+64 == toupper(charKey_Left)) {
+			leftKeyDown = false;
+			r = true;
+		}
+		if (inASCII+64 == toupper(charKey_Down)) {
+			downKeyDown = false;
+			r = true;
+		}
+		if (inASCII+64 == toupper(charKey_Right)) {
+			rightKeyDown = false;
+			r = true;
+		}
 	}
 
 	if (!upKeyDown && !leftKeyDown && !downKeyDown && !rightKeyDown) {
@@ -598,29 +741,6 @@ void HetuwMod::drawHelp() {
 	drawPos.x -= viewWidth/2 - 250;
 	drawPos.y += viewHeight/2 - 80;
 
-	livingLifePage->hetuwDrawWithHandwritingFont( "H TOGGLE SHOW HELP", drawPos );
-	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "= MAKE SCREENSHOT", drawPos );
-	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "+ ZOOM IN", drawPos );
-	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "- ZOOM OUT", drawPos );
-	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "F TOGGLE FIX CAMERA", drawPos );
-	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "WASD MOVE", drawPos );
-	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "Q USE BACKPACK", drawPos );
-	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "SHIFT+Q USE BACKPACK", drawPos );
-	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "E EAT / PUT CLOTHES ON", drawPos );
-	drawPos.y -= lineHeight;
-
-	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
-	drawPos.x -= viewWidth/2 - 570;
-	drawPos.y += viewHeight/2 - 80;
-
 	sprintf(str, "%s - BABY SUICIDE", translate( "dieCommand" ));
 	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
 	drawPos.y -= lineHeight;
@@ -632,5 +752,40 @@ void HetuwMod::drawHelp() {
 	drawPos.y -= lineHeight;
 	sprintf(str, "%s - SHOW PING", translate( "pingCommand" ));
 	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "H TOGGLE SHOW HELP", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "= MAKE SCREENSHOT", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "+ ZOOM IN", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "- ZOOM OUT", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "F TOGGLE FIX CAMERA", drawPos );
+	drawPos.y -= lineHeight;
+
+	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	drawPos.x -= viewWidth/2 - 630;
+	drawPos.y += viewHeight/2 - 80;
+
+	livingLifePage->hetuwDrawWithHandwritingFont( "Q - USE BACKPACK", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "SHIFT+Q - USE BACKPACK", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "E - EAT / PUT CLOTHES ON", drawPos );
+	drawPos.y -= lineHeight;
+	sprintf(str, "%c%c%c%c - MOVE", toupper(charKey_Up), toupper(charKey_Left), toupper(charKey_Down), toupper(charKey_Right));
+	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	drawPos.y -= lineHeight;
+	sprintf(str, "SHIFT+%c%c%c%c - USE/PICK UP ITEM", toupper(charKey_Up), toupper(charKey_Left), toupper(charKey_Down), toupper(charKey_Right));
+	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	drawPos.y -= lineHeight;
+	sprintf(str, "CTRL+%c%c%c%c - DROP / PICK ITEM FROM CONTAINER", toupper(charKey_Up), toupper(charKey_Left), toupper(charKey_Down), toupper(charKey_Right));
+	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "SPACE - USE/PICK UP ITEM ON THE TILE YOU ARE STANDING ON", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "CTRL+SPACE - DROP / PICK ITEM FROM CONTAINER", drawPos );
 	drawPos.y -= lineHeight;
 }

@@ -1919,9 +1919,18 @@ void LivingLifePage::hetuwSetNextActionMessage(const char* msg, int x, int y) {
 		delete [] nextActionMessageToSend;
 		nextActionMessageToSend = NULL;
 	}
-    lastMouseX = x;
-    lastMouseY = y;
-    mLastMouseOverID = 0;
+
+//	int mapX = x - mMapOffsetX + mMapD / 2;
+//	int mapY = y - mMapOffsetY + mMapD / 2;
+//	int destID = mMap[ mapY * mMapD + mapX ];
+//	if( destID > 0 ) {
+//		mCurMouseOverID = destID;
+//	}
+//	mCurMouseOverSpot.x = mapX;
+//	mCurMouseOverSpot.y = mapY;
+//	mCurMouseOverWorld.x = x;
+//	mCurMouseOverWorld.y = y;
+
 	playerActionTargetX = x;
 	playerActionTargetY = y;
 	playerActionTargetNotAdjacent = true;
@@ -16738,7 +16747,6 @@ void LivingLifePage::step() {
               ourLiveObject->yd == playerActionTargetY ) 
             ||
             playerActionTargetNotAdjacent ) ) {
-        
         // done moving on client end
         // can start showing pending action animation, even if 
         // end of motion not received from server yet
@@ -16782,7 +16790,6 @@ void LivingLifePage::step() {
             0.166 - ourLiveObject->lastResponseTimeDelta &&
             ourLiveObject->xd == ourLiveObject->xServer &&
             ourLiveObject->yd == ourLiveObject->yServer ) {
-            
  
             // move end acked by server AND action animation in progress
 
