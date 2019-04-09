@@ -36,12 +36,20 @@ public:
 	static char charKey_Left;
 	static char charKey_Right;
 
+	static char charKey_TileStandingOn;
+
+	static char charKey_Backpack;
+	static char charKey_Eat;
+
+	static char charKey_ShowHelp;
+
+	static bool isCharKey( char c, char charKey );
+
 	static RainbowColor *colorRainbow;
 
 	static LivingLifePage *livingLifePage;
 
 	static void init();
-	static void initDangerousAnimals();
 
 	static void setLivingLifePage(LivingLifePage *inLivingLifePage);
 
@@ -80,6 +88,9 @@ private:
 	static bool downKeyDown;
 	static bool leftKeyDown;
 	static bool rightKeyDown;
+
+	static void initDangerousAnimals();
+	static void initWithLivingLifePage();
 
 	static void move(); // called only once on frame - dont use
 	static bool cornerTileIsSafeToWalk( int sX, int sY, bool up, bool down, bool right, bool left);

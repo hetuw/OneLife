@@ -19730,6 +19730,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 }
             break;
         case 'f': // hetuw mod
+        case 'F': // hetuw mod
             if( ! mSayField.isFocused() ) {
                 shouldMoveCamera = !shouldMoveCamera; // hetuw mod
                 }
