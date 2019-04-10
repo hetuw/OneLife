@@ -51,6 +51,13 @@ time_t HetuwMod::lastSpecialEmote;
 int* HetuwMod::dangerousAnimals;
 int HetuwMod::dangerousAnimalsLength;
 
+int* HetuwMod::closedDoorIDs;
+int HetuwMod::closedDoorIDsLength;
+
+bool HetuwMod::waitForDoorToOpen;
+int HetuwMod::lastDoorToOpenX;
+int HetuwMod::lastDoorToOpenY;
+
 bool HetuwMod::stopAutoRoadRun;
 time_t HetuwMod::stopAutoRoadRunTime;
 bool HetuwMod::activateAutoRoadRun;
@@ -84,6 +91,7 @@ void HetuwMod::init() {
 	bDrawNames = true;
 
 	initDangerousAnimals();	
+	initClosedDoorIDs();
 
 	initWithLivingLifePage();
 }
@@ -136,6 +144,23 @@ void HetuwMod::initDangerousAnimals() {
 	dangerousAnimals[34] = 654; // Shot Grizzly Bear#1 attacking
 }
 
+void HetuwMod::initClosedDoorIDs() {
+	if (closedDoorIDs != NULL) {
+		delete[] closedDoorIDs;
+		closedDoorIDs = NULL;
+	}
+	closedDoorIDsLength = 7;
+	closedDoorIDs = new int[closedDoorIDsLength];
+
+	closedDoorIDs[0] = 116; // 116.txt:Pine Door# installed vert
+	closedDoorIDs[1] = 2759; // 2759.txt:Springy Wooden Door# installed vert
+	closedDoorIDs[2] = 876; // 876.txt:Wooden Door# Installed
+	closedDoorIDs[3] = 1930; // 1930.txt:Twenty Minute Wooden Door# Installed
+	closedDoorIDs[4] = 2757; // 2757.txt:Springy Wooden Door# Installed
+	closedDoorIDs[5] = 877; // 877.txt:Wooden Door# installed vert
+	closedDoorIDs[6] = 115; // 115.txt:Pine Door# Installed
+}
+
 void HetuwMod::initWithLivingLifePage() {
 	lastPosX = 9999;
 	lastPosY = 9999;
@@ -151,6 +176,10 @@ void HetuwMod::initWithLivingLifePage() {
 	stopAutoRoadRun = false;
 	activateAutoRoadRun = false;
 	stopAutoRoadRunTime = 0;
+
+	waitForDoorToOpen = false;
+	lastDoorToOpenX = 9999;
+	lastDoorToOpenY = 9999;
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage) {
@@ -645,7 +674,12 @@ bool HetuwMod::tileIsSafeToWalk(int x, int y) {
 			if (objId == dangerousAnimals[i]) return false;
 		}
 		ObjectRecord* obj = getObject(objId);
-		if (obj->blocksWalking) return false;
+		if (obj->blocksWalking) {
+ 			LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
+			if (ourLiveObject->xd == x || ourLiveObject->yd == y)
+				if (tileHasClosedDoor( x, y )) return true;
+			return false;
+		}
 	}
 	return true;
 }
@@ -683,6 +717,16 @@ bool HetuwMod::cornerTileIsSafeToWalk( int sX, int sY, bool up, bool down, bool 
 		}
 	}
 	return tileNextIsSafe;
+}
+
+bool HetuwMod::tileHasClosedDoor(int x, int y) {
+	int objId = livingLifePage->hetuwGetObjId( x, y);
+	if (objId > 0) {
+		for (int i = 0; i < closedDoorIDsLength; i++) {
+			if (objId == closedDoorIDs[i]) return true;
+		}
+	}
+	return false;
 }
 
 void HetuwMod::move() {
@@ -804,6 +848,22 @@ void HetuwMod::move() {
 
 	lastPosX = sX;
 	lastPosY = sY;
+
+	if (waitForDoorToOpen && (lastDoorToOpenX != x || lastDoorToOpenY != y)) {
+		waitForDoorToOpen = false;
+	} else if (waitForDoorToOpen) {
+		if (tileHasClosedDoor( lastDoorToOpenX, lastDoorToOpenY ))
+			return;
+		waitForDoorToOpen = false;
+	} else if (tileHasClosedDoor( x, y )) {
+		char msg[32];
+		sprintf( msg, "USE %d %d#", livingLifePage->sendX(x), livingLifePage->sendY(y));
+		livingLifePage->hetuwSetNextActionMessage( msg, x, y );
+		waitForDoorToOpen = true;
+		lastDoorToOpenX = (int)x;
+		lastDoorToOpenY = (int)y;
+		return;
+	}
 
 	x *= CELL_D;
 	y *= CELL_D;

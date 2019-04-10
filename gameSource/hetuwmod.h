@@ -24,6 +24,9 @@ public:
 	static int dangerousAnimalsLength;
 	static int* dangerousAnimals;
 
+	static int closedDoorIDsLength;
+	static int* closedDoorIDs;
+
 	static int viewWidth;
 	static int viewHeight;
 
@@ -82,6 +85,7 @@ public:
 
 	static bool tileIsSafeToWalk(int x, int y); 
 	static bool tileHasNoDangerousAnimals(int x, int y);
+	static bool tileHasClosedDoor(int x, int y);
 
 	static void getRelationNameColor( const char* name, float* color );
 	static void drawPlayerNames( LiveObject* player );
@@ -101,10 +105,15 @@ private:
 	static bool rightKeyDown;
 
 	static void initDangerousAnimals();
+	static void initClosedDoorIDs();
 	static void initWithLivingLifePage();
 
 	static void move(); // called only once on frame - dont use
 	static bool cornerTileIsSafeToWalk( int sX, int sY, bool up, bool down, bool right, bool left);
+
+	static bool waitForDoorToOpen;
+	static int lastDoorToOpenX;
+	static int lastDoorToOpenY;
 
 	static doublePair debugRecPos;
 	static doublePair debugRecPos2;
