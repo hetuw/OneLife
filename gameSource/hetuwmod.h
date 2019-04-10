@@ -73,6 +73,7 @@ public:
 	static void useBackpack( bool replace=false);
 	static void useOnSelf();
 
+	static void livingLifeStep();
 	static void livingLifeDraw();
 	static bool livingLifeKeyDown(unsigned char inASCII);
 	static bool livingLifeKeyUp(unsigned char inASCII);

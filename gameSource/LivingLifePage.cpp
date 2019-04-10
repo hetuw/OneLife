@@ -10519,7 +10519,7 @@ void LivingLifePage::step() {
         sendToServerSocket( (char*)"KA 0 0#" );
         }
     
-
+	HetuwMod::livingLifeStep();
 
     char *message = getNextServerMessage();
 

@@ -207,7 +207,7 @@ void HetuwMod::zoomDecrease() {
 	zoomCalc();
 }
 
-void HetuwMod::livingLifeDraw() {
+void HetuwMod::livingLifeStep() {
 
 	move();
 
@@ -220,6 +220,9 @@ void HetuwMod::livingLifeDraw() {
 			activateAutoRoadRun = false;
 		}
 	}
+}
+
+void HetuwMod::livingLifeDraw() {
 
  	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
 
@@ -687,7 +690,9 @@ void HetuwMod::move() {
 	if (!upKeyDown && !leftKeyDown && !downKeyDown && !rightKeyDown)
 		return;
 
+	if (!livingLifePage) return;
  	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
+	if (!ourLiveObject) return;
 	float x = round(ourLiveObject->currentPos.x);
 	float y = round(ourLiveObject->currentPos.y);
 
