@@ -11449,6 +11449,8 @@ void LivingLifePage::step() {
                 
                 if( !( mFirstServerMessagesReceived & 1 ) ) {
                     // first map chunk just recieved
+
+					HetuwMod::initOnBirth();
                     
                     char found = false;
                     int closestX = 0;

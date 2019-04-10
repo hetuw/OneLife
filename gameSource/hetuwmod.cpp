@@ -93,7 +93,7 @@ void HetuwMod::init() {
 	initDangerousAnimals();	
 	initClosedDoorIDs();
 
-	initWithLivingLifePage();
+	initOnBirth();
 }
 
 void HetuwMod::initDangerousAnimals() {
@@ -161,7 +161,7 @@ void HetuwMod::initClosedDoorIDs() {
 	closedDoorIDs[6] = 115; // 115.txt:Pine Door# Installed
 }
 
-void HetuwMod::initWithLivingLifePage() {
+void HetuwMod::initOnBirth() {
 	lastPosX = 9999;
 	lastPosY = 9999;
 
@@ -184,7 +184,6 @@ void HetuwMod::initWithLivingLifePage() {
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage) {
 	livingLifePage = inLivingLifePage;
-	initWithLivingLifePage();
 }
 
 HetuwMod::RainbowColor::RainbowColor() {

@@ -60,6 +60,7 @@ public:
 	static LivingLifePage *livingLifePage;
 
 	static void init();
+	static void initOnBirth();
 
 	static void setLivingLifePage(LivingLifePage *inLivingLifePage);
 
@@ -106,7 +107,6 @@ private:
 
 	static void initDangerousAnimals();
 	static void initClosedDoorIDs();
-	static void initWithLivingLifePage();
 
 	static void move(); // called only once on frame - dont use
 	static bool cornerTileIsSafeToWalk( int sX, int sY, bool up, bool down, bool right, bool left);
