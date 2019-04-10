@@ -377,35 +377,20 @@ void HetuwMod::actionAlphaRelativeToMe( int x, int y ) {
 
 	int objId = livingLifePage->hetuwGetObjId( x, y);
 	bool use = false;
+
+	if (objId > 0) use = true;
+	else use = false;
+
 	if( ourLiveObject->holdingID > 0 ) {
 		ObjectRecord *held = getObject( ourLiveObject->holdingID );
 
-		char foundAlt = false;                
 		if( held->foodValue == 0 ) {
 			TransRecord *r = getTrans( ourLiveObject->holdingID, -1 );
-			if( r != NULL && r->newTarget != 0 ) {
-				// a use-on-ground transition exists!
-				// override the drop action
-                use = true;
-				foundAlt = true;
+			if( r != NULL && r->newTarget != 0 ) { // a use-on-ground transition exists!
+                use = true;	// override the drop action
 			}
 		}
-		if( !foundAlt && objId > 0 ) {
-			// check if use on floor exists
-			TransRecord *r = getTrans( ourLiveObject->holdingID, objId );
-			if( r != NULL ) {
-				// a use-on-floor transition exists!
-				// override the drop action
-                use = true;
-			}
-		}
-	} else { // holding no item
-		use = true;
 	}
-	
-	if (objId > 0 && getNumContainerSlots( objId ) > 0)  {
-		use = true; // always do USE on conatiners
-	} 
 
 	x = livingLifePage->sendX(x);
 	y = livingLifePage->sendY(y);
