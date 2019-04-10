@@ -450,7 +450,7 @@ class LivingLifePage : public GamePage, public ActionListener {
 		void hetuwSetPanelOffsets();
 		bool hetuwSayFieldIsFocused() { return mSayField.isFocused(); }
 		doublePair hetuwGetLastScreenViewCenter();
-		void hetuwDrawWithHandwritingFont( const char* str, doublePair drawPos );
+		void hetuwDrawWithHandwritingFont( const char* str, doublePair drawPos, TextAlignment align = alignLeft  );
 		double hetuwMeasureStringHandwritingFont(const char* str);
 		void hetuwSetNextActionMessage( const char* str, int x, int y );
 		void hetuwSetNextActionDropping( bool b );

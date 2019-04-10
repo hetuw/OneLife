@@ -35,13 +35,12 @@ public:
 	static char charKey_Down;
 	static char charKey_Left;
 	static char charKey_Right;
-
 	static char charKey_TileStandingOn;
 
 	static char charKey_Backpack;
 	static char charKey_Eat;
-
 	static char charKey_ShowHelp;
+	static char charKey_ShowNames;
 
 	static bool isCharKey( char c, char charKey );
 
@@ -50,6 +49,8 @@ public:
 	static bool stopAutoRoadRun;
 	static time_t stopAutoRoadRunTime;
 	static bool activateAutoRoadRun;
+
+	static bool bDrawNames;
 
 	static RainbowColor *colorRainbow;
 
@@ -81,6 +82,9 @@ public:
 	static bool tileIsSafeToWalk(int x, int y); 
 	static bool tileHasNoDangerousAnimals(int x, int y);
 
+	static void getRelationNameColor( const char* name, float* color );
+	static void drawPlayerNames( LiveObject* player );
+
 private:
 	static void zoomCalc();
 
@@ -106,6 +110,9 @@ private:
 
 	static int currentEmote;
 	static time_t lastEmoteTime;
+
+	static float playerNameColor[3];
+	static doublePair playerNamePos;
 };
 
 

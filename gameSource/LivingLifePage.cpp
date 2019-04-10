@@ -69,8 +69,8 @@ extern Font *handwritingFont;
 extern Font *pencilFont;
 extern Font *pencilErasedFont;
 
-void LivingLifePage::hetuwDrawWithHandwritingFont(const char* str, doublePair drawPos) {
-	handwritingFont->drawString( str, drawPos, alignLeft );
+void LivingLifePage::hetuwDrawWithHandwritingFont(const char* str, doublePair drawPos, TextAlignment align) {
+	handwritingFont->drawString( str, drawPos, align );
 }
 
 double LivingLifePage::hetuwMeasureStringHandwritingFont(const char* str) {
@@ -3556,7 +3556,6 @@ void LivingLifePage::drawMapCell( int inMapI,
             }
         
         
-        
         }
     else if( oID == -1 ) {
         // unknown
@@ -5913,6 +5912,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         heldToDrawOnTop.push_back( heldPack );
                         }
                     }
+
+				if ( o != ourLiveObject && HetuwMod::bDrawNames ) 
+					HetuwMod::drawPlayerNames( o );
+
                 }
             else if( drawRec.extraMovingObj ) {
                 ExtraMapObject *mO = mMapExtraMovingObjects.getElement(
@@ -5937,7 +5940,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 drawMapCell( drawRec.mapI, drawRec.screenX, drawRec.screenY );
                 }
             }
-        
 
         // now draw non-behind-marked map objects in this row
         // OVER the player objects in this row (so that pick up and set down

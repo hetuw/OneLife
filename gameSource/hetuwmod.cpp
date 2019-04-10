@@ -29,13 +29,12 @@ char HetuwMod::charKey_Up;
 char HetuwMod::charKey_Down;
 char HetuwMod::charKey_Left;
 char HetuwMod::charKey_Right;
-
 char HetuwMod::charKey_TileStandingOn;
 
 char HetuwMod::charKey_Backpack;
 char HetuwMod::charKey_Eat;
-
 char HetuwMod::charKey_ShowHelp;
+char HetuwMod::charKey_ShowNames;
 
 bool HetuwMod::upKeyDown;
 bool HetuwMod::downKeyDown;
@@ -56,6 +55,10 @@ bool HetuwMod::stopAutoRoadRun;
 time_t HetuwMod::stopAutoRoadRunTime;
 bool HetuwMod::activateAutoRoadRun;
 
+bool HetuwMod::bDrawNames;
+float HetuwMod::playerNameColor[3];
+doublePair HetuwMod::playerNamePos;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	zoomCalc();
@@ -68,16 +71,17 @@ void HetuwMod::init() {
 	charKey_Down = 's';
 	charKey_Left = 'a';
 	charKey_Right = 'd';
-
 	charKey_TileStandingOn = ' ';
 
 	charKey_Backpack = 'q';
 	charKey_Eat = 'e';
-
 	charKey_ShowHelp = 'h';
+	charKey_ShowNames = 'n';
 
 	debugRecPos = { 0.0, 0.0 };
 	debugRecPos2 = { 0.0, 0.0 };
+
+	bDrawNames = true;
 
 	initDangerousAnimals();	
 
@@ -255,6 +259,53 @@ void HetuwMod::livingLifeDraw() {
 	}
 }
 
+void HetuwMod::getRelationNameColor( const char* name, float* color ) {
+	if ( !name ) {
+		color[0] = 1.0f; color[1] = 1.0f; color[2] = 1.0f; 
+	} else if ( strstr( name, "MOTHER" )) {
+		if ( strstr( name, "GRANDMOTHER" )) {
+			color[0] = 0.0f; color[1] = 0.7f; color[2] = 0.0f; 
+		} else { // MOTHER
+			color[0] = 0.0f; color[1] = 1.0f; color[2] = 0.0f; 
+		}
+	} else if ( strstr( name, "BROTHER" ) || strstr( name, "SISTER" )) {
+		color[0] = 0.0f; color[1] = 1.0f; color[2] = 0.7f; 
+	} else if ( strstr( name, "SON" ) || strstr( name, "DAUGHTER" )) {
+		if( strstr( name, "GRAND" )) {
+			color[0] = 0.4f; color[1] = 1.0f; color[2] = 0.0f; 
+		} else { // DIRECT SON / DAUGTHER
+			color[0] = 0.6f; color[1] = 1.0f; color[2] = 0.2f; 
+		}
+	} else if ( strstr( name, "UNCLE" ) || strstr( name, "AUNT" )) {
+		if ( strstr( name, "GREAT" )) {
+			color[0] = 0.1f; color[1] = 0.7f; color[2] = 0.5f; 
+		} else { // DIRECT UNCLE / AUNT
+			color[0] = 0.1f; color[1] = 0.7f; color[2] = 0.5f; 
+		}
+	} else if ( strstr( name, "COUSIN" ) && strstr( name, "FIRST" )) {
+		color[0] = 0.3f; color[1] = 0.6f; color[2] = 1.0f; 
+	} else {
+		color[0] = 1.0f; color[1] = 0.2f; color[2] = 1.0f; 
+	}
+}
+
+void HetuwMod::drawPlayerNames( LiveObject* player ) {
+	if ( !player->name ) return;
+	playerNamePos.x = player->currentPos.x * CELL_D;
+	playerNamePos.y = player->currentPos.y * CELL_D;
+	playerNamePos.y += 44;
+
+	getRelationNameColor( player->relationName, playerNameColor );
+
+	setDrawColor( 0.0, 0.0, 0.0, 0.8 );
+	float textWidth = livingLifePage->hetuwMeasureStringHandwritingFont( player->name );
+	drawRect( playerNamePos, textWidth/2 + 6, 16 );
+	setDrawColor( playerNameColor[0], playerNameColor[1], playerNameColor[2], 1 );
+	if ( player->name ) livingLifePage->hetuwDrawWithHandwritingFont( player->name, playerNamePos, alignCenter );
+	//playerNamePos.y += 40;
+	//if ( player->relationName ) livingLifePage->hetuwDrawWithHandwritingFont( player->relationName, playerNamePos );
+}
+
 void HetuwMod::useTileRelativeToMe( int x, int y ) {
  	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
 	x += ourLiveObject->xd;
@@ -425,11 +476,6 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		return true;
 	}
 
-	if (isCharKey(inASCII, charKey_ShowHelp)) {
-		bDrawHelp = !bDrawHelp;
-		return true;
-	}
-
 //	if (inASCII == 'u') {
 //		useTileRelativeToMe(1, 0);
 //		return true;
@@ -442,6 +488,16 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 //		remvTileRelativeToMe(1, 0);
 //		return true;
 //	}
+
+	if (isCharKey(inASCII, charKey_ShowHelp)) {
+		bDrawHelp = !bDrawHelp;
+		return true;
+	}
+
+	if (isCharKey(inASCII, charKey_ShowNames)) {
+		bDrawNames = !bDrawNames;
+		return true;
+	}
 	
 	if (commandKey) {
 		if (isCharKey(inASCII, charKey_TileStandingOn) || inASCII == charKey_TileStandingOn-64) {
@@ -798,8 +854,8 @@ void HetuwMod::drawHelp() {
 	drawPos.y -= lineHeight;
 	sprintf(str, "%s - SHOW PING", translate( "pingCommand" ));
 	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
-
 	drawPos.y -= lineHeight;
+
 	sprintf(str, "%c TOGGLE SHOW HELP", toupper(charKey_ShowHelp));
 	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
 	drawPos.y -= lineHeight;
@@ -810,6 +866,9 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawWithHandwritingFont( "- ZOOM OUT", drawPos );
 	drawPos.y -= lineHeight;
 	livingLifePage->hetuwDrawWithHandwritingFont( "F TOGGLE FIX CAMERA", drawPos );
+	drawPos.y -= lineHeight;
+	sprintf(str, "%c TOGGLE SHOW NAMES", toupper(charKey_ShowNames));
+	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
 	drawPos.y -= lineHeight;
 
 	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
