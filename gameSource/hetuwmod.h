@@ -18,6 +18,7 @@ class HetuwMod
 	};
 
 public:
+
 	static const int defaultViewWidth = 1280;
 	static const int defaultViewHeight = 720;
 
@@ -93,6 +94,9 @@ public:
 	static void drawPlayerNames( LiveObject* player );
 
 private:
+
+ 	static LiveObject *ourLiveObject;
+
 	static void zoomCalc();
 
 	static bool bDrawHelp;

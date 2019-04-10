@@ -19,6 +19,7 @@ int HetuwMod::panelOffsetY;
 HetuwMod::RainbowColor *HetuwMod::colorRainbow;
 
 LivingLifePage *HetuwMod::livingLifePage;
+LiveObject *HetuwMod::ourLiveObject;
 
 bool HetuwMod::bDrawHelp;
 
@@ -242,6 +243,9 @@ void HetuwMod::zoomDecrease() {
 
 void HetuwMod::livingLifeStep() {
 
+ 	ourLiveObject = livingLifePage->getOurLiveObject();
+	if (!ourLiveObject) return;
+
 	move();
 
 	colorRainbow->step();
@@ -257,7 +261,8 @@ void HetuwMod::livingLifeStep() {
 
 void HetuwMod::livingLifeDraw() {
 
- 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
+ 	ourLiveObject = livingLifePage->getOurLiveObject();
+	if (!ourLiveObject) return;
 
 	if (bDrawCords) drawCords();
 
@@ -333,7 +338,6 @@ void HetuwMod::drawPlayerNames( LiveObject* player ) {
 }
 
 void HetuwMod::useTileRelativeToMe( int x, int y ) {
- 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
 	x += ourLiveObject->xd;
 	y += ourLiveObject->yd;
 	x = livingLifePage->sendX(x);
@@ -344,7 +348,6 @@ void HetuwMod::useTileRelativeToMe( int x, int y ) {
 }
 
 void HetuwMod::dropTileRelativeToMe( int x, int y ) {
- 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
 	x += ourLiveObject->xd;
 	y += ourLiveObject->yd;
 	x = livingLifePage->sendX(x);
@@ -355,7 +358,6 @@ void HetuwMod::dropTileRelativeToMe( int x, int y ) {
 }
 
 void HetuwMod::remvTileRelativeToMe( int x, int y ) {
- 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
 	x += ourLiveObject->xd;
 	y += ourLiveObject->yd;
 	x = livingLifePage->sendX(x);
@@ -366,7 +368,6 @@ void HetuwMod::remvTileRelativeToMe( int x, int y ) {
 }
 
 void HetuwMod::actionAlphaRelativeToMe( int x, int y ) {
- 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
 	x += ourLiveObject->xd;
 	y += ourLiveObject->yd;
 
@@ -396,7 +397,6 @@ void HetuwMod::actionAlphaRelativeToMe( int x, int y ) {
 }
 
 void HetuwMod::actionBetaRelativeToMe( int x, int y ) {
- 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
 	x += ourLiveObject->xd;
 	y += ourLiveObject->yd;
 
@@ -417,7 +417,6 @@ void HetuwMod::actionBetaRelativeToMe( int x, int y ) {
 void HetuwMod::useBackpack(bool replace) {
 	int clothingSlot = 5; // backpack clothing slot
 
- 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
 	int x = round( ourLiveObject->xd );
 	int y = round( ourLiveObject->yd );
 	x = livingLifePage->sendX(x);
@@ -440,7 +439,6 @@ void HetuwMod::useBackpack(bool replace) {
 }
 
 void HetuwMod::useOnSelf() {
- 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
 	int x = round( ourLiveObject->xd );
 	int y = round( ourLiveObject->yd );
 	x = livingLifePage->sendX(x);
@@ -659,7 +657,6 @@ bool HetuwMod::tileIsSafeToWalk(int x, int y) {
 		}
 		ObjectRecord* obj = getObject(objId);
 		if (obj->blocksWalking) {
- 			LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
 			if (ourLiveObject->xd == x || ourLiveObject->yd == y)
 				if (tileHasClosedDoor( x, y )) return true;
 			return false;
@@ -718,9 +715,6 @@ void HetuwMod::move() {
 	if (!upKeyDown && !leftKeyDown && !downKeyDown && !rightKeyDown)
 		return;
 
-	if (!livingLifePage) return;
- 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
-	if (!ourLiveObject) return;
 	float x = round(ourLiveObject->currentPos.x);
 	float y = round(ourLiveObject->currentPos.y);
 
@@ -859,13 +853,14 @@ void HetuwMod::move() {
 }
 
 void HetuwMod::drawCords() {
- 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
+	int x = round(ourLiveObject->currentPos.x);
+	int y = round(ourLiveObject->currentPos.y);
 
 	char sBufA[16];
-	sprintf(sBufA, "%d", (int)ourLiveObject->currentPos.x );
+	sprintf(sBufA, "%d", x );
 	float textWidthA = livingLifePage->hetuwMeasureStringHandwritingFont( sBufA );
 	char sBufB[16];
-	sprintf(sBufB, "%d", (int)ourLiveObject->currentPos.y );
+	sprintf(sBufB, "%d", y );
 	float textWidthB = livingLifePage->hetuwMeasureStringHandwritingFont( sBufB );
 
 	doublePair drawPosA = livingLifePage->hetuwGetLastScreenViewCenter();
@@ -879,10 +874,10 @@ void HetuwMod::drawCords() {
 	drawRect( drawPosA, textWidthA/2 + 6, 16 );
 	drawRect( drawPosB, textWidthB/2 + 6, 16 );
 
-	if (ourLiveObject->currentPos.x < 0) setDrawColor( 1, 0.8, 0, 1 );
+	if (x < 0) setDrawColor( 1, 0.8, 0, 1 );
 	else setDrawColor( 0, 1, 0.8, 1 );
 	livingLifePage->hetuwDrawWithHandwritingFont( sBufA, drawPosA, alignCenter );
-	if (ourLiveObject->currentPos.y < 0) setDrawColor( 1, 0.8, 0, 1 );
+	if (y < 0) setDrawColor( 1, 0.8, 0, 1 );
 	else setDrawColor( 0, 1, 0.8, 1 );
 	livingLifePage->hetuwDrawWithHandwritingFont( sBufB, drawPosB, alignCenter );
 }
