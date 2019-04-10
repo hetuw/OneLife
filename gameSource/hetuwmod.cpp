@@ -35,6 +35,7 @@ char HetuwMod::charKey_Backpack;
 char HetuwMod::charKey_Eat;
 char HetuwMod::charKey_ShowHelp;
 char HetuwMod::charKey_ShowNames;
+char HetuwMod::charKey_ShowCords;
 
 bool HetuwMod::upKeyDown;
 bool HetuwMod::downKeyDown;
@@ -66,6 +67,8 @@ bool HetuwMod::bDrawNames;
 float HetuwMod::playerNameColor[3];
 doublePair HetuwMod::playerNamePos;
 
+bool HetuwMod::bDrawCords;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	zoomCalc();
@@ -84,11 +87,13 @@ void HetuwMod::init() {
 	charKey_Eat = 'e';
 	charKey_ShowHelp = 'h';
 	charKey_ShowNames = 'n';
+	charKey_ShowCords = 'c';
 
 	debugRecPos = { 0.0, 0.0 };
 	debugRecPos2 = { 0.0, 0.0 };
 
 	bDrawNames = true;
+	bDrawCords = true;
 
 	initDangerousAnimals();	
 	initClosedDoorIDs();
@@ -254,21 +259,11 @@ void HetuwMod::livingLifeDraw() {
 
  	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
 
-	// cords 
-	setDrawColor( 0, 0, 0, 1 );
-	doublePair jDrawPos = livingLifePage->hetuwGetLastScreenViewCenter();
-	jDrawPos.x -= HetuwMod::viewWidth/2 - 40;
-	jDrawPos.y += HetuwMod::viewHeight/2 - 40;
-	char sBuf[64];
-	int jWidthLimit = 250;
-	double jFade = 1.0;
-	sprintf(sBuf, "%d", (int)ourLiveObject->currentPos.x );
-	livingLifePage->drawChalkBackgroundString( jDrawPos, sBuf, jFade, jWidthLimit );
-	jDrawPos.x += 45 + livingLifePage->hetuwMeasureStringHandwritingFont( sBuf );
-	sprintf(sBuf, "%d", (int)ourLiveObject->currentPos.y);
-	livingLifePage->drawChalkBackgroundString( jDrawPos, sBuf, jFade, jWidthLimit );
+	if (bDrawCords) drawCords();
 
 	// age
+	doublePair jDrawPos;
+	char sBuf[32];
 	sprintf(sBuf, "%d", (int)(ourLiveObject->age));
 	jDrawPos = livingLifePage->hetuwGetLastScreenViewCenter();
 	jDrawPos.x += 330;
@@ -515,6 +510,11 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		return true;
 	}
 	
+	if (isCharKey(inASCII, charKey_ShowCords)) {
+		bDrawCords = !bDrawCords;
+		return true;
+	}
+
 	if (commandKey) {
 		if (isCharKey(inASCII, charKey_TileStandingOn) || inASCII == charKey_TileStandingOn-64) {
 			actionBetaRelativeToMe( 0, 0 );
@@ -858,6 +858,35 @@ void HetuwMod::move() {
 	//debugRecPos.y = y;
 }
 
+void HetuwMod::drawCords() {
+ 	LiveObject *ourLiveObject = livingLifePage->getOurLiveObject();
+
+	char sBufA[16];
+	sprintf(sBufA, "%d", (int)ourLiveObject->currentPos.x );
+	float textWidthA = livingLifePage->hetuwMeasureStringHandwritingFont( sBufA );
+	char sBufB[16];
+	sprintf(sBufB, "%d", (int)ourLiveObject->currentPos.y );
+	float textWidthB = livingLifePage->hetuwMeasureStringHandwritingFont( sBufB );
+
+	doublePair drawPosA = livingLifePage->hetuwGetLastScreenViewCenter();
+	doublePair drawPosB;
+	drawPosA.x -= HetuwMod::viewWidth/2 - 40;
+	drawPosA.y += HetuwMod::viewHeight/2 - 40;
+	drawPosB.x = drawPosA.x + 20 + textWidthA/2 + textWidthB/2;
+	drawPosB.y = drawPosA.y;
+
+	setDrawColor( 0, 0, 0, 1 );
+	drawRect( drawPosA, textWidthA/2 + 6, 16 );
+	drawRect( drawPosB, textWidthB/2 + 6, 16 );
+
+	if (ourLiveObject->currentPos.x < 0) setDrawColor( 1, 0.8, 0, 1 );
+	else setDrawColor( 0, 1, 0.8, 1 );
+	livingLifePage->hetuwDrawWithHandwritingFont( sBufA, drawPosA, alignCenter );
+	if (ourLiveObject->currentPos.y < 0) setDrawColor( 1, 0.8, 0, 1 );
+	else setDrawColor( 0, 1, 0.8, 1 );
+	livingLifePage->hetuwDrawWithHandwritingFont( sBufB, drawPosB, alignCenter );
+}
+
 void HetuwMod::drawHelp() {
 	char str[64];
 	setDrawColor( 0, 0, 0, 0.8 );
@@ -917,6 +946,9 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawWithHandwritingFont( "F TOGGLE FIX CAMERA", drawPos );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c TOGGLE SHOW NAMES", toupper(charKey_ShowNames));
+	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	drawPos.y -= lineHeight;
+	sprintf(str, "%c TOGGLE SHOW CORDS", toupper(charKey_ShowCords));
 	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
 	drawPos.y -= lineHeight;
 

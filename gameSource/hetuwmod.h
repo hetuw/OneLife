@@ -44,6 +44,7 @@ public:
 	static char charKey_Eat;
 	static char charKey_ShowHelp;
 	static char charKey_ShowNames;
+	static char charKey_ShowCords;
 
 	static bool isCharKey( char c, char charKey );
 
@@ -96,6 +97,9 @@ private:
 
 	static bool bDrawHelp;
 	static void drawHelp();
+
+	static bool bDrawCords;
+	static void drawCords();
 
 	static float lastPosX;
 	static float lastPosY;
