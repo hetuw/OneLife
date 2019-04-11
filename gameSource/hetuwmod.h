@@ -61,6 +61,9 @@ public:
 
 	static LivingLifePage *livingLifePage;
 
+	static int stepCount;
+	static double ourAge;
+
 	static void init();
 	static void initOnBirth();
 
@@ -104,6 +107,8 @@ private:
 
 	static bool bDrawCords;
 	static void drawCords();
+
+	static void drawAge();
 
 	static float lastPosX;
 	static float lastPosY;

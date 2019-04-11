@@ -70,6 +70,9 @@ doublePair HetuwMod::playerNamePos;
 
 bool HetuwMod::bDrawCords;
 
+int HetuwMod::stepCount;
+double HetuwMod::ourAge;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	zoomCalc();
@@ -243,8 +246,14 @@ void HetuwMod::zoomDecrease() {
 
 void HetuwMod::livingLifeStep() {
 
+	stepCount++;
+	if (stepCount > 10000) stepCount = 0;
+
  	ourLiveObject = livingLifePage->getOurLiveObject();
 	if (!ourLiveObject) return;
+
+	if (stepCount % 10 == 0) 
+		ourAge = livingLifePage->hetuwGetAge( ourLiveObject );
 
 	move();
 
@@ -257,6 +266,13 @@ void HetuwMod::livingLifeStep() {
 			activateAutoRoadRun = false;
 		}
 	}
+
+	if (currentEmote >= 0 && lastEmoteTime+8 < time(NULL)) {
+		lastEmoteTime = time(NULL);
+		char message[64];
+		sprintf( message, "EMOT 0 0 %i#", currentEmote);
+        livingLifePage->sendToServerSocket( message );
+	}
 }
 
 void HetuwMod::livingLifeDraw() {
@@ -266,14 +282,7 @@ void HetuwMod::livingLifeDraw() {
 
 	if (bDrawCords) drawCords();
 
-	// age
-	doublePair jDrawPos;
-	char sBuf[32];
-	sprintf(sBuf, "%d", (int)(ourLiveObject->age));
-	jDrawPos = livingLifePage->hetuwGetLastScreenViewCenter();
-	jDrawPos.x += 330;
-	jDrawPos.y -= HetuwMod::viewHeight/2 - 25;
-	livingLifePage->hetuwDrawWithHandwritingFont( sBuf, jDrawPos );
+	drawAge();
 
 	if (bDrawHelp) drawHelp();
 
@@ -282,12 +291,6 @@ void HetuwMod::livingLifeDraw() {
 	//setDrawColor( 0.0, 1.0, 0, 1.0 );
 	//drawRect( debugRecPos2, 10, 10 );
 
-	if (currentEmote >= 0 && lastEmoteTime+8 < time(NULL)) {
-		lastEmoteTime = time(NULL);
-		char message[64];
-		sprintf( message, "EMOT 0 0 %i#", currentEmote);
-        livingLifePage->sendToServerSocket( message );
-	}
 }
 
 void HetuwMod::getRelationNameColor( const char* name, float* color ) {
@@ -852,6 +855,20 @@ void HetuwMod::move() {
 	//debugRecPos.y = y;
 }
 
+void HetuwMod::drawAge() {
+	setDrawColor( 0, 0, 0, 1 );
+	doublePair drawPos;
+	char sBuf[32];
+	int age = (int)(ourAge*10);
+	int ageDecimal = age - int(age*0.1)*10;
+	age = (int)((age-ageDecimal)*0.1);
+	sprintf(sBuf, "%d.%d", age, ageDecimal);
+	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	drawPos.x += 310;
+	drawPos.y -= viewHeight/2 - 25;
+	livingLifePage->hetuwDrawWithHandwritingFont( sBuf, drawPos );
+}
+
 void HetuwMod::drawCords() {
 	int x = round(ourLiveObject->currentPos.x);
 	int y = round(ourLiveObject->currentPos.y);
@@ -875,10 +892,10 @@ void HetuwMod::drawCords() {
 	drawRect( drawPosB, textWidthB/2 + 6, 16 );
 
 	if (x < 0) setDrawColor( 1, 0.8, 0, 1 );
-	else setDrawColor( 0, 1, 0.8, 1 );
+	else setDrawColor( 0.2, 1, 0.2, 1 );
 	livingLifePage->hetuwDrawWithHandwritingFont( sBufA, drawPosA, alignCenter );
 	if (y < 0) setDrawColor( 1, 0.8, 0, 1 );
-	else setDrawColor( 0, 1, 0.8, 1 );
+	else setDrawColor( 0.2, 1, 0.2, 1 );
 	livingLifePage->hetuwDrawWithHandwritingFont( sBufB, drawPosB, alignCenter );
 }
 

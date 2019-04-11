@@ -834,7 +834,9 @@ static double computeCurrentAge( LiveObject *inObj ) {
     
     }
 
-
+double LivingLifePage::hetuwGetAge( LiveObject *inObj ) {
+	return computeCurrentAge( inObj );
+}
 
 
 static void stripDescriptionComment( char *inString ) {
