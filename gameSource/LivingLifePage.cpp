@@ -2181,12 +2181,12 @@ LivingLifePage::LivingLifePage()
         mHungerSlipWiggleAmp[i] = 0;
         mHungerSlipWiggleSpeed[i] = 0.05;
         }
-    mHungerSlipShowOffsets[2].y += 20 * HetuwMod::zoomScale;
-    mHungerSlipHideOffsets[2].y -= 20 * HetuwMod::zoomScale;
+    mHungerSlipShowOffsets[2].y += 20;
+    mHungerSlipHideOffsets[2].y -= 20;
 
-    mHungerSlipShowOffsets[2].y -= 50 * HetuwMod::zoomScale;
-    mHungerSlipShowOffsets[1].y -= 30 * HetuwMod::zoomScale;
-    mHungerSlipShowOffsets[0].y += 18 * HetuwMod::zoomScale;
+    mHungerSlipShowOffsets[2].y -= 50;
+    mHungerSlipShowOffsets[1].y -= 30;
+    mHungerSlipShowOffsets[0].y += 18; 
 
 
     mHungerSlipWiggleAmp[1] = 0.5;
@@ -2384,7 +2384,7 @@ LivingLifePage::LivingLifePage()
 
     }
 
-// hetuw mod
+// hetuw mod - if changes are made here they also need to be made in the constructor above
 void LivingLifePage::hetuwSetPanelOffsets() {
     mNotePaperHideOffset.y = -420 - HetuwMod::panelOffsetY;
     mHomeSlipHideOffset.y = -360 - HetuwMod::panelOffsetY;
@@ -2399,12 +2399,12 @@ void LivingLifePage::hetuwSetPanelOffsets() {
         mHungerSlipShowOffsets[i].y = -250 - HetuwMod::panelOffsetY;
         mHungerSlipHideOffsets[i].y = -370 - HetuwMod::panelOffsetY;
 	}
-    mHungerSlipShowOffsets[2].y += 20 * HetuwMod::zoomScale;
-    mHungerSlipHideOffsets[2].y -= 20 * HetuwMod::zoomScale;
+    mHungerSlipShowOffsets[2].y += 20;
+    mHungerSlipHideOffsets[2].y -= 20;
 
-    mHungerSlipShowOffsets[2].y -= 50 * HetuwMod::zoomScale;
-    mHungerSlipShowOffsets[1].y -= 30 * HetuwMod::zoomScale;
-    mHungerSlipShowOffsets[0].y += 18 * HetuwMod::zoomScale;
+    mHungerSlipShowOffsets[2].y -= 50; // starving slip
+    mHungerSlipShowOffsets[1].y -= 30; // hunger slip
+    mHungerSlipShowOffsets[0].y += 18; // full slip
     for( int i=0; i<3; i++ ) {    
         mHungerSlipPosOffset[i] = mHungerSlipHideOffsets[i];
         mHungerSlipPosTargetOffset[i] = mHungerSlipPosOffset[i];
