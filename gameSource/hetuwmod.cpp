@@ -264,14 +264,14 @@ void HetuwMod::zoomCalc() {
 }
 
 void HetuwMod::zoomIncrease() {
-	zoomScale += 0.25f;
+	zoomScale *= 1.25f;
 	if (zoomScale > 10.0f) zoomScale = 10.0f;
 	zoomCalc();
 }
 
 void HetuwMod::zoomDecrease() {
-	zoomScale -= 0.25f;
-	if (zoomScale < 0.5f) zoomScale = 0.5f;
+	zoomScale *= 0.75f;
+	if (zoomScale < 1.0f) zoomScale = 1.0f;
 	zoomCalc();
 }
 
@@ -1216,10 +1216,6 @@ void HetuwMod::drawHelp() {
 	drawPos.y -= lineHeight;
 	livingLifePage->hetuwDrawWithHandwritingFont( "= MAKE SCREENSHOT", drawPos );
 	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "+ ZOOM IN", drawPos );
-	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "- ZOOM OUT", drawPos );
-	drawPos.y -= lineHeight;
 	livingLifePage->hetuwDrawWithHandwritingFont( "F TOGGLE FIX CAMERA", drawPos );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c TOGGLE SHOW NAMES", toupper(charKey_ShowNames));
@@ -1227,6 +1223,10 @@ void HetuwMod::drawHelp() {
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c TOGGLE SHOW CORDS", toupper(charKey_ShowCords));
 	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "LEFT-ARROW-KEY  ZOOM IN", drawPos );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawWithHandwritingFont( "RIGHT-ARROW-KEY  ZOOM OUT", drawPos );
 	drawPos.y -= lineHeight;
 
 	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();

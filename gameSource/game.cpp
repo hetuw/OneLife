@@ -2166,15 +2166,6 @@ void keyDown( unsigned char inASCII ) {
         toggleMipMapMinFilter( false );
         }
     */
-
-	if (inASCII == '+' && currentUserTypedMessage == NULL ) {
-		HetuwMod::zoomDecrease();
-		hetuwSetViewSize();
-	}
-	if (inASCII == '-' && currentUserTypedMessage == NULL ) {
-		HetuwMod::zoomIncrease();
-		hetuwSetViewSize();
-	}
     
     if( isPaused() ) {
         // block general keyboard control during pause
@@ -2263,6 +2254,14 @@ void keyUp( unsigned char inASCII ) {
 
 
 void specialKeyDown( int inKey ) {
+	if( inKey == MG_KEY_LEFT ) { // hetuw mod
+		HetuwMod::zoomDecrease();
+		hetuwSetViewSize();
+	} else if( inKey == MG_KEY_RIGHT ) { // hetuw mod
+		HetuwMod::zoomIncrease();
+		hetuwSetViewSize();
+		}
+
     if( isPaused() ) {
         return;
         }
