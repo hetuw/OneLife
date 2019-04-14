@@ -109,8 +109,8 @@ void HetuwMod::init() {
 	charKey_ShowCords = 'c';
 
 	charKey_ShowMap = 'm';
-	charKey_MapZoomIn = 'o';
-	charKey_MapZoomOut = 'u';
+	charKey_MapZoomIn = 'u';
+	charKey_MapZoomOut = 'o';
 
 	debugRecPos = { 0.0, 0.0 };
 	debugRecPos2 = { 0.0, 0.0 };
@@ -1063,8 +1063,11 @@ void HetuwMod::drawMap() {
 		
 		float alpha = 1.0f;
 		if (playersInMap[k]->finalAgeSet) alpha = 0.4f;
-		setLastNameColor( playersInMap[k]->lastName, alpha );
-		//printf("hetuw draw at x:%f y:%f\n", drawPos.x, drawPos.y);
+
+		if (ourLiveObject->id == playersInMap[k]->id) 
+			setDrawColor( colorRainbow->color[0], 1.0f, colorRainbow->color[2], 1 );
+		else setLastNameColor( playersInMap[k]->lastName, alpha );
+
 		drawRect( drawPos, recWidthHalf, recHeightHalf );
 	}
 

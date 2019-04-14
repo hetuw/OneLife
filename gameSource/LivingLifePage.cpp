@@ -15835,7 +15835,7 @@ void LivingLifePage::step() {
                         }
 
                     if( ourLiveObject->foodStore > 4 ||
-                        computeCurrentAge( ourLiveObject ) >= 57 ) {
+                        computeCurrentAge( ourLiveObject ) >= 60 ) {
                         // restore music
                         setMusicLoudness( musicLoudness );
                         
