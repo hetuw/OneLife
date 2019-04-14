@@ -1009,7 +1009,7 @@ void HetuwMod::drawMap() {
 	int mouseX, mouseY;
 	livingLifePage->hetuwGetMouseXY( mouseX, mouseY );
 	
-	setDrawColor( 0, 0, 0, 0.5 );
+	setDrawColor( 0, 0, 0, 0.2 );
 	drawRect( screenCenter, viewWidth/2, viewHeight/2 );
 	setDrawColor( 1, 1, 1, 1 );
 

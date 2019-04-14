@@ -2170,12 +2170,10 @@ void keyDown( unsigned char inASCII ) {
 	if (inASCII == '+' && currentUserTypedMessage == NULL ) {
 		HetuwMod::zoomDecrease();
 		hetuwSetViewSize();
-		return;
 	}
 	if (inASCII == '-' && currentUserTypedMessage == NULL ) {
 		HetuwMod::zoomIncrease();
 		hetuwSetViewSize();
-		return;
 	}
     
     if( isPaused() ) {
