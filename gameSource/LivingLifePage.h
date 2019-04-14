@@ -458,6 +458,7 @@ class LivingLifePage : public GamePage, public ActionListener {
 		int hetuwGetObjId( int mapX, int mapY );
 		void hetuwClickMove( float x, float y );
 		double hetuwGetAge( LiveObject *inObj );
+		void hetuwGetMouseXY( int &x, int &y );
 		
         virtual void actionPerformed( GUIComponent *inTarget );
         

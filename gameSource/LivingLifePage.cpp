@@ -2380,7 +2380,7 @@ LivingLifePage::LivingLifePage()
         mTutorialNumber = 1;
         }
 
-	HetuwMod::setLivingLifePage(this);
+	HetuwMod::setLivingLifePage(this, &gameObjects);
 
     }
 
@@ -18131,6 +18131,10 @@ void LivingLifePage::hetuwClickMove( float x, float y ) {
 	mForceGroundClick = false;
 }
 
+void LivingLifePage::hetuwGetMouseXY( int &x, int &y ) {
+	x = lastMouseX;
+	y = lastMouseY;
+}
 
 void LivingLifePage::pointerDown( float inX, float inY ) {
     lastMouseX = inX;

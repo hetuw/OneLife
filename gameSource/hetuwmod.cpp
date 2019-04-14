@@ -1,6 +1,7 @@
 #include "hetuwmod.h"
 
 #include <iostream>
+#include <vector>
 
 #include "LivingLifePage.h"
 #include "objectBank.h"
@@ -73,6 +74,20 @@ bool HetuwMod::bDrawCords;
 int HetuwMod::stepCount;
 double HetuwMod::ourAge;
 
+SimpleVector<LiveObject> *HetuwMod::gameObjects;
+
+std::vector<HetuwMod::PlayerInMap*> HetuwMod::playersInMap;
+bool HetuwMod::bDrawMap;
+float HetuwMod::mapScale;
+float HetuwMod::mapOffsetX;
+float HetuwMod::mapOffsetY;
+
+char HetuwMod::charKey_ShowMap;
+char HetuwMod::charKey_MapZoomIn;
+char HetuwMod::charKey_MapZoomOut;
+bool HetuwMod::mapZoomInKeyDown;
+bool HetuwMod::mapZoomOutKeyDown;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	zoomCalc();
@@ -93,11 +108,20 @@ void HetuwMod::init() {
 	charKey_ShowNames = 'n';
 	charKey_ShowCords = 'c';
 
+	charKey_ShowMap = 'm';
+	charKey_MapZoomIn = 'o';
+	charKey_MapZoomOut = 'u';
+
 	debugRecPos = { 0.0, 0.0 };
 	debugRecPos2 = { 0.0, 0.0 };
 
 	bDrawNames = true;
 	bDrawCords = true;
+
+	bDrawMap = false;
+	mapScale = 20000;
+	mapOffsetX = 0;
+	mapOffsetY = 0;
 
 	initDangerousAnimals();	
 	initClosedDoorIDs();
@@ -189,10 +213,17 @@ void HetuwMod::initOnBirth() {
 	waitForDoorToOpen = false;
 	lastDoorToOpenX = 9999;
 	lastDoorToOpenY = 9999;
+	
+	playersInMap.clear();
+	playersInMap.shrink_to_fit();
+	
+	mapZoomInKeyDown = false;
+	mapZoomInKeyDown = false;
 }
 
-void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage) {
+void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject>* inGameObjects) {
 	livingLifePage = inLivingLifePage;
+	gameObjects = inGameObjects;
 }
 
 HetuwMod::RainbowColor::RainbowColor() {
@@ -259,6 +290,12 @@ void HetuwMod::livingLifeStep() {
 
 	colorRainbow->step();
 
+	if (stepCount % 50 == 0) {
+		updateMap();
+	}
+	if (mapZoomInKeyDown) mapScale *= 0.96;
+	if (mapZoomOutKeyDown) mapScale *= 1.04;
+
 	if (activateAutoRoadRun) {
 		if (time(NULL) > stopAutoRoadRunTime+2) {
 			stopAutoRoadRun = false;
@@ -285,6 +322,8 @@ void HetuwMod::livingLifeDraw() {
 	drawAge();
 
 	if (bDrawHelp) drawHelp();
+
+	if (bDrawMap) drawMap();
 
 	//setDrawColor( 1.0, 0, 0, 1.0 );
 	//drawRect( debugRecPos, 10, 10 );
@@ -598,6 +637,19 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		return true;
 	}
 
+	if (isCharKey(inASCII, charKey_ShowMap)) {
+		bDrawMap = !bDrawMap;
+		return true;
+	}
+	if (isCharKey(inASCII, charKey_MapZoomIn)) {
+		mapZoomInKeyDown = true;
+		return true;
+	}
+	if (isCharKey(inASCII, charKey_MapZoomOut)) {
+		mapZoomOutKeyDown = true;
+		return true;
+	}
+
 	return false;
 }
 
@@ -640,6 +692,15 @@ bool HetuwMod::livingLifeKeyUp(unsigned char inASCII) {
 			rightKeyDown = false;
 			r = true;
 		}
+	}
+
+	if (inASCII == charKey_MapZoomIn || inASCII == toupper(charKey_MapZoomIn)) {
+		mapZoomInKeyDown = false;
+		r = true;
+	}
+	if (inASCII == charKey_MapZoomOut || inASCII == toupper(charKey_MapZoomOut)) {
+		mapZoomOutKeyDown = false;
+		r = true;
 	}
 
 	if (!upKeyDown && !leftKeyDown && !downKeyDown && !rightKeyDown) {
@@ -853,6 +914,210 @@ void HetuwMod::move() {
 
 	//debugRecPos.x = x;
 	//debugRecPos.y = y;
+}
+
+void HetuwMod::getLastName(char* lastName, const char* name) {
+	int k = -1;
+	for (int i=0; name[i] != 0; i++) {
+		if (name[i] == ' ') {
+			if (k >= 0) break;
+			else {
+				k = 0;
+				continue;
+			}
+		}
+		if (k >= 0) {
+			lastName[k] = name[i];
+			k++;
+		}
+	}
+	if (k < 0) lastName[0] = 0;
+	else lastName[k] = 0;
+}
+
+void HetuwMod::setLastNameColor( const char* lastName, float alpha ) {
+	if (!lastName) {
+		setDrawColor( 1, 1, 1, alpha );
+		return;
+	}
+	int num = 0;
+	for (int i=0; lastName[i] != 0; i++) {
+		num += (int)lastName[i];
+	}
+	setDrawColor(
+		0.0 + (num%100)/100.0f,  
+		0.0 + (num%182)/150.0f,  
+		0.0 + (num%77)/77.0f,  
+		alpha );
+}
+
+void HetuwMod::updateMap() {
+	//printf("hetuw printing %d gameObjects -------------------------------------- \n", gameObjects->size());
+	time_t timeNow = time(NULL);
+	for(int i=0; i<gameObjects->size(); i++) {
+		LiveObject *o = gameObjects->getElement( i );
+		int p = -1;
+		for(unsigned k=0; k<playersInMap.size(); k++) {
+			if (playersInMap[k]->id == o->id) {
+				p = (int)k;
+				break;
+			}
+		}
+		if (p < 0) {
+			p = playersInMap.size();
+			PlayerInMap *pInMap = new PlayerInMap();
+			pInMap->id = o->id;
+			pInMap->lastTime = timeNow;
+			playersInMap.push_back(pInMap);	
+		}
+		if (!playersInMap[p]->name && o->name) {
+			playersInMap[p]->name = new char[64];
+			strcpy(playersInMap[p]->name, o->name);
+			playersInMap[p]->lastName = new char[32];
+			getLastName( playersInMap[p]->lastName, playersInMap[p]->name );
+			//printf("hetuw name: %s lastName: %s\n", playersInMap[p]->name, playersInMap[p]->lastName);
+			if (playersInMap[p]->lastName[0] == 0) {
+				delete[] playersInMap[p]->lastName;
+				playersInMap[p]->lastName = NULL;
+			}
+			playersInMap[p]->lastTime = timeNow;
+		}
+		if (o->xd != 1977) {
+			playersInMap[p]->x = o->xd;
+			playersInMap[p]->lastTime = timeNow;
+		}
+		if (o->yd != 1977) {
+			playersInMap[p]->y = o->yd;
+			playersInMap[p]->lastTime = timeNow;
+		}
+		playersInMap[p]->finalAgeSet = o->finalAgeSet;
+	}
+
+	//for(unsigned k=0; k<playersInMap.size(); k++) {
+		//printf("hetuw %d.pim x:%d y:%d %s\n", (int)k, playersInMap[k]->x, playersInMap[k]->y, playersInMap[k]->lastName);
+	//}
+}
+
+void HetuwMod::onPlayerUpdate( LiveObject* o, const char* deathReason ) {
+	if (o == NULL) return;
+	//printf("hetuw x:%d y:%d age:%d id:%d %s\n", o->xd, o->yd, (int)o->age, o->id, o->name);
+}
+
+void HetuwMod::drawMap() {
+	doublePair drawPos;
+	doublePair screenCenter = livingLifePage->hetuwGetLastScreenViewCenter();
+	int mouseX, mouseY;
+	livingLifePage->hetuwGetMouseXY( mouseX, mouseY );
+	
+	setDrawColor( 0, 0, 0, 0.5 );
+	drawRect( screenCenter, viewWidth/2, viewHeight/2 );
+	setDrawColor( 1, 1, 1, 1 );
+
+	char names[32][32];
+	int namesCount = 0;
+	double minX = screenCenter.x - viewWidth/2;
+	double minY = screenCenter.y - viewHeight/2;
+	double maxX = screenCenter.x + viewWidth/2;
+	double maxY = screenCenter.y + viewHeight/2;
+	char drawMouseOver[128];
+	bool bDrawMouseOver = false;
+	int recWidthHalf = 10*zoomScale;
+	int recHeightHalf = 10*zoomScale;
+	for(unsigned k=0; k<playersInMap.size(); k++) {
+		if (playersInMap[k]->x == 999999) continue;
+		if (!playersInMap[k]->name) continue;
+		drawPos.x = (playersInMap[k]->x - ourLiveObject->xd) / mapScale;
+		drawPos.y = (playersInMap[k]->y - ourLiveObject->yd) / mapScale;
+		drawPos.x += mapOffsetX;
+		drawPos.y += mapOffsetY;
+		drawPos.x *= viewHeight;
+		drawPos.y *= viewHeight;
+		drawPos.x += screenCenter.x;
+		drawPos.y += screenCenter.y;
+		if (drawPos.x < minX || drawPos.x > maxX || drawPos.y < minY || drawPos.y > maxY)
+			continue;
+		if (drawPos.x > mouseX-recWidthHalf && drawPos.x < mouseX+recWidthHalf &&
+			drawPos.y > mouseY-recHeightHalf && drawPos.y < mouseY+recHeightHalf) {
+			bDrawMouseOver = true;
+			if (playersInMap[k]->lastName) {
+				sprintf(drawMouseOver, "%s X:%d Y:%d", playersInMap[k]->lastName, playersInMap[k]->x, playersInMap[k]->y);
+			} else {
+				sprintf(drawMouseOver, "X:%d Y:%d", playersInMap[k]->x, playersInMap[k]->y);
+			}
+		}
+		
+		if (playersInMap[k]->lastName) {
+			bool nameFound = false;
+			for (int i=0; i<namesCount; i++) {
+				if (strcmp(names[i], playersInMap[k]->lastName) == 0) {
+					nameFound = true;
+					break;
+				}
+			}
+			if (!nameFound) {
+				//printf("hetuw copy lastNames %s", playersInMap[k]->lastName);
+				strcpy( names[namesCount], playersInMap[k]->lastName );
+				namesCount++;
+			}
+		}
+		
+		float alpha = 1.0f;
+		if (playersInMap[k]->finalAgeSet) alpha = 0.4f;
+		setLastNameColor( playersInMap[k]->lastName, alpha );
+		//printf("hetuw draw at x:%f y:%f\n", drawPos.x, drawPos.y);
+		drawRect( drawPos, recWidthHalf, recHeightHalf );
+	}
+
+	setDrawColor( 0, 0, 0, 0.8 );
+
+	char strZoomKeys[64];
+	sprintf( strZoomKeys, "USE %c/%c TO ZOOM IN/OUT", toupper(charKey_MapZoomIn), toupper(charKey_MapZoomOut)); 
+	float strZoomKeysWidth = livingLifePage->hetuwMeasureStringHandwritingFont( strZoomKeys ); 
+	doublePair drawKeysRecPos;
+	drawKeysRecPos.x = screenCenter.x - viewWidth/2;
+	drawKeysRecPos.y = screenCenter.y - viewHeight/2;
+	drawKeysRecPos.x += strZoomKeysWidth/2 + 10;
+	drawKeysRecPos.y += 80;
+	drawRect( drawKeysRecPos, strZoomKeysWidth/2+10, 15);  
+
+	doublePair drawNameRecPos;
+	drawNameRecPos.x = screenCenter.x - viewWidth/2 + 50;
+	drawNameRecPos.y = drawKeysRecPos.y + 15;
+	float drawNameRecWidth = 100;
+	float drawNameRecHeight = namesCount*15+10;
+	drawNameRecPos.y += drawNameRecHeight;
+	drawRect( drawNameRecPos, drawNameRecWidth, drawNameRecHeight );
+
+	doublePair drawNamesPos;
+	drawNamesPos.x = screenCenter.x - viewWidth/2;
+	drawNamesPos.y = drawKeysRecPos.y + 40;
+	drawNamesPos.x += 20;
+	for (int i=0; i<namesCount; i++) {
+		setLastNameColor( names[i] , 1.0f );
+		livingLifePage->hetuwDrawWithHandwritingFont( names[i], drawNamesPos );
+		drawNamesPos.y += 30;
+	}
+
+	setDrawColor( 1, 1, 1, 1 );
+	livingLifePage->hetuwDrawWithHandwritingFont( strZoomKeys, drawKeysRecPos, alignCenter );
+
+	if (bDrawMouseOver) {
+		doublePair drawMouseOverPos;
+		float textWidth = livingLifePage->hetuwMeasureStringHandwritingFont( drawMouseOver ); 
+		drawMouseOverPos.x = mouseX - textWidth/2;
+		drawMouseOverPos.y = mouseY + 20;
+		setDrawColor( 0, 0, 0, 0.5 );
+		doublePair bckgrRecPos;
+		bckgrRecPos.x = mouseX;
+		bckgrRecPos.y = mouseY + 20;
+		drawRect( bckgrRecPos, textWidth/2 + 10, 15 );
+		setDrawColor( 1, 1, 1, 1 );
+		livingLifePage->hetuwDrawWithHandwritingFont( drawMouseOver, drawMouseOverPos );
+	}
+}
+
+void drawPlayersInAreaInfo() {
+
 }
 
 void HetuwMod::drawAge() {

@@ -2,7 +2,8 @@
 #define HETUWMOD_H
 
 #include "LivingLifePage.h"
-
+#include <vector>
+                            
 class HetuwMod
 {
 
@@ -15,6 +16,34 @@ class HetuwMod
 		const float stepSize = 0.03f;
 		bool increase;
 		int cycle; // from 0 - 2 / which color should change
+	};
+
+	struct PlayerInMap {
+		int id;
+		int x;
+		int y;
+		char* name;
+		char* lastName;
+		time_t lastTime;
+		bool finalAgeSet;
+		PlayerInMap() {
+			name = NULL;
+			lastName = NULL;
+			x = 999999;
+			y = 999999;
+			id = -9999;
+			finalAgeSet = false;
+		}
+		~PlayerInMap() {
+			if (name) {
+				delete[] name;
+				name = NULL;
+			}
+			if (lastName) {
+				delete[] lastName;
+				lastName = NULL;
+			}
+		}
 	};
 
 public:
@@ -47,6 +76,10 @@ public:
 	static char charKey_ShowNames;
 	static char charKey_ShowCords;
 
+	static char charKey_ShowMap;
+	static char charKey_MapZoomIn;
+	static char charKey_MapZoomOut;
+
 	static bool isCharKey( char c, char charKey );
 
 	static time_t lastSpecialEmote;
@@ -64,10 +97,13 @@ public:
 	static int stepCount;
 	static double ourAge;
 
+	static SimpleVector<LiveObject> *gameObjects;
+	static std::vector<PlayerInMap*> playersInMap;
+
 	static void init();
 	static void initOnBirth();
 
-	static void setLivingLifePage(LivingLifePage *inLivingLifePage);
+	static void setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject> *inGameObjects);
 
 	static void zoomIncrease();
 	static void zoomDecrease();
@@ -96,6 +132,10 @@ public:
 	static void getRelationNameColor( const char* name, float* color );
 	static void drawPlayerNames( LiveObject* player );
 
+	static void onPlayerUpdate( LiveObject* o, const char* deathReason = NULL );
+	static void getLastName(char* lastName, const char* name);
+	static void setLastNameColor( const char* lastName, float alpha );
+
 private:
 
  	static LiveObject *ourLiveObject;
@@ -108,6 +148,9 @@ private:
 	static bool bDrawCords;
 	static void drawCords();
 
+	static bool bDrawMap;
+	static void drawMap();
+
 	static void drawAge();
 
 	static float lastPosX;
@@ -118,6 +161,9 @@ private:
 	static bool leftKeyDown;
 	static bool rightKeyDown;
 
+	static bool mapZoomInKeyDown;
+	static bool mapZoomOutKeyDown;
+	
 	static void initDangerousAnimals();
 	static void initClosedDoorIDs();
 
@@ -136,6 +182,14 @@ private:
 
 	static float playerNameColor[3];
 	static doublePair playerNamePos;
+
+	static void drawPlayersInAreaInfo();
+	static void updateMap();
+
+	static float mapScale;
+	static float mapOffsetX;
+	static float mapOffsetY;
+
 };
 
 
