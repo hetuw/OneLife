@@ -342,7 +342,7 @@ void HetuwMod::getRelationNameColor( const char* name, float* color ) {
 			color[0] = 0.0f; color[1] = 1.0f; color[2] = 0.0f; 
 		}
 	} else if ( strstr( name, "BROTHER" ) || strstr( name, "SISTER" )) {
-		color[0] = 0.0f; color[1] = 1.0f; color[2] = 0.7f; 
+		color[0] = 0.3f; color[1] = 1.0f; color[2] = 1.0f; 
 	} else if ( strstr( name, "SON" ) || strstr( name, "DAUGHTER" )) {
 		if( strstr( name, "GRAND" )) {
 			color[0] = 0.4f; color[1] = 1.0f; color[2] = 0.0f; 
@@ -351,14 +351,26 @@ void HetuwMod::getRelationNameColor( const char* name, float* color ) {
 		}
 	} else if ( strstr( name, "UNCLE" ) || strstr( name, "AUNT" )) {
 		if ( strstr( name, "GREAT" )) {
-			color[0] = 0.1f; color[1] = 0.7f; color[2] = 0.5f; 
+			color[0] = 0.2f; color[1] = 0.7f; color[2] = 0.5f; 
 		} else { // DIRECT UNCLE / AUNT
-			color[0] = 0.1f; color[1] = 0.7f; color[2] = 0.5f; 
+			color[0] = 0.2f; color[1] = 0.7f; color[2] = 0.5f; 
 		}
-	} else if ( strstr( name, "COUSIN" ) && strstr( name, "FIRST" )) {
-		color[0] = 0.3f; color[1] = 0.6f; color[2] = 1.0f; 
+	} else if ( strstr( name, "NIECE" ) || strstr( name, "NEPHEW" )) {
+		if ( strstr( name, "GREAT" )) {
+			color[0] = 0.1f; color[1] = 0.7f; color[2] = 0.8f; 
+		} else { // DIRECT NIECE / NEPHEW
+			color[0] = 0.1f; color[1] = 0.7f; color[2] = 1.0f; 
+		}
+	} else if ( strstr( name, "COUSIN" )) {
+		if ( strstr( name, "FIRST" )) {
+			color[0] = 0.3f; color[1] = 0.6f; color[2] = 1.0f; 
+		} else if ( strstr( name, "SECOND" )) {
+			color[0] = 0.4f; color[1] = 0.5f; color[2] = 1.0f; 
+		} else {
+			color[0] = 0.6f; color[1] = 0.4f; color[2] = 1.0f; 
+		}
 	} else {
-		color[0] = 1.0f; color[1] = 0.2f; color[2] = 1.0f; 
+		color[0] = 0.6f; color[1] = 0.4f; color[2] = 1.0f; 
 	}
 }
 
