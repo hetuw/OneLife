@@ -7,8 +7,8 @@ This is a modified version of OneLife https://github.com/jasonrohrer/OneLife
 press H in game to show all the hotkeys and commands
 
 #### Zoom
-press -> (right-arrow-key) to zoom in <br>
-press <- (left-arrow-key) to zoom out
+press -> (right-arrow-key) to zoom out <br>
+press <- (left-arrow-key) to zoom in
 
 #### Age
 current age will be displayed on the bottom panel
