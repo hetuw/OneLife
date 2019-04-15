@@ -122,6 +122,7 @@ public:
 	static void livingLifeDraw();
 	static bool livingLifeKeyDown(unsigned char inASCII);
 	static bool livingLifeKeyUp(unsigned char inASCII);
+	static bool livingLifeSpecialKeyDown(unsigned char inKeyCode);
 
 	static void setEmote(int id);
 

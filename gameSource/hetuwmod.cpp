@@ -728,6 +728,32 @@ bool HetuwMod::livingLifeKeyUp(unsigned char inASCII) {
 	return r;
 }
 
+bool HetuwMod::livingLifeSpecialKeyDown(unsigned char inKeyCode) {
+	bool r = false;
+	if ( inKeyCode == MG_KEY_F1 ) {
+		char message[] = "EMOT 0 0 12#"; // HMPH
+        livingLifePage->sendToServerSocket( message );
+		r = true;
+	}
+	if ( inKeyCode == MG_KEY_F2 ) {
+		char message[] = "EMOT 0 0 13#"; // LOVE
+        livingLifePage->sendToServerSocket( message );
+		r = true;
+	}
+	if ( inKeyCode == MG_KEY_F3 ) {
+		char message[] = "EMOT 0 0 14#"; // OREALLY
+        livingLifePage->sendToServerSocket( message );
+		r = true;
+	}
+	if ( inKeyCode == MG_KEY_F4 ) {
+		char message[] = "EMOT 0 0 15#"; // SHOCK
+        livingLifePage->sendToServerSocket( message );
+		r = true;
+	}
+	
+	return r;
+}
+
 bool HetuwMod::tileIsSafeToWalk(int x, int y) {
 	int objId = livingLifePage->hetuwGetObjId( x, y);
 	if (objId > 0) {
@@ -1202,7 +1228,7 @@ void HetuwMod::drawHelp() {
 		if (i > 6) id -= 2;
 
 		if (id < 10) sprintf(str, " %i: %s", id, emotions.getElement(i)->triggerWord);
-		else sprintf(str, "%i: %s", id, emotions.getElement(i)->triggerWord);
+		else sprintf(str, "F%i: %s", id-9, emotions.getElement(i)->triggerWord);
 
 		livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
 		drawPos.y -= lineHeight;
