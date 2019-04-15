@@ -77,6 +77,21 @@ double LivingLifePage::hetuwMeasureStringHandwritingFont(const char* str) {
 	return handwritingFont->measureString( str );
 }
 
+void LivingLifePage::hetuwDrawScaledHandwritingFont(const char* str, doublePair drawPos, double customScale, TextAlignment align ) {
+	double scale = handwritingFont->hetuwGetScaleFactor();
+	handwritingFont->hetuwSetScaleFactor(scale * customScale);
+	handwritingFont->drawString( str, drawPos, align );
+	handwritingFont->hetuwSetScaleFactor(scale);
+}
+
+double LivingLifePage::hetuwMeasureScaledHandwritingFont(const char* str, double customScale) {
+	double scale = handwritingFont->hetuwGetScaleFactor();
+	handwritingFont->hetuwSetScaleFactor(scale * customScale);
+	double r = handwritingFont->measureString( str );
+	handwritingFont->hetuwSetScaleFactor(scale);
+	return r;
+}
+
 // to make all erased pencil fonts lighter
 static float pencilErasedFontExtraFade = 0.75;
 

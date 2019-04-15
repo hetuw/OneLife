@@ -452,6 +452,8 @@ class LivingLifePage : public GamePage, public ActionListener {
 		doublePair hetuwGetLastScreenViewCenter();
 		void hetuwDrawWithHandwritingFont( const char* str, doublePair drawPos, TextAlignment align = alignLeft  );
 		double hetuwMeasureStringHandwritingFont(const char* str);
+		void hetuwDrawScaledHandwritingFont( const char* str, doublePair drawPos, double customScale, TextAlignment align = alignLeft  );
+		double hetuwMeasureScaledHandwritingFont(const char* str, double customScale );
 		void hetuwSetNextActionMessage( const char* str, int x, int y );
 		void hetuwSetNextActionDropping( bool b );
 		void hetuwSetNextActionEating( bool b );

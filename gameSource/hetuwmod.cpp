@@ -1182,30 +1182,32 @@ void HetuwMod::drawCords() {
 	int x = round(ourLiveObject->currentPos.x);
 	int y = round(ourLiveObject->currentPos.y);
 
+	double textScale = 0.8 * zoomScale;
+
 	char sBufA[16];
 	sprintf(sBufA, "%d", x );
-	float textWidthA = livingLifePage->hetuwMeasureStringHandwritingFont( sBufA );
+	float textWidthA = livingLifePage->hetuwMeasureScaledHandwritingFont( sBufA, textScale );
 	char sBufB[16];
 	sprintf(sBufB, "%d", y );
-	float textWidthB = livingLifePage->hetuwMeasureStringHandwritingFont( sBufB );
+	float textWidthB = livingLifePage->hetuwMeasureScaledHandwritingFont( sBufB, textScale );
 
 	doublePair drawPosA = livingLifePage->hetuwGetLastScreenViewCenter();
 	doublePair drawPosB;
-	drawPosA.x -= HetuwMod::viewWidth/2 - 40;
-	drawPosA.y += HetuwMod::viewHeight/2 - 40;
-	drawPosB.x = drawPosA.x + 20 + textWidthA/2 + textWidthB/2;
+	drawPosA.x -= HetuwMod::viewWidth/2 - (40*textScale);
+	drawPosA.y += HetuwMod::viewHeight/2 - (40*textScale);
+	drawPosB.x = drawPosA.x + (20*textScale) + textWidthA/2 + textWidthB/2;
 	drawPosB.y = drawPosA.y;
 
 	setDrawColor( 0, 0, 0, 1 );
-	drawRect( drawPosA, textWidthA/2 + 6, 16 );
-	drawRect( drawPosB, textWidthB/2 + 6, 16 );
+	drawRect( drawPosA, textWidthA/2 + 6*textScale, 16*textScale );
+	drawRect( drawPosB, textWidthB/2 + 6*textScale, 16*textScale );
 
 	if (x < 0) setDrawColor( 1, 0.8, 0, 1 );
 	else setDrawColor( 0.2, 1, 0.2, 1 );
-	livingLifePage->hetuwDrawWithHandwritingFont( sBufA, drawPosA, alignCenter );
+	livingLifePage->hetuwDrawScaledHandwritingFont( sBufA, drawPosA, textScale, alignCenter );
 	if (y < 0) setDrawColor( 1, 0.8, 0, 1 );
 	else setDrawColor( 0.2, 1, 0.2, 1 );
-	livingLifePage->hetuwDrawWithHandwritingFont( sBufB, drawPosB, alignCenter );
+	livingLifePage->hetuwDrawScaledHandwritingFont( sBufB, drawPosB, textScale, alignCenter );
 }
 
 void HetuwMod::drawHelp() {
