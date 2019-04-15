@@ -1050,6 +1050,8 @@ void HetuwMod::drawMap() {
 	int mouseX, mouseY;
 	livingLifePage->hetuwGetMouseXY( mouseX, mouseY );
 	
+	double textScale = 0.8 * zoomScale;
+
 	setDrawColor( 0, 0, 0, 0.2 );
 	drawRect( screenCenter, viewWidth/2, viewHeight/2 );
 	setDrawColor( 1, 1, 1, 1 );
@@ -1096,7 +1098,6 @@ void HetuwMod::drawMap() {
 				}
 			}
 			if (!nameFound) {
-				//printf("hetuw copy lastNames %s", playersInMap[k]->lastName);
 				strcpy( names[namesCount], playersInMap[k]->lastName );
 				namesCount++;
 			}
@@ -1116,47 +1117,47 @@ void HetuwMod::drawMap() {
 
 	char strZoomKeys[64];
 	sprintf( strZoomKeys, "USE %c/%c TO ZOOM IN/OUT", toupper(charKey_MapZoomIn), toupper(charKey_MapZoomOut)); 
-	float strZoomKeysWidth = livingLifePage->hetuwMeasureStringHandwritingFont( strZoomKeys ); 
+	float strZoomKeysWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( strZoomKeys, textScale ); 
 	doublePair drawKeysRecPos;
 	drawKeysRecPos.x = screenCenter.x - viewWidth/2;
 	drawKeysRecPos.y = screenCenter.y - viewHeight/2;
-	drawKeysRecPos.x += strZoomKeysWidth/2 + 10;
+	drawKeysRecPos.x += strZoomKeysWidth/2 + 10*textScale;
 	drawKeysRecPos.y += 80;
-	drawRect( drawKeysRecPos, strZoomKeysWidth/2+10, 15);  
+	drawRect( drawKeysRecPos, strZoomKeysWidth/2+10*textScale, 15*textScale);  
 
 	doublePair drawNameRecPos;
-	drawNameRecPos.x = screenCenter.x - viewWidth/2 + 50;
-	drawNameRecPos.y = drawKeysRecPos.y + 15;
-	float drawNameRecWidth = 100;
-	float drawNameRecHeight = namesCount*15+10;
+	drawNameRecPos.x = screenCenter.x - viewWidth/2 + 50*textScale;
+	drawNameRecPos.y = drawKeysRecPos.y + 15*textScale;
+	float drawNameRecWidth = 100*textScale;
+	float drawNameRecHeight = namesCount*15*textScale + 10*textScale;
 	drawNameRecPos.y += drawNameRecHeight;
 	drawRect( drawNameRecPos, drawNameRecWidth, drawNameRecHeight );
 
 	doublePair drawNamesPos;
 	drawNamesPos.x = screenCenter.x - viewWidth/2;
-	drawNamesPos.y = drawKeysRecPos.y + 40;
-	drawNamesPos.x += 20;
+	drawNamesPos.y = drawKeysRecPos.y + 40*textScale;
+	drawNamesPos.x += 20*textScale;
 	for (int i=0; i<namesCount; i++) {
 		setLastNameColor( names[i] , 1.0f );
-		livingLifePage->hetuwDrawWithHandwritingFont( names[i], drawNamesPos );
-		drawNamesPos.y += 30;
+		livingLifePage->hetuwDrawScaledHandwritingFont( names[i], drawNamesPos, textScale );
+		drawNamesPos.y += 30*textScale;
 	}
 
 	setDrawColor( 1, 1, 1, 1 );
-	livingLifePage->hetuwDrawWithHandwritingFont( strZoomKeys, drawKeysRecPos, alignCenter );
+	livingLifePage->hetuwDrawScaledHandwritingFont( strZoomKeys, drawKeysRecPos, textScale, alignCenter );
 
 	if (bDrawMouseOver) {
 		doublePair drawMouseOverPos;
-		float textWidth = livingLifePage->hetuwMeasureStringHandwritingFont( drawMouseOver ); 
+		float textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( drawMouseOver, textScale ); 
 		drawMouseOverPos.x = mouseX - textWidth/2;
-		drawMouseOverPos.y = mouseY + 20;
+		drawMouseOverPos.y = mouseY + 20*textScale;
 		setDrawColor( 0, 0, 0, 0.5 );
 		doublePair bckgrRecPos;
 		bckgrRecPos.x = mouseX;
-		bckgrRecPos.y = mouseY + 20;
-		drawRect( bckgrRecPos, textWidth/2 + 10, 15 );
+		bckgrRecPos.y = mouseY + 20*textScale;
+		drawRect( bckgrRecPos, textWidth/2 + 10*textScale, 15*textScale );
 		setDrawColor( 1, 1, 1, 1 );
-		livingLifePage->hetuwDrawWithHandwritingFont( drawMouseOver, drawMouseOverPos );
+		livingLifePage->hetuwDrawScaledHandwritingFont( drawMouseOver, drawMouseOverPos, textScale );
 	}
 }
 
