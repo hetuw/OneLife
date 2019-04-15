@@ -18125,15 +18125,23 @@ char LivingLifePage::getCellBlocksWalking( int inMapX, int inMapY ) {
     }
 
 void LivingLifePage::hetuwClickMove( float x, float y ) {
+	float tMouseX = lastMouseX;
+	float tMouseY = lastMouseY;
 	mForceGroundClick = true;
 	pointerDown( x, y );
 	pointerUp( x, y );
 	mForceGroundClick = false;
+	lastMouseX = tMouseX;
+	lastMouseY = tMouseY;
 }
 
 void LivingLifePage::hetuwGetMouseXY( int &x, int &y ) {
 	x = lastMouseX;
 	y = lastMouseY;
+}
+
+bool LivingLifePage::hetuwMouseIsDown() {
+	return mouseDown;
 }
 
 void LivingLifePage::pointerDown( float inX, float inY ) {
