@@ -376,6 +376,9 @@ void HetuwMod::getRelationNameColor( const char* name, float* color ) {
 
 void HetuwMod::drawPlayerNames( LiveObject* player ) {
 	if ( !player->name ) return;
+	if( player->hide || player->outOfRange ) return;
+	if( !player->allSpritesLoaded ) return;
+
 	playerNamePos.x = player->currentPos.x * CELL_D;
 	playerNamePos.y = player->currentPos.y * CELL_D;
 	playerNamePos.y += 44;
