@@ -21,7 +21,7 @@ then
 	then
 		echo "Invalid argument '$2'"
 		echo "To get more information type $0"
-		exit
+		exit 1
 	fi
 fi
 
@@ -70,7 +70,10 @@ fi
 # link Winsock.h to winsock.h (to circumvent case sensitive headers) (for windows)
 if [ "$2" = "3" ]
 then
-	ln -s /usr/i686-w64-mingw32/include/winsock.h Winsock.h
+	if [ ! -e Winsock.h ]
+	then
+		ln -s /usr/i686-w64-mingw32/include/winsock.h Winsock.h
+	fi
 fi
 
 
@@ -105,10 +108,10 @@ cd ..
 
 latestVersion=$latestTaggedVersionB
 
-if [ $latestTaggedVersionA -gt $latestTaggedVersionB ]
-then
-	latestVersion=$latestTaggedVersionA
-fi
+#if [ $latestTaggedVersionA -gt $latestTaggedVersionB ]
+#then
+#	latestVersion=$latestTaggedVersionA
+#fi
 
 
 if [ ! -h OneLifeData7 ]
@@ -164,6 +167,7 @@ fi
 
 cp OneLife/build/source/runToBuild .
 
+cp OneLife/scripts/hetuwScripts/hetuwCompileAll.sh ../.
 
 echo
 echo "Done downloading"
