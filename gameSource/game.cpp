@@ -2265,9 +2265,9 @@ void specialKeyDown( int inKey ) {
 	}
 	if (isCommandKeyDown()) {
 		if( inKey == MG_KEY_LEFT ) { // hetuw mod
-			HetuwMod::textScaleDecrease();
+			HetuwMod::guiScaleDecrease();
 		} else if( inKey == MG_KEY_RIGHT ) { // hetuw mod
-			HetuwMod::textScaleIncrease();
+			HetuwMod::guiScaleIncrease();
 		}
 	}
 

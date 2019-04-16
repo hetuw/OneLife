@@ -14,8 +14,8 @@ int HetuwMod::viewWidth;
 int HetuwMod::viewHeight;
 
 float HetuwMod::zoomScale;
-float HetuwMod::textScaleRaw;
-float HetuwMod::textScale;
+float HetuwMod::guiScaleRaw;
+float HetuwMod::guiScale;
 int HetuwMod::panelOffsetX;
 int HetuwMod::panelOffsetY;
 
@@ -92,8 +92,8 @@ bool HetuwMod::mapZoomOutKeyDown;
 
 void HetuwMod::init() {
 	zoomScale = 1.5f;
-	textScaleRaw = 0.8f;
-	textScale = textScaleRaw * zoomScale;
+	guiScaleRaw = 0.9f;
+	guiScale = guiScaleRaw * zoomScale;
 	zoomCalc();
 	
 	colorRainbow = new RainbowColor();
@@ -265,7 +265,7 @@ void HetuwMod::zoomCalc() {
 	viewHeight = defaultViewHeight*zoomScale;
 	panelOffsetX = (int)(viewWidth - defaultViewWidth)/2;
 	panelOffsetY = (int)(viewHeight - defaultViewHeight)/2;
-	textScale = textScaleRaw * zoomScale;
+	guiScale = guiScaleRaw * zoomScale;
 }
 
 void HetuwMod::zoomIncrease() {
@@ -280,16 +280,16 @@ void HetuwMod::zoomDecrease() {
 	zoomCalc();
 }
 
-void HetuwMod::textScaleIncrease() {
-	textScaleRaw *= 0.9f;
-	if (textScaleRaw < 0.1) textScaleRaw = 0.1;
-	textScale = textScaleRaw * zoomScale;
+void HetuwMod::guiScaleIncrease() {
+	guiScaleRaw *= 0.9f;
+	if (guiScaleRaw < 0.1) guiScaleRaw = 0.1;
+	guiScale = guiScaleRaw * zoomScale;
 }
 
-void HetuwMod::textScaleDecrease() {
-	textScaleRaw *= 1.1f;
-	if (textScaleRaw > 1.5) textScaleRaw = 1.5;
-	textScale = textScaleRaw * zoomScale;
+void HetuwMod::guiScaleDecrease() {
+	guiScaleRaw *= 1.1f;
+	if (guiScaleRaw > 1.5) guiScaleRaw = 1.5;
+	guiScale = guiScaleRaw * zoomScale;
 }
 
 void HetuwMod::livingLifeStep() {
@@ -1152,47 +1152,47 @@ void HetuwMod::drawMap() {
 
 	char strZoomKeys[64];
 	sprintf( strZoomKeys, "USE %c/%c TO ZOOM IN/OUT", toupper(charKey_MapZoomIn), toupper(charKey_MapZoomOut)); 
-	float strZoomKeysWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( strZoomKeys, textScale ); 
+	float strZoomKeysWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( strZoomKeys, guiScale ); 
 	doublePair drawKeysRecPos;
 	drawKeysRecPos.x = screenCenter.x - viewWidth/2;
 	drawKeysRecPos.y = screenCenter.y - viewHeight/2;
-	drawKeysRecPos.x += strZoomKeysWidth/2 + 10*textScale;
+	drawKeysRecPos.x += strZoomKeysWidth/2 + 10*guiScale;
 	drawKeysRecPos.y += 80;
-	drawRect( drawKeysRecPos, strZoomKeysWidth/2+10*textScale, 15*textScale);  
+	drawRect( drawKeysRecPos, strZoomKeysWidth/2+10*guiScale, 15*guiScale);  
 
 	doublePair drawNameRecPos;
-	drawNameRecPos.x = screenCenter.x - viewWidth/2 + 50*textScale;
-	drawNameRecPos.y = drawKeysRecPos.y + 15*textScale;
-	float drawNameRecWidth = 100*textScale;
-	float drawNameRecHeight = namesCount*15*textScale + 10*textScale;
+	drawNameRecPos.x = screenCenter.x - viewWidth/2 + 50*guiScale;
+	drawNameRecPos.y = drawKeysRecPos.y + 15*guiScale;
+	float drawNameRecWidth = 100*guiScale;
+	float drawNameRecHeight = namesCount*15*guiScale + 10*guiScale;
 	drawNameRecPos.y += drawNameRecHeight;
 	drawRect( drawNameRecPos, drawNameRecWidth, drawNameRecHeight );
 
 	doublePair drawNamesPos;
 	drawNamesPos.x = screenCenter.x - viewWidth/2;
-	drawNamesPos.y = drawKeysRecPos.y + 40*textScale;
-	drawNamesPos.x += 20*textScale;
+	drawNamesPos.y = drawKeysRecPos.y + 40*guiScale;
+	drawNamesPos.x += 20*guiScale;
 	for (int i=0; i<namesCount; i++) {
 		setLastNameColor( names[i] , 1.0f );
-		livingLifePage->hetuwDrawScaledHandwritingFont( names[i], drawNamesPos, textScale );
-		drawNamesPos.y += 30*textScale;
+		livingLifePage->hetuwDrawScaledHandwritingFont( names[i], drawNamesPos, guiScale );
+		drawNamesPos.y += 30*guiScale;
 	}
 
 	setDrawColor( 1, 1, 1, 1 );
-	livingLifePage->hetuwDrawScaledHandwritingFont( strZoomKeys, drawKeysRecPos, textScale, alignCenter );
+	livingLifePage->hetuwDrawScaledHandwritingFont( strZoomKeys, drawKeysRecPos, guiScale, alignCenter );
 
 	if (bDrawMouseOver) {
 		doublePair drawMouseOverPos;
-		float textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( drawMouseOver, textScale ); 
+		float textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( drawMouseOver, guiScale ); 
 		drawMouseOverPos.x = mouseX - textWidth/2;
-		drawMouseOverPos.y = mouseY + 20*textScale;
+		drawMouseOverPos.y = mouseY + 20*guiScale;
 		setDrawColor( 0, 0, 0, 0.5 );
 		doublePair bckgrRecPos;
 		bckgrRecPos.x = mouseX;
-		bckgrRecPos.y = mouseY + 20*textScale;
-		drawRect( bckgrRecPos, textWidth/2 + 10*textScale, 15*textScale );
+		bckgrRecPos.y = mouseY + 20*guiScale;
+		drawRect( bckgrRecPos, textWidth/2 + 10*guiScale, 15*guiScale );
 		setDrawColor( 1, 1, 1, 1 );
-		livingLifePage->hetuwDrawScaledHandwritingFont( drawMouseOver, drawMouseOverPos, textScale );
+		livingLifePage->hetuwDrawScaledHandwritingFont( drawMouseOver, drawMouseOverPos, guiScale );
 	}
 }
 
@@ -1220,28 +1220,28 @@ void HetuwMod::drawCords() {
 
 	char sBufA[16];
 	sprintf(sBufA, "%d", x );
-	float textWidthA = livingLifePage->hetuwMeasureScaledHandwritingFont( sBufA, textScale );
+	float textWidthA = livingLifePage->hetuwMeasureScaledHandwritingFont( sBufA, guiScale );
 	char sBufB[16];
 	sprintf(sBufB, "%d", y );
-	float textWidthB = livingLifePage->hetuwMeasureScaledHandwritingFont( sBufB, textScale );
+	float textWidthB = livingLifePage->hetuwMeasureScaledHandwritingFont( sBufB, guiScale );
 
 	doublePair drawPosA = livingLifePage->hetuwGetLastScreenViewCenter();
 	doublePair drawPosB;
-	drawPosA.x -= HetuwMod::viewWidth/2 - (40*textScale);
-	drawPosA.y += HetuwMod::viewHeight/2 - (40*textScale);
-	drawPosB.x = drawPosA.x + (20*textScale) + textWidthA/2 + textWidthB/2;
+	drawPosA.x -= HetuwMod::viewWidth/2 - (40*guiScale);
+	drawPosA.y += HetuwMod::viewHeight/2 - (40*guiScale);
+	drawPosB.x = drawPosA.x + (20*guiScale) + textWidthA/2 + textWidthB/2;
 	drawPosB.y = drawPosA.y;
 
 	setDrawColor( 0, 0, 0, 1 );
-	drawRect( drawPosA, textWidthA/2 + 6*textScale, 16*textScale );
-	drawRect( drawPosB, textWidthB/2 + 6*textScale, 16*textScale );
+	drawRect( drawPosA, textWidthA/2 + 6*guiScale, 16*guiScale );
+	drawRect( drawPosB, textWidthB/2 + 6*guiScale, 16*guiScale );
 
 	if (x < 0) setDrawColor( 1, 0.8, 0, 1 );
 	else setDrawColor( 0.2, 1, 0.2, 1 );
-	livingLifePage->hetuwDrawScaledHandwritingFont( sBufA, drawPosA, textScale, alignCenter );
+	livingLifePage->hetuwDrawScaledHandwritingFont( sBufA, drawPosA, guiScale, alignCenter );
 	if (y < 0) setDrawColor( 1, 0.8, 0, 1 );
 	else setDrawColor( 0.2, 1, 0.2, 1 );
-	livingLifePage->hetuwDrawScaledHandwritingFont( sBufB, drawPosB, textScale, alignCenter );
+	livingLifePage->hetuwDrawScaledHandwritingFont( sBufB, drawPosB, guiScale, alignCenter );
 }
 
 void HetuwMod::drawHelp() {
@@ -1251,12 +1251,12 @@ void HetuwMod::drawHelp() {
 
 	setDrawColor( colorRainbow->color[0], 1.0f, colorRainbow->color[2], 1 );
 
-	double lineHeight = 30;
+	double lineHeight = 30*guiScale;
 
 	// emotion words
 	doublePair drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
-	drawPos.x -= viewWidth/2 - 20;
-	drawPos.y += viewHeight/2 - 80;
+	drawPos.x -= viewWidth/2 - 20*guiScale;
+	drawPos.y += viewHeight/2 - 80*guiScale;
 	SimpleVector<Emotion> emotions = hetuwGetEmotions();
     for( int i=0; i<emotions.size(); i++ ) {
 		if (i == 7 || i == 8) continue;
@@ -1266,80 +1266,82 @@ void HetuwMod::drawHelp() {
 		if (id < 10) sprintf(str, " %i: %s", id, emotions.getElement(i)->triggerWord);
 		else sprintf(str, "F%i: %s", id-9, emotions.getElement(i)->triggerWord);
 
-		livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+		livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 		drawPos.y -= lineHeight;
 	}
-	livingLifePage->hetuwDrawWithHandwritingFont( "PRESS NUMBER KEY FOR SHORT EMOTE", drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( "PRESS NUMBER KEY FOR SHORT EMOTE", drawPos, guiScale );
 	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "WRITE EMOTE FOR PERMANENT EMOTE", drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( "WRITE EMOTE FOR PERMANENT EMOTE", drawPos, guiScale );
 	drawPos.y -= lineHeight;
 
 	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
-	drawPos.x -= viewWidth/2 - 250;
-	drawPos.y += viewHeight/2 - 80;
+	drawPos.x -= viewWidth/2 - 250*guiScale;
+	drawPos.y += viewHeight/2 - 80*guiScale;
 
 	sprintf(str, "%s - BABY SUICIDE", translate( "dieCommand" ));
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%s - TOGGLE SHOW FPS", translate( "fpsCommand" ));
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%s - TOGGLE SHOW NETWORK", translate( "netCommand" ));
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%s - SHOW PING", translate( "pingCommand" ));
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 
 	sprintf(str, "%c TOGGLE SHOW HELP", toupper(charKey_ShowHelp));
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "= MAKE SCREENSHOT", drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( "= MAKE SCREENSHOT", drawPos, guiScale );
 	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "F TOGGLE FIX CAMERA", drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( "F TOGGLE FIX CAMERA", drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c TOGGLE SHOW NAMES", toupper(charKey_ShowNames));
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c TOGGLE SHOW CORDS", toupper(charKey_ShowCords));
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c TOGGLE SHOW MAP", toupper(charKey_ShowMap));
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
-	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "LEFT-ARROW-KEY  ZOOM IN", drawPos );
-	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawWithHandwritingFont( "RIGHT-ARROW-KEY  ZOOM OUT", drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 
 	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
-	drawPos.x -= viewWidth/2 - 630;
-	drawPos.y += viewHeight/2 - 80;
+	drawPos.x -= viewWidth/2 - 630*guiScale;
+	drawPos.y += viewHeight/2 - 80*guiScale;
 
 	sprintf(str, "%c - USE BACKPACK", toupper(charKey_Backpack));
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "SHIFT+%c - USE BACKPACK", toupper(charKey_Backpack));
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c - EAT / PUT CLOTHES ON", toupper(charKey_Eat));
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c%c%c%c - MOVE", toupper(charKey_Up), toupper(charKey_Left), toupper(charKey_Down), toupper(charKey_Right));
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "SHIFT+%c%c%c%c - USE/PICK UP ITEM", toupper(charKey_Up), toupper(charKey_Left), toupper(charKey_Down), toupper(charKey_Right));
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "CTRL+%c%c%c%c - DROP / PICK ITEM FROM CONTAINER", toupper(charKey_Up), toupper(charKey_Left), toupper(charKey_Down), toupper(charKey_Right));
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	if (charKey_TileStandingOn == ' ') sprintf(str, "SPACE - USE/PICK UP ITEM ON THE TILE YOU ARE STANDING ON");
 	else sprintf(str, "%c - USE/PICK UP ITEM ON THE TILE YOU ARE STANDING ON", charKey_TileStandingOn);
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	if (charKey_TileStandingOn == ' ') sprintf(str, "CTRL+SPACE - DROP / PICK ITEM FROM CONTAINER");
 	else sprintf(str, "CTRL+%c - DROP / PICK ITEM FROM CONTAINER", charKey_TileStandingOn);
-	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawScaledHandwritingFont( "LEFTARROWKEY ZOOM IN", drawPos, guiScale );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawScaledHandwritingFont( "RIGHTARROWKEY ZOOM OUT", drawPos, guiScale );
+	drawPos.y -= lineHeight;
+	livingLifePage->hetuwDrawScaledHandwritingFont( "CTRL+ARROWKEYS SCALE GUI", drawPos, guiScale );
 	drawPos.y -= lineHeight;
 }
