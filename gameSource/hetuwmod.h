@@ -61,6 +61,8 @@ public:
 	static int viewHeight;
 
 	static float zoomScale;
+	static float textScale;
+	static float textScaleRaw;
 	static int panelOffsetX;
 	static int panelOffsetY;
 	
@@ -107,6 +109,8 @@ public:
 
 	static void zoomIncrease();
 	static void zoomDecrease();
+	static void textScaleIncrease();
+	static void textScaleDecrease();
 	
 	static void useTileRelativeToMe( int x, int y );
 	static void dropTileRelativeToMe( int x, int y );

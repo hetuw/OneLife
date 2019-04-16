@@ -14,6 +14,8 @@ int HetuwMod::viewWidth;
 int HetuwMod::viewHeight;
 
 float HetuwMod::zoomScale;
+float HetuwMod::textScaleRaw;
+float HetuwMod::textScale;
 int HetuwMod::panelOffsetX;
 int HetuwMod::panelOffsetY;
 
@@ -90,6 +92,8 @@ bool HetuwMod::mapZoomOutKeyDown;
 
 void HetuwMod::init() {
 	zoomScale = 1.5f;
+	textScaleRaw = 0.8f;
+	textScale = textScaleRaw * zoomScale;
 	zoomCalc();
 	
 	colorRainbow = new RainbowColor();
@@ -261,6 +265,7 @@ void HetuwMod::zoomCalc() {
 	viewHeight = defaultViewHeight*zoomScale;
 	panelOffsetX = (int)(viewWidth - defaultViewWidth)/2;
 	panelOffsetY = (int)(viewHeight - defaultViewHeight)/2;
+	textScale = textScaleRaw * zoomScale;
 }
 
 void HetuwMod::zoomIncrease() {
@@ -273,6 +278,18 @@ void HetuwMod::zoomDecrease() {
 	zoomScale *= 0.75f;
 	if (zoomScale < 1.0f) zoomScale = 1.0f;
 	zoomCalc();
+}
+
+void HetuwMod::textScaleIncrease() {
+	textScaleRaw *= 0.9f;
+	if (textScaleRaw < 0.1) textScaleRaw = 0.1;
+	textScale = textScaleRaw * zoomScale;
+}
+
+void HetuwMod::textScaleDecrease() {
+	textScaleRaw *= 1.1f;
+	if (textScaleRaw > 1.5) textScaleRaw = 1.5;
+	textScale = textScaleRaw * zoomScale;
 }
 
 void HetuwMod::livingLifeStep() {
@@ -1069,8 +1086,6 @@ void HetuwMod::drawMap() {
 	doublePair screenCenter = livingLifePage->hetuwGetLastScreenViewCenter();
 	int mouseX, mouseY;
 	livingLifePage->hetuwGetMouseXY( mouseX, mouseY );
-	
-	double textScale = 0.8 * zoomScale;
 
 	setDrawColor( 0, 0, 0, 0.2 );
 	drawRect( screenCenter, viewWidth/2, viewHeight/2 );
@@ -1202,8 +1217,6 @@ void HetuwMod::drawAge() {
 void HetuwMod::drawCords() {
 	int x = round(ourLiveObject->currentPos.x);
 	int y = round(ourLiveObject->currentPos.y);
-
-	double textScale = 0.8 * zoomScale;
 
 	char sBufA[16];
 	sprintf(sBufA, "%d", x );

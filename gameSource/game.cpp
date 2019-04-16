@@ -2254,13 +2254,22 @@ void keyUp( unsigned char inASCII ) {
 
 
 void specialKeyDown( int inKey ) {
-	if( inKey == MG_KEY_LEFT ) { // hetuw mod
-		HetuwMod::zoomDecrease();
-		hetuwSetViewSize();
-	} else if( inKey == MG_KEY_RIGHT ) { // hetuw mod
-		HetuwMod::zoomIncrease();
-		hetuwSetViewSize();
+	if (!isCommandKeyDown() && !isShiftKeyDown()) {
+		if( inKey == MG_KEY_LEFT ) { // hetuw mod
+			HetuwMod::zoomDecrease();
+			hetuwSetViewSize();
+		} else if( inKey == MG_KEY_RIGHT ) { // hetuw mod
+			HetuwMod::zoomIncrease();
+			hetuwSetViewSize();
 		}
+	}
+	if (isCommandKeyDown()) {
+		if( inKey == MG_KEY_LEFT ) { // hetuw mod
+			HetuwMod::textScaleDecrease();
+		} else if( inKey == MG_KEY_RIGHT ) { // hetuw mod
+			HetuwMod::textScaleIncrease();
+		}
+	}
 
     if( isPaused() ) {
         return;
