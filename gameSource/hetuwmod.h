@@ -1,6 +1,8 @@
 #ifndef HETUWMOD_H
 #define HETUWMOD_H
 
+#define hetuwWaitingText "press H in game for help"
+
 #include "LivingLifePage.h"
 #include <vector>
                             

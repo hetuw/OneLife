@@ -4603,12 +4603,21 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         else if( userReconnect ) {
             drawMessage( "waitingReconnect", pos );
+            doublePair hetuwPos = pos; // hetuw mod
+			hetuwPos.y -= 60; // hetuw mod
+            drawMessage( hetuwWaitingText, hetuwPos ); // hetuw mod
             }
         else if( mPlayerInFlight ) {
             drawMessage( "waitingArrival", pos );
+            doublePair hetuwPos = pos; // hetuw mod
+			hetuwPos.y -= 60; // hetuw mod
+            drawMessage( hetuwWaitingText, hetuwPos ); // hetuw mod
             }
         else if( userTwinCode == NULL ) {
             drawMessage( "waitingBirth", pos );
+            doublePair hetuwPos = pos; // hetuw mod
+			hetuwPos.y -= 60; // hetuw mod
+            drawMessage( hetuwWaitingText, hetuwPos ); // hetuw mod
             }
         else {
             const char *sizeString = translate( "twins" );
