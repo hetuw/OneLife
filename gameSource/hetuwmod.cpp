@@ -92,7 +92,7 @@ bool HetuwMod::mapZoomOutKeyDown;
 
 void HetuwMod::init() {
 	zoomScale = 1.5f;
-	guiScaleRaw = 0.9f;
+	guiScaleRaw = 0.8f;
 	guiScale = guiScaleRaw * zoomScale;
 	zoomCalc();
 	
@@ -777,21 +777,25 @@ bool HetuwMod::livingLifeSpecialKeyDown(unsigned char inKeyCode) {
 
 	if (!commandKey && !shiftKey) {
 		if ( inKeyCode == MG_KEY_F1 ) {
+			currentEmote = -1;
 			char message[] = "EMOT 0 0 12#"; // HMPH
 	        livingLifePage->sendToServerSocket( message );
 			r = true;
 		}
 		if ( inKeyCode == MG_KEY_F2 ) {
+			currentEmote = -1;
 			char message[] = "EMOT 0 0 13#"; // LOVE
 	        livingLifePage->sendToServerSocket( message );
 			r = true;
 		}
 		if ( inKeyCode == MG_KEY_F3 ) {
+			currentEmote = -1;
 			char message[] = "EMOT 0 0 14#"; // OREALLY
 	        livingLifePage->sendToServerSocket( message );
 			r = true;
 		}
 		if ( inKeyCode == MG_KEY_F4 ) {
+			currentEmote = -1;
 			char message[] = "EMOT 0 0 15#"; // SHOCK
 	        livingLifePage->sendToServerSocket( message );
 			r = true;
@@ -1271,6 +1275,7 @@ void HetuwMod::drawCords() {
 }
 
 void HetuwMod::drawHelp() {
+	float guiScale = (guiScaleRaw+0.1) * zoomScale;
 	char str[64];
 	setDrawColor( 0, 0, 0, 0.8 );
 	drawRect( livingLifePage->hetuwGetLastScreenViewCenter(), viewWidth/2, viewHeight/2 );
