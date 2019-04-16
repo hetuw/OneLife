@@ -5939,7 +5939,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         }
                     }
 
-				if ( o != ourLiveObject && HetuwMod::bDrawNames ) 
+				if ( o != ourLiveObject && HetuwMod::iDrawNames > 0 ) 
 					HetuwMod::drawPlayerNames( o );
 
                 }

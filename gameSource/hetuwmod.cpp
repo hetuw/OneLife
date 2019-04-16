@@ -67,7 +67,7 @@ bool HetuwMod::stopAutoRoadRun;
 time_t HetuwMod::stopAutoRoadRunTime;
 bool HetuwMod::activateAutoRoadRun;
 
-bool HetuwMod::bDrawNames;
+int HetuwMod::iDrawNames;
 float HetuwMod::playerNameColor[3];
 doublePair HetuwMod::playerNamePos;
 
@@ -119,7 +119,7 @@ void HetuwMod::init() {
 	debugRecPos = { 0.0, 0.0 };
 	debugRecPos2 = { 0.0, 0.0 };
 
-	bDrawNames = true;
+	iDrawNames = 1;
 	bDrawCords = true;
 
 	bDrawMap = false;
@@ -403,10 +403,19 @@ void HetuwMod::drawPlayerNames( LiveObject* player ) {
 	getRelationNameColor( player->relationName, playerNameColor );
 
 	setDrawColor( 0.0, 0.0, 0.0, 0.8 );
-	float textWidth = livingLifePage->hetuwMeasureStringHandwritingFont( player->name );
-	drawRect( playerNamePos, textWidth/2 + 6, 16 );
-	setDrawColor( playerNameColor[0], playerNameColor[1], playerNameColor[2], 1 );
-	if ( player->name ) livingLifePage->hetuwDrawWithHandwritingFont( player->name, playerNamePos, alignCenter );
+	if ( iDrawNames == 1) {
+		float textWidth = livingLifePage->hetuwMeasureStringHandwritingFont( player->name );
+		drawRect( playerNamePos, textWidth/2 + 6, 16 );
+		setDrawColor( playerNameColor[0], playerNameColor[1], playerNameColor[2], 1 );
+		livingLifePage->hetuwDrawWithHandwritingFont( player->name, playerNamePos, alignCenter );
+	} else if ( iDrawNames == 2) {
+		char playerName[48];
+		removeLastName( playerName, player->name );
+		float textWidth = livingLifePage->hetuwMeasureStringHandwritingFont( playerName );
+		drawRect( playerNamePos, textWidth/2 + 6, 16 );
+		setDrawColor( playerNameColor[0], playerNameColor[1], playerNameColor[2], 1 );
+		livingLifePage->hetuwDrawWithHandwritingFont( playerName, playerNamePos, alignCenter );
+	}
 	//playerNamePos.y += 40;
 	//if ( player->relationName ) livingLifePage->hetuwDrawWithHandwritingFont( player->relationName, playerNamePos );
 }
@@ -580,7 +589,8 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	}
 
 	if (!commandKey && isCharKey(inASCII, charKey_ShowNames)) {
-		bDrawNames = !bDrawNames;
+		iDrawNames++;
+		if (iDrawNames >= 3) iDrawNames = 0;
 		return true;
 	}
 	
@@ -992,6 +1002,22 @@ void HetuwMod::move() {
 
 	//debugRecPos.x = x;
 	//debugRecPos.y = y;
+}
+
+void HetuwMod::removeLastName(char *newName, const char* name) {
+	int k = 0;
+	bool skip = false;
+	for (int i=0; name[i] != 0; i++) {
+		if (name[i] == ' ') {
+			skip = !skip;
+		}
+		if (!skip) {
+			newName[k] = name[i];
+			k++;
+		}
+	}
+	if (k < 0) newName[0] = 0;
+	else newName[k] = 0;
 }
 
 void HetuwMod::getLastName(char* lastName, const char* name) {

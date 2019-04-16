@@ -92,7 +92,7 @@ public:
 	static time_t stopAutoRoadRunTime;
 	static bool activateAutoRoadRun;
 
-	static bool bDrawNames;
+	static int iDrawNames;
 
 	static RainbowColor *colorRainbow;
 
@@ -140,6 +140,7 @@ public:
 	static void drawPlayerNames( LiveObject* player );
 
 	static void onPlayerUpdate( LiveObject* o, const char* deathReason = NULL );
+	static void removeLastName(char *newName, const char* name);
 	static void getLastName(char* lastName, const char* name);
 	static void setLastNameColor( const char* lastName, float alpha );
 
