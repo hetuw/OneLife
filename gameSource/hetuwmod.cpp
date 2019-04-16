@@ -532,14 +532,16 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	bool shiftKey = isShiftKeyDown();
 
 	// emotes
-	int jic = (int)inASCII - 48;
-	if (jic >= 0 && jic <= 9) {
-		if (jic > 6) jic += 2;
-		currentEmote = -1;
-		char message[64];
-		sprintf( message, "EMOT 0 0 %i#", jic);
-        livingLifePage->sendToServerSocket( message );
-		return true;
+	if (!commandKey && !shiftKey) {
+		int jic = (int)inASCII - 48;
+		if (jic >= 0 && jic <= 9) {
+			if (jic > 6) jic += 2;
+			currentEmote = -1;
+			char message[64];
+			sprintf( message, "EMOT 0 0 %i#", jic);
+	        livingLifePage->sendToServerSocket( message );
+			return true;
+		}
 	}
 
 //	if (inASCII == 'u') {
@@ -555,23 +557,23 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 //		return true;
 //	}
 
-	if (isCharKey(inASCII, charKey_ShowHelp)) {
+	if (!commandKey && isCharKey(inASCII, charKey_ShowHelp)) {
 		bDrawHelp = !bDrawHelp;
 		return true;
 	}
 
-	if (isCharKey(inASCII, charKey_ShowNames)) {
+	if (!commandKey && isCharKey(inASCII, charKey_ShowNames)) {
 		bDrawNames = !bDrawNames;
 		return true;
 	}
 	
-	if (isCharKey(inASCII, charKey_ShowCords)) {
+	if (!commandKey && isCharKey(inASCII, charKey_ShowCords)) {
 		bDrawCords = !bDrawCords;
 		return true;
 	}
 
 	if (commandKey) {
-		if (isCharKey(inASCII, charKey_TileStandingOn) || inASCII == charKey_TileStandingOn-64) {
+		if (isCharKey(inASCII, charKey_TileStandingOn)) {
 			actionBetaRelativeToMe( 0, 0 );
 			return true;
 		}
@@ -604,19 +606,19 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 			return true;
 		}
 	} else if (commandKey) {
-		if (inASCII == charKey_Up || inASCII == toupper(charKey_Up) || inASCII+64 == toupper(charKey_Up)) {
+		if (inASCII+64 == toupper(charKey_Up)) {
 			actionBetaRelativeToMe( 0, 1 );
 			return true;
 		}
-		if (inASCII == charKey_Left || inASCII == toupper(charKey_Left) || inASCII+64 == toupper(charKey_Left)) {
+		if (inASCII+64 == toupper(charKey_Left)) {
 			actionBetaRelativeToMe( -1, 0 );
 			return true;
 		}
-		if (inASCII == charKey_Down || inASCII == toupper(charKey_Down) || inASCII+64 == toupper(charKey_Down)) {
+		if (inASCII+64 == toupper(charKey_Down)) {
 			actionBetaRelativeToMe( 0, -1 );
 			return true;
 		}
-		if (inASCII == charKey_Right || inASCII == toupper(charKey_Right) || inASCII+64 == toupper(charKey_Right)) {
+		if (inASCII+64 == toupper(charKey_Right)) {
 			actionBetaRelativeToMe( 1, 0 );
 			return true;
 		}
@@ -652,17 +654,30 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		return true;
 	}
 
-	if (isCharKey(inASCII, charKey_ShowMap)) {
+	if (!commandKey && isCharKey(inASCII, charKey_ShowMap)) {
 		bDrawMap = !bDrawMap;
 		return true;
 	}
-	if (isCharKey(inASCII, charKey_MapZoomIn)) {
+	if (!commandKey && isCharKey(inASCII, charKey_MapZoomIn)) {
 		mapZoomInKeyDown = true;
 		return true;
 	}
-	if (isCharKey(inASCII, charKey_MapZoomOut)) {
+	if (!commandKey && isCharKey(inASCII, charKey_MapZoomOut)) {
 		mapZoomOutKeyDown = true;
 		return true;
+	}
+
+	if (!commandKey && !shiftKey && inASCII == 27) { // ESCAPE KEY
+		upKeyDown = false;
+		leftKeyDown = false;
+		downKeyDown = false;
+		rightKeyDown = false;
+		bDrawHelp = false;
+		bDrawMap = false;
+		lastPosX = 9999;
+		lastPosY = 9999;
+		stopAutoRoadRunTime = time(NULL);
+		activateAutoRoadRun = true;
 	}
 
 	return false;
@@ -729,28 +744,33 @@ bool HetuwMod::livingLifeKeyUp(unsigned char inASCII) {
 }
 
 bool HetuwMod::livingLifeSpecialKeyDown(unsigned char inKeyCode) {
+	bool commandKey = isCommandKeyDown();
+	bool shiftKey = isShiftKeyDown();
 	bool r = false;
-	if ( inKeyCode == MG_KEY_F1 ) {
-		char message[] = "EMOT 0 0 12#"; // HMPH
-        livingLifePage->sendToServerSocket( message );
-		r = true;
+
+	if (!commandKey && !shiftKey) {
+		if ( inKeyCode == MG_KEY_F1 ) {
+			char message[] = "EMOT 0 0 12#"; // HMPH
+	        livingLifePage->sendToServerSocket( message );
+			r = true;
+		}
+		if ( inKeyCode == MG_KEY_F2 ) {
+			char message[] = "EMOT 0 0 13#"; // LOVE
+	        livingLifePage->sendToServerSocket( message );
+			r = true;
+		}
+		if ( inKeyCode == MG_KEY_F3 ) {
+			char message[] = "EMOT 0 0 14#"; // OREALLY
+	        livingLifePage->sendToServerSocket( message );
+			r = true;
+		}
+		if ( inKeyCode == MG_KEY_F4 ) {
+			char message[] = "EMOT 0 0 15#"; // SHOCK
+	        livingLifePage->sendToServerSocket( message );
+			r = true;
+		}
 	}
-	if ( inKeyCode == MG_KEY_F2 ) {
-		char message[] = "EMOT 0 0 13#"; // LOVE
-        livingLifePage->sendToServerSocket( message );
-		r = true;
-	}
-	if ( inKeyCode == MG_KEY_F3 ) {
-		char message[] = "EMOT 0 0 14#"; // OREALLY
-        livingLifePage->sendToServerSocket( message );
-		r = true;
-	}
-	if ( inKeyCode == MG_KEY_F4 ) {
-		char message[] = "EMOT 0 0 15#"; // SHOCK
-        livingLifePage->sendToServerSocket( message );
-		r = true;
-	}
-	
+
 	return r;
 }
 
@@ -1269,6 +1289,9 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c TOGGLE SHOW CORDS", toupper(charKey_ShowCords));
+	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
+	drawPos.y -= lineHeight;
+	sprintf(str, "%c TOGGLE SHOW MAP", toupper(charKey_ShowMap));
 	livingLifePage->hetuwDrawWithHandwritingFont( str, drawPos );
 	drawPos.y -= lineHeight;
 	livingLifePage->hetuwDrawWithHandwritingFont( "LEFT-ARROW-KEY  ZOOM IN", drawPos );
