@@ -76,6 +76,7 @@ public:
 
 	static char charKey_Backpack;
 	static char charKey_Eat;
+	static char charKey_Baby;
 	static char charKey_ShowHelp;
 	static char charKey_ShowNames;
 	static char charKey_ShowCords;
@@ -103,6 +104,10 @@ public:
 
 	static SimpleVector<LiveObject> *gameObjects;
 	static std::vector<PlayerInMap*> playersInMap;
+
+	static void pickUpBaby( int x, int y );
+	static bool playerIsInCloseRange( LiveObject* o );
+	static void pickUpBabyInRange();
 
 	static void init();
 	static void initOnBirth();

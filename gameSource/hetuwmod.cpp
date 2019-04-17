@@ -37,6 +37,7 @@ char HetuwMod::charKey_TileStandingOn;
 
 char HetuwMod::charKey_Backpack;
 char HetuwMod::charKey_Eat;
+char HetuwMod::charKey_Baby;
 char HetuwMod::charKey_ShowHelp;
 char HetuwMod::charKey_ShowNames;
 char HetuwMod::charKey_ShowCords;
@@ -108,6 +109,7 @@ void HetuwMod::init() {
 
 	charKey_Backpack = 'q';
 	charKey_Eat = 'e';
+	charKey_Baby = 'b';
 	charKey_ShowHelp = 'h';
 	charKey_ShowNames = 'n';
 	charKey_ShowCords = 'c';
@@ -220,7 +222,7 @@ void HetuwMod::initOnBirth() {
 	
 	playersInMap.clear();
 	playersInMap.shrink_to_fit();
-	
+
 	mapZoomInKeyDown = false;
 	mapZoomInKeyDown = false;
 }
@@ -537,6 +539,61 @@ void HetuwMod::useOnSelf() {
 		livingLifePage->hetuwSetNextActionEating(true);
 }
 
+void HetuwMod::pickUpBaby( int x, int y ) {
+	char msg[32];
+	sprintf( msg, "BABY %d %d#", x, y );
+	livingLifePage->hetuwSetNextActionMessage( msg, x, y );
+}
+
+bool HetuwMod::playerIsInCloseRange( LiveObject* o ) {
+	if ( o->outOfRange ) return false;
+
+	if ( o->xd != ourLiveObject->xd && o->yd != ourLiveObject->yd ) return false; 
+	int posDiff = 0;
+	if ( o->xd == ourLiveObject->xd) posDiff = o->yd - ourLiveObject->yd;
+	else if ( o->yd == ourLiveObject->yd) posDiff = o->xd - ourLiveObject->xd;
+	if (posDiff > 1 || posDiff < -1) return false;
+	return true;
+}
+
+void HetuwMod::pickUpBabyInRange() {
+	if ( livingLifePage->hetuwGetAge( ourLiveObject ) < 13 ) return;
+
+	if ( ourLiveObject->holdingID != 0 ) {
+		dropTileRelativeToMe( 0, 0 );
+		return;
+	}
+
+	// find new baby to pick up - prefer babies further away
+	int babyFound = false;
+	int babyX = 0;
+	int babyY = 0;
+	for(int i=0; i<gameObjects->size(); i++) {
+		LiveObject *o = gameObjects->getElement( i );
+			
+		if ( livingLifePage->hetuwGetAge( o ) > 5 ) continue;
+
+		if ( o->xd != ourLiveObject->xd && o->yd != ourLiveObject->yd ) continue; 
+		if ( !babyFound ) {
+			if ( o->xd == ourLiveObject->xd && o->yd == ourLiveObject->yd ) {
+				babyFound = true;
+				babyX = o->xd;
+				babyY = o->yd;
+				continue;
+			}
+		}
+		int posDiff = 0;
+		if ( o->xd == ourLiveObject->xd) posDiff = o->yd - ourLiveObject->yd;
+		else if ( o->yd == ourLiveObject->yd) posDiff = o->xd - ourLiveObject->xd;
+		if (posDiff > 1 || posDiff < -1) continue;
+
+		pickUpBaby( o->xd, o->yd );
+		return;
+	}
+	if ( !babyFound ) return;
+	pickUpBaby( babyX, babyY );
+}
+
 void HetuwMod::setEmote(int id) {
 	lastEmoteTime = time(NULL);
 	currentEmote = id;
@@ -678,6 +735,10 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	}
 	if (isCharKey(inASCII, charKey_Eat)) {
 		useOnSelf();
+		return true;
+	}
+	if (isCharKey(inASCII, charKey_Baby)) {
+		pickUpBabyInRange();
 		return true;
 	}
 
@@ -1350,6 +1411,9 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c - EAT / PUT CLOTHES ON", toupper(charKey_Eat));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+	sprintf(str, "%c - PICK UP / DROP BABY", toupper(charKey_Baby));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c%c%c%c - MOVE", toupper(charKey_Up), toupper(charKey_Left), toupper(charKey_Down), toupper(charKey_Right));
