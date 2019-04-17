@@ -80,6 +80,7 @@ public:
 	static char charKey_ShowHelp;
 	static char charKey_ShowNames;
 	static char charKey_ShowCords;
+	static char charKey_ShowPlayersInRange;
 
 	static char charKey_ShowMap;
 	static char charKey_MapZoomIn;
@@ -149,6 +150,9 @@ public:
 	static void getLastName(char* lastName, const char* name);
 	static void setLastNameColor( const char* lastName, float alpha );
 
+	static int playersInRangeNum;
+	static int youngWomenInRange;
+
 private:
 
  	static LiveObject *ourLiveObject;
@@ -196,8 +200,11 @@ private:
 	static float playerNameColor[3];
 	static doublePair playerNamePos;
 
-	static void drawPlayersInAreaInfo();
 	static void updateMap();
+
+	static bool bDrawPlayersInRangePanel;
+	static void updatePlayersInRangePanel();
+	static void drawPlayersInRangePanel();
 
 	static float mapScale;
 	static float mapOffsetX;

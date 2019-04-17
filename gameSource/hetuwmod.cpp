@@ -41,6 +41,7 @@ char HetuwMod::charKey_Baby;
 char HetuwMod::charKey_ShowHelp;
 char HetuwMod::charKey_ShowNames;
 char HetuwMod::charKey_ShowCords;
+char HetuwMod::charKey_ShowPlayersInRange;
 
 bool HetuwMod::upKeyDown;
 bool HetuwMod::downKeyDown;
@@ -91,6 +92,10 @@ char HetuwMod::charKey_MapZoomOut;
 bool HetuwMod::mapZoomInKeyDown;
 bool HetuwMod::mapZoomOutKeyDown;
 
+int HetuwMod::playersInRangeNum;
+int HetuwMod::youngWomenInRange;
+bool HetuwMod::bDrawPlayersInRangePanel;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -100,6 +105,7 @@ void HetuwMod::init() {
 	colorRainbow = new RainbowColor();
 
 	bDrawHelp = false;
+	bDrawPlayersInRangePanel = true;
 
 	charKey_Up = 'w';
 	charKey_Down = 's';
@@ -113,6 +119,7 @@ void HetuwMod::init() {
 	charKey_ShowHelp = 'h';
 	charKey_ShowNames = 'n';
 	charKey_ShowCords = 'c';
+	charKey_ShowPlayersInRange = 'p';
 
 	charKey_ShowMap = 'm';
 	charKey_MapZoomIn = 'u';
@@ -225,6 +232,9 @@ void HetuwMod::initOnBirth() {
 
 	mapZoomInKeyDown = false;
 	mapZoomInKeyDown = false;
+
+	playersInRangeNum = 0;
+	youngWomenInRange = 0;
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject>* inGameObjects) {
@@ -315,6 +325,10 @@ void HetuwMod::livingLifeStep() {
 	if (mapZoomInKeyDown) mapScale *= 0.96;
 	if (mapZoomOutKeyDown) mapScale *= 1.04;
 
+	if (stepCount % 46 == 0) {
+		updatePlayersInRangePanel();
+	}
+
 	if (activateAutoRoadRun) {
 		if (time(NULL) > stopAutoRoadRunTime+2) {
 			stopAutoRoadRun = false;
@@ -336,13 +350,15 @@ void HetuwMod::livingLifeDraw() {
  	ourLiveObject = livingLifePage->getOurLiveObject();
 	if (!ourLiveObject) return;
 
-	if (bDrawCords) drawCords();
-
 	drawAge();
 
-	if (bDrawHelp) drawHelp();
+	if (bDrawCords) drawCords();
+
+	if (bDrawPlayersInRangePanel) drawPlayersInRangePanel();
 
 	if (bDrawMap) drawMap();
+
+	if (bDrawHelp) drawHelp();
 
 	//setDrawColor( 1.0, 0, 0, 1.0 );
 	//drawRect( debugRecPos, 10, 10 );
@@ -653,6 +669,11 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	
 	if (!commandKey && isCharKey(inASCII, charKey_ShowCords)) {
 		bDrawCords = !bDrawCords;
+		return true;
+	}
+
+	if (!commandKey && isCharKey(inASCII, charKey_ShowPlayersInRange)) {
+		bDrawPlayersInRangePanel = !bDrawPlayersInRangePanel;
 		return true;
 	}
 
@@ -1167,6 +1188,29 @@ void HetuwMod::updateMap() {
 	//}
 }
 
+#define hetuwPlayersInRangeDistance 50
+void HetuwMod::updatePlayersInRangePanel() {
+	playersInRangeNum = 0;
+	youngWomenInRange = 0;
+	for(int i=0; i<gameObjects->size(); i++) {
+		LiveObject *o = gameObjects->getElement( i );
+
+		if ( o->outOfRange ) continue;
+		int distX = o->xd - ourLiveObject->xd;
+		if ( distX > hetuwPlayersInRangeDistance || distX < -hetuwPlayersInRangeDistance)
+			continue;
+		int distY = o->yd - ourLiveObject->yd;
+		if ( distY > hetuwPlayersInRangeDistance || distY < -hetuwPlayersInRangeDistance)
+			continue;
+
+		playersInRangeNum++;
+
+		if ( !getObject( o->displayID )->male )
+			if ( livingLifePage->hetuwGetAge( o ) < 40 )
+				youngWomenInRange++;
+	}
+}
+
 void HetuwMod::onPlayerUpdate( LiveObject* o, const char* deathReason ) {
 	if (o == NULL) return;
 	//printf("hetuw x:%d y:%d age:%d id:%d %s\n", o->xd, o->yd, (int)o->age, o->id, o->name);
@@ -1287,8 +1331,39 @@ void HetuwMod::drawMap() {
 	}
 }
 
-void drawPlayersInAreaInfo() {
+void HetuwMod::drawPlayersInRangePanel() {
+	setDrawColor( 0, 0, 0, 0.8 );
+	doublePair bckgrRecPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	int bckgrRecWidthHalf = 140*guiScale;
+	int bckgrRecHeightHalf = 35*guiScale;
+	bckgrRecPos.x += viewWidth/2;
+	bckgrRecPos.y += viewHeight/2;
+	doublePair textPos = bckgrRecPos;
+	bckgrRecPos.x -= bckgrRecWidthHalf;
+	bckgrRecPos.y -= bckgrRecHeightHalf;
+	drawRect( bckgrRecPos, bckgrRecWidthHalf, bckgrRecHeightHalf );
 
+	setDrawColor( 1, 1, 1, 1 );
+	char text[32];
+	textPos.y -= 20*guiScale;
+	textPos.x -= 20*guiScale;
+	if (playersInRangeNum < 10) sprintf(text, "PLAYERS IN RANGE:   %d", playersInRangeNum);
+	else if (playersInRangeNum < 100) sprintf(text, "PLAYERS IN RANGE:  %d", playersInRangeNum);
+	else sprintf(text, "PLAYERS IN RANGE: %d", playersInRangeNum);
+	livingLifePage->hetuwDrawScaledHandwritingFont( text, textPos, guiScale, alignRight );
+	textPos.y -= 25*guiScale;
+
+	if (youngWomenInRange <= 0) setDrawColor( 1, 0.2, 0, 1 );
+	else if (youngWomenInRange == 1) setDrawColor( 1, 0.7, 0, 1);
+	else if (youngWomenInRange == 2) setDrawColor( 1, 0.9, 0, 1);
+	else if (youngWomenInRange == 3) setDrawColor( 0.8, 1, 0, 1);
+	else if (youngWomenInRange == 4) setDrawColor( 0.5, 1, 0, 1);
+	else if (youngWomenInRange == 5) setDrawColor( 0.3, 1, 0, 1);
+	else setDrawColor( 0.0, 1, 0, 1);
+	if (youngWomenInRange < 10) sprintf(text, "YOUNG WOMEN:   %d", youngWomenInRange);
+	else if (youngWomenInRange < 100) sprintf(text, "YOUNG WOMEN:  %d", youngWomenInRange);
+	else sprintf(text, "YOUNG WOMEN: %d", youngWomenInRange);
+	livingLifePage->hetuwDrawScaledHandwritingFont( text, textPos, guiScale, alignRight );
 }
 
 void HetuwMod::drawAge() {
@@ -1397,6 +1472,9 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c TOGGLE SHOW MAP", toupper(charKey_ShowMap));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+	sprintf(str, "%c TOGGLE SHOW PLAYERS IN RANGE", toupper(charKey_ShowPlayersInRange));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 
