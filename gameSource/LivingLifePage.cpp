@@ -12476,6 +12476,8 @@ void LivingLifePage::step() {
                                       &responsiblePlayerID,
                                       &heldYum);
                 
+				HetuwMod::onPlayerUpdate( &o, lines[i] );
+
                 
                 // heldYum is 24th value, optional
                 if( numRead >= 23 ) {

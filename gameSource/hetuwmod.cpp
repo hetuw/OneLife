@@ -42,6 +42,7 @@ char HetuwMod::charKey_ShowHelp;
 char HetuwMod::charKey_ShowNames;
 char HetuwMod::charKey_ShowCords;
 char HetuwMod::charKey_ShowPlayersInRange;
+char HetuwMod::charKey_ShowDeathMessages;
 
 bool HetuwMod::upKeyDown;
 bool HetuwMod::downKeyDown;
@@ -96,6 +97,9 @@ int HetuwMod::playersInRangeNum;
 int HetuwMod::youngWomenInRange;
 bool HetuwMod::bDrawPlayersInRangePanel;
 
+bool HetuwMod::bDrawDeathMessages;
+std::vector<HetuwMod::DeathMsg*> HetuwMod::deathMessages;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -106,6 +110,7 @@ void HetuwMod::init() {
 
 	bDrawHelp = false;
 	bDrawPlayersInRangePanel = true;
+	bDrawDeathMessages = true;
 
 	charKey_Up = 'w';
 	charKey_Down = 's';
@@ -120,6 +125,7 @@ void HetuwMod::init() {
 	charKey_ShowNames = 'n';
 	charKey_ShowCords = 'z';
 	charKey_ShowPlayersInRange = 'p';
+	charKey_ShowDeathMessages = 't';
 
 	charKey_ShowMap = 'm';
 	charKey_MapZoomIn = 'u';
@@ -235,6 +241,9 @@ void HetuwMod::initOnBirth() {
 
 	playersInRangeNum = 0;
 	youngWomenInRange = 0;
+
+	deathMessages.clear();
+	deathMessages.shrink_to_fit();
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject>* inGameObjects) {
@@ -355,6 +364,8 @@ void HetuwMod::livingLifeDraw() {
 	if (bDrawCords) drawCords();
 
 	if (bDrawPlayersInRangePanel) drawPlayersInRangePanel();
+
+	if (bDrawDeathMessages) drawDeathMessages();
 
 	if (bDrawMap) drawMap();
 
@@ -660,20 +671,21 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		bDrawHelp = !bDrawHelp;
 		return true;
 	}
-
 	if (!commandKey && isCharKey(inASCII, charKey_ShowNames)) {
 		iDrawNames++;
 		if (iDrawNames >= 3) iDrawNames = 0;
 		return true;
 	}
-	
 	if (!commandKey && isCharKey(inASCII, charKey_ShowCords)) {
 		bDrawCords = !bDrawCords;
 		return true;
 	}
-
 	if (!commandKey && isCharKey(inASCII, charKey_ShowPlayersInRange)) {
 		bDrawPlayersInRangePanel = !bDrawPlayersInRangePanel;
+		return true;
+	}
+	if (!commandKey && isCharKey(inASCII, charKey_ShowDeathMessages)) {
+		bDrawDeathMessages = !bDrawDeathMessages;
 		return true;
 	}
 
@@ -1211,9 +1223,80 @@ void HetuwMod::updatePlayersInRangePanel() {
 	}
 }
 
-void HetuwMod::onPlayerUpdate( LiveObject* o, const char* deathReason ) {
-	if (o == NULL) return;
-	//printf("hetuw x:%d y:%d age:%d id:%d %s\n", o->xd, o->yd, (int)o->age, o->id, o->name);
+#define hetuwDeathMessageRange 200
+void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
+	if ( inO == NULL ) return;
+	if ( ourLiveObject == NULL ) return;
+
+	bool isDeathMsg = ( strstr( line, "X X" ) != NULL );
+	if ( !isDeathMsg ) return;
+
+	LiveObject *o = NULL;
+	for(int i=0; i<gameObjects->size(); i++) {
+		LiveObject *kO = gameObjects->getElement(i);
+		if (inO->id == kO->id) {
+			o = kO;
+		}
+	}
+	if ( o == NULL ) return;
+	if ( !o->name ) return;
+	
+	int diffX = o->xd - ourLiveObject->xd;
+	int diffY = o->yd - ourLiveObject->yd;
+	if ( diffX > hetuwDeathMessageRange || diffX < -hetuwDeathMessageRange) return;
+	if ( diffY > hetuwDeathMessageRange || diffY < -hetuwDeathMessageRange) return;
+
+	DeathMsg* deathMsg = new DeathMsg();
+
+	deathMsg->timeReci = time(NULL);
+
+	deathMsg->name = new char[64];
+	sprintf( deathMsg->name, "%s", o->name); 
+
+	deathMsg->info = new char[32];
+	int age = (int)livingLifePage->hetuwGetAge( o );
+	char gender = 'F';
+	if ( !getObject( o->displayID ) ) gender = 'U';
+	else if ( getObject( o->displayID )->male ) gender = 'M';
+	sprintf( deathMsg->info, "RIP %c %d ", gender, age);
+
+	getRelationNameColor( o->relationName, deathMsg->nameColor );
+
+	deathMessages.push_back(deathMsg);
+}
+
+void HetuwMod::drawDeathMessages() {
+	if ( deathMessages.size() <= 0 ) return;
+
+	DeathMsg* dm = deathMessages[0];
+
+	doublePair drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	drawPos.y += viewHeight/2;
+	drawPos.y -= 20*guiScale;
+	
+	double nameWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( dm->name, guiScale );
+	double infoWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( dm->info, guiScale );
+	double textWidth = nameWidth + infoWidth;
+
+	doublePair recDrawPos = drawPos;
+
+	setDrawColor( 0, 0, 0, 0.8 );
+	drawRect( recDrawPos, (textWidth)/2 + 10*guiScale, 20*guiScale );
+
+	drawPos.x -= textWidth/2;
+	setDrawColor( 1, 1, 1, 1 );
+	livingLifePage->hetuwDrawScaledHandwritingFont( dm->info , drawPos, guiScale );
+
+	drawPos.x += infoWidth;
+	setDrawColor( dm->nameColor[0], dm->nameColor[1], dm->nameColor[2], 1 );
+	livingLifePage->hetuwDrawScaledHandwritingFont( dm->name , drawPos, guiScale );
+
+	if ( dm->timeReci+15 < time(NULL) ) {
+		delete deathMessages[0];
+		deathMessages.erase( deathMessages.begin() );
+		if ( deathMessages.size() > 0 )
+			deathMessages[0]->timeReci = time(NULL);
+	}
 }
 
 void HetuwMod::drawMap() {
@@ -1477,9 +1560,12 @@ void HetuwMod::drawHelp() {
 	sprintf(str, "%c TOGGLE SHOW PLAYERS IN RANGE", toupper(charKey_ShowPlayersInRange));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
+	sprintf(str, "%c TOGGLE SHOW DEATH MESSAGES", toupper(charKey_ShowDeathMessages));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
 
 	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
-	drawPos.x -= viewWidth/2 - 630*guiScale;
+	drawPos.x -= viewWidth/2 - 640*guiScale;
 	drawPos.y += viewHeight/2 - 80*guiScale;
 
 	sprintf(str, "%c - USE BACKPACK", toupper(charKey_Backpack));

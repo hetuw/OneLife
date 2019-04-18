@@ -48,6 +48,27 @@ class HetuwMod
 		}
 	};
 
+	struct DeathMsg {
+		time_t timeReci;
+		char* name;
+		char* info;
+		float nameColor[3];
+		DeathMsg() {
+			name = NULL;
+			info = NULL;
+		}
+		~DeathMsg() {
+			if (name) {
+				delete[] name;
+				name = NULL;
+			}
+			if (info) {
+				delete[] info;
+				info = NULL;
+			}
+		}
+	};
+
 public:
 
 	static const int defaultViewWidth = 1280;
@@ -81,6 +102,7 @@ public:
 	static char charKey_ShowNames;
 	static char charKey_ShowCords;
 	static char charKey_ShowPlayersInRange;
+	static char charKey_ShowDeathMessages;
 
 	static char charKey_ShowMap;
 	static char charKey_MapZoomIn;
@@ -145,9 +167,9 @@ public:
 	static void getRelationNameColor( const char* name, float* color );
 	static void drawPlayerNames( LiveObject* player );
 
-	static void onPlayerUpdate( LiveObject* o, const char* deathReason = NULL );
-	static void removeLastName(char *newName, const char* name);
-	static void getLastName(char* lastName, const char* name);
+	static void onPlayerUpdate( LiveObject* o, const char* line );
+	static void removeLastName(char *newName, const char* name );
+	static void getLastName(char* lastName, const char* name );
 	static void setLastNameColor( const char* lastName, float alpha );
 
 	static int playersInRangeNum;
@@ -209,6 +231,10 @@ private:
 	static float mapScale;
 	static float mapOffsetX;
 	static float mapOffsetY;
+
+	static bool bDrawDeathMessages;
+	static void drawDeathMessages();
+	static std::vector<DeathMsg*> deathMessages;
 
 };
 
