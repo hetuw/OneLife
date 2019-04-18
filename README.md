@@ -2,6 +2,11 @@
 
 This is a modified version of OneLife https://github.com/jasonrohrer/OneLife
 
+## Installation:
+you can download the executable here: https://github.com/hetuw/OneLife/releases<br>
+for windows this would be "OneLifeApp_H_windows.exe"<br>
+place this file inside your ohol folder and then start it.
+
 ## Changes:
 #### Help page
 press H in game to show all the hotkeys and commands
@@ -22,7 +27,15 @@ when you are holding a food item in your hand, it will show you how much food yo
 #### Show player names
 all player names will be written above the players, the color depends on your relationship with that person.<br>
 your mother is green, your cousins are blue or purple, unrelated people are white.<br>
-if you dont want to see the names press N to disable it
+you can show only first names / full names or no names at all, press N to change it.
+
+#### Death messages
+if someone in your area dies you wll see a death message on your screen.<br>
+telling you the name of the person that died, their age and gender.
+
+#### Players in range panel
+in the top right corner you can see how many people are in your range<br>
+and how many of them are females under the age of 40.
 
 #### Emotions
 you can press 0-9 to make emotions<br>
@@ -38,6 +51,9 @@ press Q to put something in your backpack or take something out
 
 #### SHIFT+Q
 switch the item in your hand with an item inside your backpack
+
+#### C
+press C to pick up or drop a baby
 
 #### WASD
 you can use wasd to go up/left/down/right<br>
