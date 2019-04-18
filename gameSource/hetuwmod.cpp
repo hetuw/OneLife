@@ -115,10 +115,10 @@ void HetuwMod::init() {
 
 	charKey_Backpack = 'q';
 	charKey_Eat = 'e';
-	charKey_Baby = 'b';
+	charKey_Baby = 'c';
 	charKey_ShowHelp = 'h';
 	charKey_ShowNames = 'n';
-	charKey_ShowCords = 'c';
+	charKey_ShowCords = 'z';
 	charKey_ShowPlayersInRange = 'p';
 
 	charKey_ShowMap = 'm';
