@@ -51,20 +51,18 @@ class HetuwMod
 	struct DeathMsg {
 		time_t timeReci;
 		char* name;
-		char* info;
 		float nameColor[3];
+		int age;
+		bool male;
+		bool killed;
 		DeathMsg() {
 			name = NULL;
-			info = NULL;
+			killed = false;
 		}
 		~DeathMsg() {
 			if (name) {
 				delete[] name;
 				name = NULL;
-			}
-			if (info) {
-				delete[] info;
-				info = NULL;
 			}
 		}
 	};

@@ -1284,12 +1284,10 @@ void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
 	deathMsg->name = new char[64];
 	sprintf( deathMsg->name, "%s", o->name); 
 
-	deathMsg->info = new char[32];
-	int age = (int)livingLifePage->hetuwGetAge( o );
-	char gender = 'F';
-	if ( !getObject( o->displayID ) ) gender = 'U';
-	else if ( getObject( o->displayID )->male ) gender = 'M';
-	sprintf( deathMsg->info, "RIP %c %d ", gender, age);
+	deathMsg->age = (int)livingLifePage->hetuwGetAge( o );
+	if ( getObject( o->displayID ) )
+		deathMsg->male = getObject( o->displayID )->male;
+	deathMsg->killed = strstr( line, "kille" ) != NULL;
 
 	getRelationNameColor( o->relationName, deathMsg->nameColor );
 
@@ -1305,9 +1303,16 @@ void HetuwMod::drawDeathMessages() {
 	drawPos.y += viewHeight/2;
 	drawPos.y -= 20*guiScale;
 	
+	char gender[8];
+	sprintf( gender, "%c ", dm->male ? 'M' : 'F');
+	char age[8];
+	sprintf( age, "%d ", dm->age);
+
 	double nameWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( dm->name, guiScale );
-	double infoWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( dm->info, guiScale );
-	double textWidth = nameWidth + infoWidth;
+	double ripWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( "RIP ", guiScale );
+	double genderWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( gender, guiScale );
+	double ageWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( age, guiScale );
+	double textWidth = nameWidth + ripWidth + genderWidth + ageWidth;
 
 	doublePair recDrawPos = drawPos;
 
@@ -1315,10 +1320,21 @@ void HetuwMod::drawDeathMessages() {
 	drawRect( recDrawPos, (textWidth)/2 + 10*guiScale, 20*guiScale );
 
 	drawPos.x -= textWidth/2;
-	setDrawColor( 1, 1, 1, 1 );
-	livingLifePage->hetuwDrawScaledHandwritingFont( dm->info , drawPos, guiScale );
 
-	drawPos.x += infoWidth;
+	if ( dm->killed ) setDrawColor( 1, 0.2, 0, 1 );
+	else setDrawColor( 1, 1, 1, 1 );
+	livingLifePage->hetuwDrawScaledHandwritingFont( "RIP " , drawPos, guiScale );
+	drawPos.x += ripWidth;
+
+	if ( dm->male ) setDrawColor( 0.2, 0.6, 1.0, 1 );
+	else setDrawColor( 1, 0.4, 0.8, 1 );
+	livingLifePage->hetuwDrawScaledHandwritingFont( gender , drawPos, guiScale );
+	drawPos.x += genderWidth;
+
+	setDrawColor( 1, 1, 1, 1 );
+	livingLifePage->hetuwDrawScaledHandwritingFont( age , drawPos, guiScale );
+	drawPos.x += ageWidth;
+
 	setDrawColor( dm->nameColor[0], dm->nameColor[1], dm->nameColor[2], 1 );
 	livingLifePage->hetuwDrawScaledHandwritingFont( dm->name , drawPos, guiScale );
 
