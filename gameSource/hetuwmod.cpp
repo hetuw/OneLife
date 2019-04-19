@@ -500,11 +500,21 @@ void HetuwMod::actionAlphaRelativeToMe( int x, int y ) {
 			}
 		}
 	}
+	
+	bool remove = false;
+	if ( ourLiveObject->holdingID <= 0 && objId == 253) // full berry clay bowl
+		remove = true;
+
+	if ( ourLiveObject->holdingID < 0 ) { // holding babay
+		remove = false;
+		use = false;
+	}
 
 	x = livingLifePage->sendX(x);
 	y = livingLifePage->sendY(y);
 	char msg[32];
-	if (use) sprintf( msg, "USE %d %d#", x, y);
+	if (remove) sprintf( msg, "REMV %d %d -1#", x, y);
+	else if (use) sprintf( msg, "USE %d %d#", x, y);
 	else sprintf( msg, "DROP %d %d -1#", x, y);
 	livingLifePage->hetuwSetNextActionMessage( msg, x, y );
 }
@@ -517,11 +527,31 @@ void HetuwMod::actionBetaRelativeToMe( int x, int y ) {
 	if (ourLiveObject->holdingID <= 0) {
 		remove = true;
 	}
+	bool use = false;
+	int objId = livingLifePage->hetuwGetObjId( x, y );
+	if (objId > 0) {
+		ObjectRecord* obj = getObject(objId);
+		if (obj->numSlots == 0 && obj->blocksWalking) {
+			TransRecord *r = getTrans( ourLiveObject->holdingID, objId );
+			if ( r != NULL && r->newTarget != 0 ) {
+				use = true;
+			}
+		}
+	}
+
+	if (objId == 253) // full berry clay bowl
+		use = true;
+
+	if ( ourLiveObject->holdingID < 0 ) { // holding babay
+		remove = false;
+		use = false;
+	}
 
 	x = livingLifePage->sendX(x);
 	y = livingLifePage->sendY(y);
 	char msg[32];
-	if (remove) sprintf( msg, "REMV %d %d -1#", x, y);
+	if (use) sprintf( msg, "USE %d %d#", x, y);
+	else if (remove) sprintf( msg, "REMV %d %d -1#", x, y);
 	else sprintf( msg, "DROP %d %d -1#", x, y);
 	livingLifePage->hetuwSetNextActionMessage( msg, x, y );
 	if (!remove) livingLifePage->hetuwSetNextActionDropping( true );
