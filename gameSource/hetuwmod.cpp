@@ -201,7 +201,7 @@ void HetuwMod::initClosedDoorIDs() {
 		delete[] closedDoorIDs;
 		closedDoorIDs = NULL;
 	}
-	closedDoorIDsLength = 8;
+	closedDoorIDsLength = 10;
 	closedDoorIDs = new int[closedDoorIDsLength];
 
 	closedDoorIDs[0] = 116; // 116.txt:Pine Door# installed vert
@@ -212,6 +212,8 @@ void HetuwMod::initClosedDoorIDs() {
 	closedDoorIDs[5] = 877; // 877.txt:Wooden Door# installed vert
 	closedDoorIDs[6] = 115; // 115.txt:Pine Door# Installed
 	closedDoorIDs[7] = 1851; // 1851.txt:Fence Gate
+	closedDoorIDs[8] = 2984; // 2984.txt:Shaky Property Gate# +owned
+	closedDoorIDs[9] = 2962; // 2962.txt:Property Gate# +owned
 }
 
 void HetuwMod::initOnBirth() {
