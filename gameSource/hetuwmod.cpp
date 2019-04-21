@@ -502,8 +502,18 @@ void HetuwMod::actionAlphaRelativeToMe( int x, int y ) {
 	}
 	
 	bool remove = false;
-	if ( ourLiveObject->holdingID <= 0 && objId == 253) // full berry clay bowl
-		remove = true;
+	if ( ourLiveObject->holdingID <= 0 ) {
+		switch (objId) {
+			case 253: // full berry clay bowl
+			case 3026: // 1 berry inside
+			case 3027: // 2 berry inside
+			case 3028: // 3 berry inside
+			case 3029: // 4 berry inside
+			case 3030: // 5 berry inside
+				remove = true;
+				break;
+		}
+	}
 
 	if ( ourLiveObject->holdingID < 0 ) { // holding babay
 		remove = false;
@@ -539,8 +549,18 @@ void HetuwMod::actionBetaRelativeToMe( int x, int y ) {
 		}
 	}
 
-	if (objId == 253) // full berry clay bowl
-		use = true;
+	if ( ourLiveObject->holdingID <= 0 ) {
+		switch (objId) {
+			case 253: // full berry clay bowl
+			case 3026: // 1 berry inside
+			case 3027: // 2 berry inside
+			case 3028: // 3 berry inside
+			case 3029: // 4 berry inside
+			case 3030: // 5 berry inside
+				use = true;
+				break;
+		}
+	}
 
 	if ( ourLiveObject->holdingID < 0 ) { // holding babay
 		remove = false;
