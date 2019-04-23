@@ -20345,7 +20345,24 @@ void LivingLifePage::hetuwSetPanelOffsets() {
         mNotePaperPosTargetOffset.y = mNotePaperHideOffset.y;
 	}
 	mNotePaperPosOffset = mNotePaperPosTargetOffset;
+
+	LiveObject* ourObject = getOurLiveObject();
     mHomeSlipHideOffset.y = -360 - HetuwMod::panelOffsetY;
+	if ( ourObject ) {
+	    char tooClose = false;
+		double homeDist = 0;
+		int homeArrow = getHomeDir( ourObject->currentPos, &homeDist, &tooClose );
+		if( homeArrow != -1 && ! tooClose ) {
+			mHomeSlipPosTargetOffset.y = mHomeSlipHideOffset.y + 68;
+			if( homeDist > 1000 ) {
+				mHomeSlipPosTargetOffset.y += 20;
+			}
+		} else {
+			mHomeSlipPosTargetOffset.y = mHomeSlipHideOffset.y;
+		}
+		mHomeSlipPosOffset = mHomeSlipPosTargetOffset;
+	}
+
     for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
         mYumSlipHideOffset[i].y = -330 - HetuwMod::panelOffsetY;
 	}
