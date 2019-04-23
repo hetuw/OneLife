@@ -334,8 +334,14 @@ void HetuwMod::livingLifeStep() {
 	if (stepCount % 50 == 0) {
 		updateMap();
 	}
-	if (mapZoomInKeyDown) mapScale *= 0.96;
-	if (mapZoomOutKeyDown) mapScale *= 1.04;
+	if (bDrawMap && mapZoomInKeyDown) {
+		mapScale *= 0.96;
+		if (mapScale < 8.7333) mapScale = 8.73333;
+	}
+	else if (bDrawMap && mapZoomOutKeyDown) {
+		mapScale *= 1.04;
+		if (mapScale > 80177784) mapScale = 80177784;
+	}
 
 	if (stepCount % 46 == 0) {
 		updatePlayersInRangePanel();
