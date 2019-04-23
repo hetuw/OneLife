@@ -488,6 +488,24 @@ void HetuwMod::remvTileRelativeToMe( int x, int y ) {
 	livingLifePage->hetuwSetNextActionMessage( msg, x, y );
 }
 
+bool HetuwMod::objIdReverseAction( int objId ) {
+	bool r = false;
+	if ( ourLiveObject->holdingID <= 0 ) {
+		switch (objId) {
+			case 253: // full berry clay bowl
+			case 3026: // 1 berry inside
+			case 3027: // 2 berry inside
+			case 3028: // 3 berry inside
+			case 3029: // 4 berry inside
+			case 3030: // 5 berry inside
+			case 225: // wheat bundle
+				r = true;
+				break;
+		}
+	}
+	return r;
+}
+
 void HetuwMod::actionAlphaRelativeToMe( int x, int y ) {
 	x += ourLiveObject->xd;
 	y += ourLiveObject->yd;
@@ -508,25 +526,15 @@ void HetuwMod::actionAlphaRelativeToMe( int x, int y ) {
 			}
 		}
 	}
-	
-	bool remove = false;
-	if ( ourLiveObject->holdingID <= 0 ) {
-		switch (objId) {
-			case 253: // full berry clay bowl
-			case 3026: // 1 berry inside
-			case 3027: // 2 berry inside
-			case 3028: // 3 berry inside
-			case 3029: // 4 berry inside
-			case 3030: // 5 berry inside
-				remove = true;
-				break;
-		}
-	}
 
+	bool remove = false;
+	if (objIdReverseAction(objId)) remove = true;
+	
 	if ( ourLiveObject->holdingID < 0 ) { // holding babay
 		remove = false;
 		use = false;
 	}
+	//printf("hetuw alphaActionObjId: %d\n", objId);
 
 	x = livingLifePage->sendX(x);
 	y = livingLifePage->sendY(y);
@@ -557,18 +565,7 @@ void HetuwMod::actionBetaRelativeToMe( int x, int y ) {
 		}
 	}
 
-	if ( ourLiveObject->holdingID <= 0 ) {
-		switch (objId) {
-			case 253: // full berry clay bowl
-			case 3026: // 1 berry inside
-			case 3027: // 2 berry inside
-			case 3028: // 3 berry inside
-			case 3029: // 4 berry inside
-			case 3030: // 5 berry inside
-				use = true;
-				break;
-		}
-	}
+	if ( objIdReverseAction( objId ) ) use = true;
 
 	if ( ourLiveObject->holdingID < 0 ) { // holding babay
 		remove = false;

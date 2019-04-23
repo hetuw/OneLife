@@ -234,6 +234,8 @@ private:
 	static void drawDeathMessages();
 	static std::vector<DeathMsg*> deathMessages;
 
+	static bool objIdReverseAction( int objId );
+
 };
 
 
