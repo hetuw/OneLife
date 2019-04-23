@@ -2404,48 +2404,6 @@ LivingLifePage::LivingLifePage()
 
     }
 
-// hetuw mod - if changes are made here they also need to be made in the constructor above
-void LivingLifePage::hetuwSetPanelOffsets() {
-    mNotePaperHideOffset.y = -420 - HetuwMod::panelOffsetY;
-    mHomeSlipHideOffset.y = -360 - HetuwMod::panelOffsetY;
-    for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
-        mYumSlipHideOffset[i].y = -330 - HetuwMod::panelOffsetY;
-	}
-    for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
-        mYumSlipPosOffset[i] = mYumSlipHideOffset[i];
-        mYumSlipPosTargetOffset[i] = mYumSlipHideOffset[i];
-	}
-    for( int i=0; i<3; i++ ) {    
-        mHungerSlipShowOffsets[i].y = -250 - HetuwMod::panelOffsetY;
-        mHungerSlipHideOffsets[i].y = -370 - HetuwMod::panelOffsetY;
-	}
-    mHungerSlipShowOffsets[2].y += 20;
-    mHungerSlipHideOffsets[2].y -= 20;
-
-    mHungerSlipShowOffsets[2].y -= 50; // starving slip
-    mHungerSlipShowOffsets[1].y -= 30; // hunger slip
-    mHungerSlipShowOffsets[0].y += 18; // full slip
-    for( int i=0; i<3; i++ ) {    
-        mHungerSlipPosOffset[i] = mHungerSlipHideOffsets[i];
-        mHungerSlipPosTargetOffset[i] = mHungerSlipPosOffset[i];
-    }
-    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
-        mHintHideOffset[i].x = 900 + HetuwMod::panelOffsetX;
-        mHintHideOffset[i].y = -370 - HetuwMod::panelOffsetY;
-		if (HetuwMod::zoomScale >= 2.0f) {
-			mHintHideOffset[i].y -= 60;
-		}
-        
-        mHintTargetOffset[i] = mHintHideOffset[i];
-        mHintPosOffset[i] = mHintHideOffset[i];
-	}
-    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
-        mTutorialHideOffset[i].y = 430 + HetuwMod::panelOffsetY;
-        
-        mTutorialTargetOffset[i] = mTutorialHideOffset[i];
-        mTutorialPosOffset[i] = mTutorialHideOffset[i];
-	}
-}
 
 void LivingLifePage::runTutorial() {
     mForceRunTutorial = true;
@@ -20371,6 +20329,61 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
 
     }
 
+// hetuw mod - if changes are made here they also need to be made in the constructor above
+void LivingLifePage::hetuwSetPanelOffsets() {
+    mNotePaperHideOffset.y = -420 - HetuwMod::panelOffsetY;
+    if( mSayField.isFocused() ) {
+        mNotePaperPosTargetOffset.y = mNotePaperHideOffset.y + 58;
+        char *partialSay = mSayField.getText();
+        char *strUpper = stringToUpperCase( partialSay );
+        delete [] partialSay;
+        SimpleVector<char*> *lines = splitLines( strUpper, 345 );
+        if( lines->size() > 1 ) {    
+            mNotePaperPosTargetOffset.y += 20 * ( lines->size() - 1 );
+        }
+	} else {
+        mNotePaperPosTargetOffset.y = mNotePaperHideOffset.y;
+	}
+	mNotePaperPosOffset = mNotePaperPosTargetOffset;
+    mHomeSlipHideOffset.y = -360 - HetuwMod::panelOffsetY;
+    for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
+        mYumSlipHideOffset[i].y = -330 - HetuwMod::panelOffsetY;
+	}
+    for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
+        mYumSlipPosOffset[i] = mYumSlipHideOffset[i];
+        mYumSlipPosTargetOffset[i] = mYumSlipHideOffset[i];
+	}
+    for( int i=0; i<3; i++ ) {    
+        mHungerSlipShowOffsets[i].y = -250 - HetuwMod::panelOffsetY;
+        mHungerSlipHideOffsets[i].y = -370 - HetuwMod::panelOffsetY;
+	}
+    mHungerSlipShowOffsets[2].y += 20;
+    mHungerSlipHideOffsets[2].y -= 20;
+
+    mHungerSlipShowOffsets[2].y -= 50; // starving slip
+    mHungerSlipShowOffsets[1].y -= 30; // hunger slip
+    mHungerSlipShowOffsets[0].y += 18; // full slip
+    for( int i=0; i<3; i++ ) {    
+        mHungerSlipPosOffset[i] = mHungerSlipHideOffsets[i];
+        mHungerSlipPosTargetOffset[i] = mHungerSlipPosOffset[i];
+    }
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        mHintHideOffset[i].x = 900 + HetuwMod::panelOffsetX;
+        mHintHideOffset[i].y = -370 - HetuwMod::panelOffsetY;
+		if (HetuwMod::zoomScale >= 2.0f) {
+			mHintHideOffset[i].y -= 60;
+		}
+        
+        mHintTargetOffset[i] = mHintHideOffset[i];
+        mHintPosOffset[i] = mHintHideOffset[i];
+	}
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        mTutorialHideOffset[i].y = 430 + HetuwMod::panelOffsetY;
+        
+        mTutorialTargetOffset[i] = mTutorialHideOffset[i];
+        mTutorialPosOffset[i] = mTutorialHideOffset[i];
+	}
+}
 
 
 
