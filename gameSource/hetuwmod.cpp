@@ -956,7 +956,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		return true;
 	}
 
-	if (!commandKey && isCharKey(inASCII, charKey_ShowMap)) {
+	if (!commandKey && shiftKey && isCharKey(inASCII, charKey_ShowMap)) {
 		bDrawMap = !bDrawMap;
 		return true;
 	}
@@ -1753,9 +1753,6 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c TOGGLE SHOW CORDS", toupper(charKey_ShowCords));
-	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
-	drawPos.y -= lineHeight;
-	sprintf(str, "%c TOGGLE SHOW MAP", toupper(charKey_ShowMap));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c TOGGLE SHOW PLAYERS IN RANGE", toupper(charKey_ShowPlayersInRange));
