@@ -272,6 +272,7 @@ static void removeHomeLocation( int inX, int inY ) {
 
 
 static void addHomeLocation( int inX, int inY ) {
+	HetuwMod::addHomeLocation( inX, inY );
     removeHomeLocation( inX, inY );
     GridPos newPos = { inX, inY };
     HomePos p;
@@ -283,6 +284,7 @@ static void addHomeLocation( int inX, int inY ) {
 
 
 static void addAncientHomeLocation( int inX, int inY ) {
+	HetuwMod::addHomeLocation( inX, inY, true );
     removeHomeLocation( inX, inY );
 
     // remove all ancient pos

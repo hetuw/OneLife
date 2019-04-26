@@ -43,6 +43,9 @@ char HetuwMod::charKey_ShowNames;
 char HetuwMod::charKey_ShowCords;
 char HetuwMod::charKey_ShowPlayersInRange;
 char HetuwMod::charKey_ShowDeathMessages;
+char HetuwMod::charKey_ShowHomeCords;
+
+char HetuwMod::charKey_CreateHome;
 
 bool HetuwMod::upKeyDown;
 bool HetuwMod::downKeyDown;
@@ -100,6 +103,10 @@ bool HetuwMod::bDrawPlayersInRangePanel;
 bool HetuwMod::bDrawDeathMessages;
 std::vector<HetuwMod::DeathMsg*> HetuwMod::deathMessages;
 
+bool HetuwMod::bDrawHomeCords;
+std::vector<HetuwMod::HomePos*> HetuwMod::homePosStack;
+bool HetuwMod::bNextCharForHome;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -111,6 +118,7 @@ void HetuwMod::init() {
 	bDrawHelp = false;
 	bDrawPlayersInRangePanel = true;
 	bDrawDeathMessages = true;
+	bDrawHomeCords = false;
 
 	charKey_Up = 'w';
 	charKey_Down = 's';
@@ -126,10 +134,13 @@ void HetuwMod::init() {
 	charKey_ShowCords = 'z';
 	charKey_ShowPlayersInRange = 'p';
 	charKey_ShowDeathMessages = 't';
+	charKey_ShowHomeCords = 'g';
 
 	charKey_ShowMap = 'm';
 	charKey_MapZoomIn = 'u';
 	charKey_MapZoomOut = 'o';
+
+	charKey_CreateHome = 'r';
 
 	debugRecPos = { 0.0, 0.0 };
 	debugRecPos2 = { 0.0, 0.0 };
@@ -247,6 +258,11 @@ void HetuwMod::initOnBirth() {
 
 	deathMessages.clear();
 	deathMessages.shrink_to_fit();
+
+	homePosStack.clear();
+	homePosStack.shrink_to_fit();
+
+	bNextCharForHome = false;
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject>* inGameObjects) {
@@ -376,6 +392,8 @@ void HetuwMod::livingLifeDraw() {
 
 	if (bDrawDeathMessages) drawDeathMessages();
 
+	if (bDrawHomeCords) drawHomeCords();
+
 	if (bDrawMap) drawMap();
 
 	if (bDrawHelp) drawHelp();
@@ -385,6 +403,77 @@ void HetuwMod::livingLifeDraw() {
 	//setDrawColor( 0.0, 1.0, 0, 1.0 );
 	//drawRect( debugRecPos2, 10, 10 );
 
+}
+
+void HetuwMod::addHomeLocation( int x, int y, bool ancient, char c ) {
+	int id = -1;
+	for (unsigned i=0; i<homePosStack.size(); i++) {
+		if (homePosStack[i]->x == x && homePosStack[i]->y == y) {
+			id = i;
+			break;
+		}
+	}
+	if (id >= 0) return; // home already exists
+	HomePos *p = new HomePos();
+	p->x = x;
+	p->y = y;
+	p->ancient = ancient;
+	p->c = c;
+	homePosStack.push_back(p);
+}
+
+void HetuwMod::drawHomeCords() {
+	if (homePosStack.size() <= 0) return;
+
+	doublePair drawPosA = livingLifePage->hetuwGetLastScreenViewCenter();
+	drawPosA.x -= HetuwMod::viewWidth/2 - (20*guiScale);
+	drawPosA.y += HetuwMod::viewHeight/2 - (40*guiScale);
+	drawPosA.y -= (40*guiScale);
+
+	float biggestTextWidth = 0;
+	char sBufA[64];
+	int bellCount = 0;
+	int markerCount = 0;
+	for (unsigned i=0; i<homePosStack.size(); i++) {
+		if (homePosStack[i]->c != 0) {
+			sprintf( sBufA, "%c %d %d", homePosStack[i]->c, homePosStack[i]->x, homePosStack[i]->y );
+		} else if (homePosStack[i]->ancient) {
+			sprintf( sBufA, "BELL %c %d %d", (char)(bellCount+65), homePosStack[i]->x, homePosStack[i]->y );
+			bellCount++;
+		} else {
+			sprintf( sBufA, "HOME %c %d %d", (char)(markerCount+65), homePosStack[i]->x, homePosStack[i]->y );
+			markerCount++;
+		}
+		float textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( sBufA, guiScale );
+		if (textWidth > biggestTextWidth) biggestTextWidth = textWidth;
+	}
+
+	float recWidth = biggestTextWidth/2;
+	float recHeight = homePosStack.size()*24*guiScale/2-12*guiScale;
+	doublePair drawPosB = drawPosA;
+	drawPosB.x += recWidth;
+	drawPosB.y -= recHeight;
+	setDrawColor( 0, 0, 0, 0.8 );
+	drawRect( drawPosB, recWidth + 6*guiScale, recHeight + 14*guiScale );
+
+	bellCount = 0;
+	markerCount = 0;
+	for (unsigned i=0; i<homePosStack.size(); i++) {
+		if (homePosStack[i]->c != 0) {
+			sprintf( sBufA, "%c %d %d", homePosStack[i]->c, homePosStack[i]->x, homePosStack[i]->y );
+			setDrawColor( 1.0, 1.0, 1.0, 1.0 );
+		} else if (homePosStack[i]->ancient) {
+			sprintf( sBufA, "BELL %c %d %d", (char)(bellCount+65), homePosStack[i]->x, homePosStack[i]->y );
+			bellCount++;
+			setDrawColor( 1.0, 1.0, 0.2, 1.0 );
+		} else {
+			sprintf( sBufA, "HOME %c %d %d", (char)(markerCount+65), homePosStack[i]->x, homePosStack[i]->y );
+			markerCount++;
+			setDrawColor( 0.2, 0.8, 1.0, 1.0 );
+		}
+		livingLifePage->hetuwDrawScaledHandwritingFont( sBufA, drawPosA, guiScale );
+		drawPosA.y -= 24*guiScale;
+	}
 }
 
 void HetuwMod::getRelationNameColor( const char* name, float* color ) {
@@ -697,6 +786,15 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	bool commandKey = isCommandKeyDown();
 	bool shiftKey = isShiftKeyDown();
 
+	if (bNextCharForHome) {
+		bNextCharForHome = false;
+		char c = toupper(inASCII);
+		if (c >= 65 && c <= 90) {
+			addHomeLocation( ourLiveObject->xd, ourLiveObject->yd, false, c );
+			return true;
+		}
+	}
+
 	// emotes
 	if (!commandKey && !shiftKey) {
 		int jic = (int)inASCII - 48;
@@ -742,6 +840,14 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_ShowDeathMessages)) {
 		bDrawDeathMessages = !bDrawDeathMessages;
+		return true;
+	}
+	if (!commandKey && isCharKey(inASCII, charKey_ShowHomeCords)) {
+		bDrawHomeCords = !bDrawHomeCords;
+		return true;
+	}
+	if (!commandKey && isCharKey(inASCII, charKey_CreateHome)) {
+		bNextCharForHome = true;
 		return true;
 	}
 
@@ -1635,6 +1741,9 @@ void HetuwMod::drawHelp() {
 	sprintf(str, "%c TOGGLE SHOW DEATH MESSAGES", toupper(charKey_ShowDeathMessages));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
+	sprintf(str, "%c TOGGLE SHOW HOME CORDS", toupper(charKey_ShowHomeCords));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
 
 	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
 	drawPos.x -= viewWidth/2 - 640*guiScale;
@@ -1674,5 +1783,8 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( "RIGHTARROWKEY ZOOM OUT", drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	livingLifePage->hetuwDrawScaledHandwritingFont( "CTRL+ARROWKEYS SCALE GUI", drawPos, guiScale );
+	drawPos.y -= lineHeight;
+	sprintf(str, "%c THEN KEY - REMEMBER CORDS", toupper(charKey_CreateHome));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 }

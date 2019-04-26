@@ -69,6 +69,13 @@ class HetuwMod
 
 public:
 
+	typedef struct {
+		int x;
+		int y;
+		bool ancient;
+		char c;
+	} HomePos;
+
 	static const int defaultViewWidth = 1280;
 	static const int defaultViewHeight = 720;
 
@@ -96,15 +103,19 @@ public:
 	static char charKey_Backpack;
 	static char charKey_Eat;
 	static char charKey_Baby;
+
 	static char charKey_ShowHelp;
 	static char charKey_ShowNames;
 	static char charKey_ShowCords;
 	static char charKey_ShowPlayersInRange;
 	static char charKey_ShowDeathMessages;
+	static char charKey_ShowHomeCords;
 
 	static char charKey_ShowMap;
 	static char charKey_MapZoomIn;
 	static char charKey_MapZoomOut;
+
+	static char charKey_CreateHome;
 
 	static bool isCharKey( char c, char charKey );
 
@@ -167,11 +178,14 @@ public:
 
 	static void onPlayerUpdate( LiveObject* o, const char* line );
 	static void removeLastName(char *newName, const char* name );
-	static void getLastName(char* lastName, const char* name );
+	static void getLastName( char* lastName, const char* name );
 	static void setLastNameColor( const char* lastName, float alpha );
 
 	static int playersInRangeNum;
 	static int youngWomenInRange;
+
+	static std::vector<HomePos*> homePosStack;
+	static void addHomeLocation( int x, int y, bool ancient = false, char c = 0 );
 
 private:
 
@@ -235,6 +249,10 @@ private:
 	static std::vector<DeathMsg*> deathMessages;
 
 	static bool objIdReverseAction( int objId );
+
+	static bool bDrawHomeCords;
+	static void drawHomeCords();
+	static bool bNextCharForHome;
 
 };
 
