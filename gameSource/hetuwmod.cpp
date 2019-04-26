@@ -407,6 +407,25 @@ void HetuwMod::livingLifeDraw() {
 
 void HetuwMod::addHomeLocation( int x, int y, bool ancient, char c ) {
 	int id = -1;
+	if (c != 0) {
+		bool cordsAlreadyExist = false;
+		for (unsigned i=0; i<homePosStack.size(); i++) {
+			if (c == homePosStack[i]->c) {
+				id = i;
+			}
+			if (homePosStack[i]->x == x && homePosStack[i]->y == y) {
+				cordsAlreadyExist = true;
+			}
+		}
+		if (cordsAlreadyExist) return;
+		if (id >= 0) {
+			homePosStack[id]->x = x;
+			homePosStack[id]->y = y;
+			homePosStack[id]->ancient = ancient;
+			return;
+		}
+	}
+ 
 	for (unsigned i=0; i<homePosStack.size(); i++) {
 		if (homePosStack[i]->x == x && homePosStack[i]->y == y) {
 			id = i;
@@ -1654,21 +1673,25 @@ void HetuwMod::drawCords() {
 
 	doublePair drawPosA = livingLifePage->hetuwGetLastScreenViewCenter();
 	doublePair drawPosB;
-	drawPosA.x -= HetuwMod::viewWidth/2 - (40*guiScale);
+	drawPosA.x -= HetuwMod::viewWidth/2 - (20*guiScale);
 	drawPosA.y += HetuwMod::viewHeight/2 - (40*guiScale);
-	drawPosB.x = drawPosA.x + (20*guiScale) + textWidthA/2 + textWidthB/2;
+	drawPosB.x = drawPosA.x + (20*guiScale) + textWidthA;
 	drawPosB.y = drawPosA.y;
 
+	doublePair drawPosC = drawPosA;
+	drawPosC.x += textWidthA/2;
+	doublePair drawPosD = drawPosB;
+	drawPosD.x += textWidthB/2;
 	setDrawColor( 0, 0, 0, 1 );
-	drawRect( drawPosA, textWidthA/2 + 6*guiScale, 16*guiScale );
-	drawRect( drawPosB, textWidthB/2 + 6*guiScale, 16*guiScale );
+	drawRect( drawPosC, textWidthA/2 + 6*guiScale, 16*guiScale );
+	drawRect( drawPosD, textWidthB/2 + 6*guiScale, 16*guiScale );
 
 	if (x < 0) setDrawColor( 1, 0.8, 0, 1 );
 	else setDrawColor( 0.2, 1, 0.2, 1 );
-	livingLifePage->hetuwDrawScaledHandwritingFont( sBufA, drawPosA, guiScale, alignCenter );
+	livingLifePage->hetuwDrawScaledHandwritingFont( sBufA, drawPosA, guiScale );
 	if (y < 0) setDrawColor( 1, 0.8, 0, 1 );
 	else setDrawColor( 0.2, 1, 0.2, 1 );
-	livingLifePage->hetuwDrawScaledHandwritingFont( sBufB, drawPosB, guiScale, alignCenter );
+	livingLifePage->hetuwDrawScaledHandwritingFont( sBufB, drawPosB, guiScale );
 }
 
 void HetuwMod::drawHelp() {
