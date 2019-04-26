@@ -11592,8 +11592,6 @@ void LivingLifePage::step() {
                 
                 if( !( mFirstServerMessagesReceived & 1 ) ) {
                     // first map chunk just recieved
-
-					HetuwMod::initOnBirth();
                     
                     char found = false;
                     int closestX = 0;
@@ -14499,6 +14497,7 @@ void LivingLifePage::step() {
                 if( ourID != lastPlayerID ) {
                     // different ID than last time, delete home markers
                     homePosStack.deleteAll();
+					HetuwMod::initOnBirth();
                     }
                 lastPlayerID = ourID;
 
