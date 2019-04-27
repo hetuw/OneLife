@@ -1,4 +1,4 @@
-int versionNumber = 216;
+int versionNumber = 219;
 int dataVersionNumber = 0;
 
 int binVersionNumber = versionNumber;
@@ -74,6 +74,7 @@ CustomRandomSource randSource( 34957197 );
 #include "groundSprites.h"
 
 #include "emotion.h"
+#include "photos.h"
 
 
 #include "FinalMessagePage.h"
@@ -754,7 +755,9 @@ void freeFrameDrawer() {
     
     freeMusicPlayer();
     freeEmotion();
-
+    
+    freePhotos();
+    
 
     if( reflectorURL != NULL ) {
         delete [] reflectorURL;
@@ -1335,6 +1338,9 @@ void drawFrame( char inUpdate ) {
     stepSoundBank();
     
     stepMusicPlayer();
+    
+    stepPhotos();
+    
 
     if( currentGamePage != NULL ) {
         currentGamePage->base_step();
@@ -1603,6 +1609,7 @@ void drawFrame( char inUpdate ) {
                     
 
                     initEmotion();
+                    initPhotos();
                     
                     initMusicPlayer();
                     setMusicLoudness( musicLoudness );
