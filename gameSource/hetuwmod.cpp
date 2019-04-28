@@ -107,6 +107,8 @@ bool HetuwMod::bDrawHomeCords;
 std::vector<HetuwMod::HomePos*> HetuwMod::homePosStack;
 bool HetuwMod::bNextCharForHome;
 
+GridPos HetuwMod::cordOffset;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -263,6 +265,9 @@ void HetuwMod::initOnBirth() {
 	homePosStack.shrink_to_fit();
 
 	bNextCharForHome = false;
+
+	cordOffset = { 0, 0 };
+	addHomeLocation( 0, 0, false, 12 ); // add birth location
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject>* inGameObjects) {
@@ -461,12 +466,15 @@ void HetuwMod::drawHomeCords() {
 	int markerCount = 0;
 	for (unsigned i=0; i<homePosStack.size(); i++) {
 		if (homePosStack[i]->c != 0) {
-			sprintf( sBufA, "%c %d %d", homePosStack[i]->c, homePosStack[i]->x, homePosStack[i]->y );
+			if (homePosStack[i]->c == 12)
+				sprintf( sBufA, "BIRTH %d %d", homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+			else 
+				sprintf( sBufA, "%c %d %d", homePosStack[i]->c, homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
 		} else if (homePosStack[i]->ancient) {
-			sprintf( sBufA, "BELL %c %d %d", (char)(bellCount+65), homePosStack[i]->x, homePosStack[i]->y );
+			sprintf( sBufA, "BELL %c %d %d", (char)(bellCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
 			bellCount++;
 		} else {
-			sprintf( sBufA, "HOME %c %d %d", (char)(markerCount+65), homePosStack[i]->x, homePosStack[i]->y );
+			sprintf( sBufA, "HOME %c %d %d", (char)(markerCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
 			markerCount++;
 		}
 		float textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( sBufA, guiScale );
@@ -485,14 +493,19 @@ void HetuwMod::drawHomeCords() {
 	markerCount = 0;
 	for (unsigned i=0; i<homePosStack.size(); i++) {
 		if (homePosStack[i]->c != 0) {
-			sprintf( sBufA, "%c %d %d", homePosStack[i]->c, homePosStack[i]->x, homePosStack[i]->y );
-			setDrawColor( 1.0, 1.0, 1.0, 1.0 );
+			if (homePosStack[i]->c == 12) {
+				sprintf( sBufA, "BIRTH %d %d", homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				setDrawColor( 0.7, 0.6, 1.0, 1.0 );
+			} else {
+				sprintf( sBufA, "%c %d %d", homePosStack[i]->c, homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				setDrawColor( 1.0, 1.0, 1.0, 1.0 );
+			}
 		} else if (homePosStack[i]->ancient) {
-			sprintf( sBufA, "BELL %c %d %d", (char)(bellCount+65), homePosStack[i]->x, homePosStack[i]->y );
+			sprintf( sBufA, "BELL %c %d %d", (char)(bellCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
 			bellCount++;
 			setDrawColor( 1.0, 1.0, 0.2, 1.0 );
 		} else {
-			sprintf( sBufA, "HOME %c %d %d", (char)(markerCount+65), homePosStack[i]->x, homePosStack[i]->y );
+			sprintf( sBufA, "HOME %c %d %d", (char)(markerCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
 			markerCount++;
 			setDrawColor( 0.2, 0.8, 1.0, 1.0 );
 		}
@@ -855,8 +868,13 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		if (iDrawNames >= 3) iDrawNames = 0;
 		return true;
 	}
-	if (!commandKey && isCharKey(inASCII, charKey_ShowCords)) {
+	if (!commandKey && !shiftKey && isCharKey(inASCII, charKey_ShowCords)) {
 		bDrawCords = !bDrawCords;
+		return true;
+	}
+	if (!commandKey && shiftKey && isCharKey(inASCII, charKey_ShowCords)) {
+		cordOffset.x = -ourLiveObject->xd;
+		cordOffset.y = -ourLiveObject->yd;
 		return true;
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_ShowPlayersInRange)) {
@@ -1667,8 +1685,8 @@ void HetuwMod::drawAge() {
 }
 
 void HetuwMod::drawCords() {
-	int x = round(ourLiveObject->currentPos.x);
-	int y = round(ourLiveObject->currentPos.y);
+	int x = round(ourLiveObject->currentPos.x+cordOffset.x);
+	int y = round(ourLiveObject->currentPos.y+cordOffset.y);
 
 	char sBufA[16];
 	sprintf(sBufA, "%d", x );
@@ -1811,6 +1829,9 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( "CTRL+ARROWKEYS SCALE GUI", drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c THEN KEY - REMEMBER CORDS", toupper(charKey_CreateHome));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+	sprintf(str, "SHIFT+%c - RESET CORDS TO WHERE YOU ARE STANDING", toupper(charKey_ShowCords));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 }

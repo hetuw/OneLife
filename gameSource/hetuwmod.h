@@ -188,6 +188,8 @@ public:
 	static std::vector<HomePos*> homePosStack;
 	static void addHomeLocation( int x, int y, bool ancient = false, char c = 0 );
 
+	static GridPos cordOffset;
+
 private:
 
  	static LiveObject *ourLiveObject;
