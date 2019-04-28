@@ -6898,6 +6898,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
             delete [] message;
             }
         else if( photoSig != NULL ) {
+
+			float currentZoom = HetuwMod::zoomScale;
+			HetuwMod::setZoom( 1.0f );
+
             doublePair pos;
             
             pos.x = takingPhotoGlobalPos.x;
@@ -6973,6 +6977,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             photoSig = NULL;
             photoSequenceNumber = -1;
             waitingForPhotoSig = false;
+
+			HetuwMod::setZoom( currentZoom );
             }
         }
     

@@ -148,6 +148,7 @@ public:
 
 	static void zoomIncrease();
 	static void zoomDecrease();
+	static void setZoom(float newZoom);
 	static void guiScaleIncrease();
 	static void guiScaleDecrease();
 	

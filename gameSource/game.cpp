@@ -2264,10 +2264,8 @@ void specialKeyDown( int inKey ) {
 	if (!isCommandKeyDown() && !isShiftKeyDown()) {
 		if( inKey == MG_KEY_LEFT ) { // hetuw mod
 			HetuwMod::zoomDecrease();
-			hetuwSetViewSize();
 		} else if( inKey == MG_KEY_RIGHT ) { // hetuw mod
 			HetuwMod::zoomIncrease();
-			hetuwSetViewSize();
 		}
 	}
 	if (isCommandKeyDown()) {

@@ -306,6 +306,7 @@ void HetuwMod::zoomCalc() {
 	panelOffsetX = (int)(viewWidth - defaultViewWidth)/2;
 	panelOffsetY = (int)(viewHeight - defaultViewHeight)/2;
 	guiScale = guiScaleRaw * zoomScale;
+	hetuwSetViewSize();
 }
 
 void HetuwMod::zoomIncrease() {
@@ -317,6 +318,11 @@ void HetuwMod::zoomIncrease() {
 void HetuwMod::zoomDecrease() {
 	zoomScale *= 0.75f;
 	if (zoomScale < 1.0f) zoomScale = 1.0f;
+	zoomCalc();
+}
+
+void HetuwMod::setZoom(float newZoom) {
+	zoomScale = newZoom;
 	zoomCalc();
 }
 
