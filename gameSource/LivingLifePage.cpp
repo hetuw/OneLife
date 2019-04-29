@@ -4602,19 +4602,24 @@ void LivingLifePage::draw( doublePair inViewCenter,
             drawMessage( "waitingReconnect", pos );
             doublePair hetuwPos = pos; // hetuw mod
 			hetuwPos.y -= 60; // hetuw mod
-            drawMessage( hetuwWaitingText, hetuwPos ); // hetuw mod
+			char hStr[128]; // hetuw mod
+			sprintf( hStr, hetuwWaitingText, toupper(HetuwMod::charKey_ShowHelp) ); // hetuw mod
             }
         else if( mPlayerInFlight ) {
             drawMessage( "waitingArrival", pos );
             doublePair hetuwPos = pos; // hetuw mod
 			hetuwPos.y -= 60; // hetuw mod
-            drawMessage( hetuwWaitingText, hetuwPos ); // hetuw mod
+			char hStr[128]; // hetuw mod
+			sprintf( hStr, hetuwWaitingText, toupper(HetuwMod::charKey_ShowHelp) ); // hetuw mod
+            drawMessage( hStr, hetuwPos ); // hetuw mod
             }
         else if( userTwinCode == NULL ) {
             drawMessage( "waitingBirth", pos );
             doublePair hetuwPos = pos; // hetuw mod
 			hetuwPos.y -= 60; // hetuw mod
-            drawMessage( hetuwWaitingText, hetuwPos ); // hetuw mod
+			char hStr[128]; // hetuw mod
+			sprintf( hStr, hetuwWaitingText, toupper(HetuwMod::charKey_ShowHelp) ); // hetuw mod
+            drawMessage( hStr, hetuwPos ); // hetuw mod
             }
         else {
             const char *sizeString = translate( "twins" );
@@ -20087,12 +20092,6 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 mZKeyDown = true;
                 }
             break;
-        case 'f': // hetuw mod
-        case 'F': // hetuw mod
-            if( ! mSayField.isFocused() ) {
-                shouldMoveCamera = !shouldMoveCamera; // hetuw mod
-                }
-            break;
         case 9: // tab
             if( mCurrentHintObjectID != 0 ) {
                 
@@ -20509,6 +20508,10 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
         }
 
     }
+
+void LivingLifePage::hetuwToggleFixCamera() {
+	shouldMoveCamera = !shouldMoveCamera;
+}
 
 // hetuw mod - if changes are made here they also need to be made in the constructor above
 void LivingLifePage::hetuwSetPanelOffsets() {

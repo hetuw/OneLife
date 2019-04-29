@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <vector>
+#include <fstream>
+#include <string>
 
 #include "LivingLifePage.h"
 #include "objectBank.h"
@@ -9,6 +11,8 @@
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/game/drawUtils.h"
 #include "groundSprites.h"
+
+using namespace std;
 
 int HetuwMod::viewWidth;
 int HetuwMod::viewHeight;
@@ -46,6 +50,7 @@ char HetuwMod::charKey_ShowDeathMessages;
 char HetuwMod::charKey_ShowHomeCords;
 
 char HetuwMod::charKey_CreateHome;
+char HetuwMod::charKey_FixCamera;
 
 bool HetuwMod::upKeyDown;
 bool HetuwMod::downKeyDown;
@@ -121,6 +126,8 @@ void HetuwMod::init() {
 	bDrawPlayersInRangePanel = true;
 	bDrawDeathMessages = true;
 	bDrawHomeCords = false;
+	iDrawNames = 1;
+	bDrawCords = true;
 
 	charKey_Up = 'w';
 	charKey_Down = 's';
@@ -143,12 +150,10 @@ void HetuwMod::init() {
 	charKey_MapZoomOut = 'o';
 
 	charKey_CreateHome = 'r';
+	charKey_FixCamera = 'f';
 
 	debugRecPos = { 0.0, 0.0 };
 	debugRecPos2 = { 0.0, 0.0 };
-
-	iDrawNames = 1;
-	bDrawCords = true;
 
 	bDrawMap = false;
 	mapScale = 20000;
@@ -157,6 +162,8 @@ void HetuwMod::init() {
 
 	initDangerousAnimals();	
 	initClosedDoorIDs();
+
+	initSettings();
 
 	initOnBirth();
 }
@@ -227,6 +234,179 @@ void HetuwMod::initClosedDoorIDs() {
 	closedDoorIDs[7] = 1851; // 1851.txt:Fence Gate
 	closedDoorIDs[8] = 2984; // 2984.txt:Shaky Property Gate# +owned
 	closedDoorIDs[9] = 2962; // 2962.txt:Property Gate# +owned
+}
+
+// outputs name[64] and value[64] - input line
+void HetuwMod::getSettingsFileLine( char* name, char* value, string line ) {
+	int n = 0;
+	int v = 0;
+	bool readName = true;
+	for (unsigned i=0; i<line.length(); i++) {
+		if (line[i] == ' ') continue;
+
+		if (readName) {
+			if (line[i] == '=') {
+				readName = false;
+				continue;
+			}
+			if (n >= 63) break;
+			name[n] = line[i];
+			n++;
+		} else {
+			if (v >= 63) break;
+			value[v] = line[i];
+			v++;
+		}
+	}
+	name[n] = 0;
+	value[v] = 0;
+}
+
+bool HetuwMod::setCharKey( char &key, const char *value ) {
+	if (value[0] != '<') {
+		key = value[0];
+		return true;
+	}
+	if (strstr(value, "<space>")) {
+		key = ' ';
+		return true;
+	}
+	return false;
+}
+
+bool HetuwMod::setSetting( const char* name, const char* value ) {
+	if (strlen(value) < 1) return false;
+	if (strstr(name, "key_up")) {
+		return setCharKey( charKey_Up, value );
+	}
+	if (strstr(name, "key_down")) {
+		return setCharKey( charKey_Down, value );
+	}
+	if (strstr(name, "key_left")) {
+		return setCharKey( charKey_Left, value );
+	}
+	if (strstr(name, "key_right")) {
+		return setCharKey( charKey_Right, value );
+	}
+	if (strstr(name, "key_center")) {
+		return setCharKey( charKey_TileStandingOn, value );
+	}
+	if (strstr(name, "key_backpack")) {
+		return setCharKey( charKey_Backpack, value );
+	}
+	if (strstr(name, "key_eat")) {
+		return setCharKey( charKey_Eat, value );
+	}
+	if (strstr(name, "key_baby")) {
+		return setCharKey( charKey_Baby, value );
+	}
+	if (strstr(name, "key_show_help")) {
+		return setCharKey( charKey_ShowHelp, value );
+	}
+	if (strstr(name, "key_show_names")) {
+		return setCharKey( charKey_ShowNames, value );
+	}
+	if (strstr(name, "key_show_cords")) {
+		return setCharKey( charKey_ShowCords, value );
+	}
+	if (strstr(name, "key_show_playersinrange")) {
+		return setCharKey( charKey_ShowPlayersInRange, value );
+	}
+	if (strstr(name, "key_show_deathmessages")) {
+		return setCharKey( charKey_ShowDeathMessages, value );
+	}
+	if (strstr(name, "key_show_homecords")) {
+		return setCharKey( charKey_ShowHomeCords, value );
+	}
+	if (strstr(name, "key_remembercords")) {
+		return setCharKey( charKey_CreateHome, value );
+	}
+	if (strstr(name, "key_fixcamera")) {
+		return setCharKey( charKey_FixCamera, value );
+	}
+
+	if (strstr(name, "init_show_names")) {
+		iDrawNames = (int)(value[0]-'0');
+		return true;
+	}
+	if (strstr(name, "init_show_cords")) {
+		bDrawCords = bool(value[0]-'0');
+		return true;
+	}
+	if (strstr(name, "init_show_playersinrange")) {
+		bDrawPlayersInRangePanel = bool(value[0]-48);
+		return true;
+	}
+	if (strstr(name, "init_show_deathmessages")) {
+		bDrawDeathMessages = bool(value[0]-48);
+		return true;
+	}
+	if (strstr(name, "init_show_homecords")) {
+		bDrawHomeCords = bool(value[0]-48);
+		return true;
+	}
+
+	return false;
+}
+
+void HetuwMod::writeCharKeyToStream( ofstream &ofs, const char* keyName, char key ) {
+	ofs << keyName << " = ";
+	if (key == ' ')
+		ofs << "<space>";
+	else
+		ofs << key;
+	ofs << endl;
+}
+
+void HetuwMod::initSettings() {
+	ifstream ifs( hetuwSettingsFileName );
+
+	if (!ifs.good()) { // file doesnt exist
+		//printf("hetuw creating %s\n", hetuwSettingsFileName);
+		ofstream ofs( hetuwSettingsFileName, ofstream::out );
+
+		writeCharKeyToStream( ofs, "key_up", charKey_Up );
+		writeCharKeyToStream( ofs, "key_down", charKey_Down );
+		writeCharKeyToStream( ofs, "key_left", charKey_Left );
+		writeCharKeyToStream( ofs, "key_right", charKey_Right );
+		writeCharKeyToStream( ofs, "key_center", charKey_TileStandingOn );
+		ofs << endl;
+		writeCharKeyToStream( ofs, "key_backpack", charKey_Backpack );
+		writeCharKeyToStream( ofs, "key_eat", charKey_Eat );
+		writeCharKeyToStream( ofs, "key_baby", charKey_Baby );
+		ofs << endl;
+		writeCharKeyToStream( ofs, "key_show_help", charKey_ShowHelp );
+		writeCharKeyToStream( ofs, "key_show_names", charKey_ShowNames );
+		writeCharKeyToStream( ofs, "key_show_cords", charKey_ShowCords );
+		writeCharKeyToStream( ofs, "key_show_playersinrange", charKey_ShowPlayersInRange );
+		writeCharKeyToStream( ofs, "key_show_deathmessages", charKey_ShowDeathMessages );
+		writeCharKeyToStream( ofs, "key_show_homecords", charKey_ShowHomeCords );
+		ofs << endl;
+		writeCharKeyToStream( ofs, "key_remembercords", charKey_CreateHome );
+		writeCharKeyToStream( ofs, "key_fixcamera", charKey_FixCamera );
+		ofs << endl;
+		ofs << "init_show_names = " << (char)(iDrawNames+48) << endl;
+		ofs << "init_show_cords = " << (char)(bDrawCords+48) << endl;
+		ofs << "init_show_playersinrange = " << (char)(bDrawPlayersInRangePanel+48) << endl;
+		ofs << "init_show_deathmessages = " << (char)(bDrawDeathMessages+48) << endl;
+		ofs << "init_show_homecords = " << (char)(bDrawHomeCords+48) << endl;
+
+		ofs.close();
+		return;
+	}
+
+	string line;
+	while (getline(ifs, line)) {
+		//printf("hetuw read line: %s\n", line.c_str());
+		if (line.length() < 2) continue;
+		char name[64];
+		char value[64];
+		getSettingsFileLine( name, value, line );
+		if (strlen(name) < 1) continue;
+		//printf("hetuw name: %s, value: %s\n", name, value);
+		if (!setSetting( name, value ))
+			printf("hetuw WARNING invalid %s line: %s\n", hetuwSettingsFileName, line.c_str());
+	}
 }
 
 void HetuwMod::initOnBirth() {
@@ -893,6 +1073,11 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		bNextCharForHome = true;
 		return true;
 	}
+	if (!commandKey && isCharKey(inASCII, charKey_FixCamera)) {
+		livingLifePage->hetuwToggleFixCamera();
+		return true;
+	}
+	
 
 	if (commandKey) {
 		if (isCharKey(inASCII, charKey_TileStandingOn)) {
@@ -1720,7 +1905,7 @@ void HetuwMod::drawCords() {
 
 void HetuwMod::drawHelp() {
 	float guiScale = (guiScaleRaw+0.1) * zoomScale;
-	char str[64];
+	char str[128];
 	setDrawColor( 0, 0, 0, 0.8 );
 	drawRect( livingLifePage->hetuwGetLastScreenViewCenter(), viewWidth/2, viewHeight/2 );
 
@@ -1749,6 +1934,11 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( "WRITE EMOTE FOR PERMANENT EMOTE", drawPos, guiScale );
 	drawPos.y -= lineHeight;
 
+	drawPos.y -= lineHeight;
+	sprintf(str, "YOU CAN CHANGE KEYS AND SETTINGS BY MODIFYING THE HETUW.CFG FILE");
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+
 	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
 	drawPos.x -= viewWidth/2 - 250*guiScale;
 	drawPos.y += viewHeight/2 - 80*guiScale;
@@ -1771,7 +1961,8 @@ void HetuwMod::drawHelp() {
 	drawPos.y -= lineHeight;
 	livingLifePage->hetuwDrawScaledHandwritingFont( "= MAKE SCREENSHOT", drawPos, guiScale );
 	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawScaledHandwritingFont( "F TOGGLE FIX CAMERA", drawPos, guiScale );
+	sprintf(str, "%c TOGGLE FIX CAMERA", toupper(charKey_FixCamera));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c TOGGLE SHOW NAMES", toupper(charKey_ShowNames));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
@@ -1815,11 +2006,11 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	if (charKey_TileStandingOn == ' ') sprintf(str, "SPACE - USE/PICK UP ITEM ON THE TILE YOU ARE STANDING ON");
-	else sprintf(str, "%c - USE/PICK UP ITEM ON THE TILE YOU ARE STANDING ON", charKey_TileStandingOn);
+	else sprintf(str, "%c - USE/PICK UP ITEM ON THE TILE YOU ARE STANDING ON", toupper(charKey_TileStandingOn));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	if (charKey_TileStandingOn == ' ') sprintf(str, "CTRL+SPACE - DROP / PICK ITEM FROM CONTAINER");
-	else sprintf(str, "CTRL+%c - DROP / PICK ITEM FROM CONTAINER", charKey_TileStandingOn);
+	else sprintf(str, "CTRL+%c - DROP / PICK ITEM FROM CONTAINER", toupper(charKey_TileStandingOn));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	livingLifePage->hetuwDrawScaledHandwritingFont( "LEFTARROWKEY ZOOM IN", drawPos, guiScale );

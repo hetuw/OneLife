@@ -1,10 +1,14 @@
 #ifndef HETUWMOD_H
 #define HETUWMOD_H
 
-#define hetuwWaitingText "press H in game for help"
+#define hetuwWaitingText "press %c in game for help"
+#define hetuwSettingsFileName "hetuw.cfg"
 
 #include "LivingLifePage.h"
 #include <vector>
+#include <string>
+
+using namespace std;
                             
 class HetuwMod
 {
@@ -116,6 +120,7 @@ public:
 	static char charKey_MapZoomOut;
 
 	static char charKey_CreateHome;
+	static char charKey_FixCamera;
 
 	static bool isCharKey( char c, char charKey );
 
@@ -190,6 +195,10 @@ public:
 
 	static GridPos cordOffset;
 
+	static void getSettingsFileLine( char* name, char* value, string line );
+	static bool setSetting( const char* name, const char* value );
+	static bool setCharKey( char &key, const char *value );
+
 private:
 
  	static LiveObject *ourLiveObject;
@@ -220,6 +229,7 @@ private:
 	
 	static void initDangerousAnimals();
 	static void initClosedDoorIDs();
+	static void initSettings();
 
 	static void move(); // called only once on frame - dont use
 	static bool cornerTileIsSafeToWalk( int sX, int sY, bool up, bool down, bool right, bool left);
@@ -257,6 +267,7 @@ private:
 	static void drawHomeCords();
 	static bool bNextCharForHome;
 
+	static void writeCharKeyToStream( ofstream &ofs, const char* keyName, char key );
 };
 
 
