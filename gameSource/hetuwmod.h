@@ -148,6 +148,7 @@ public:
 
 	static void init();
 	static void initOnBirth();
+	static void initOnServerJoin();
 
 	static void setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject> *inGameObjects);
 

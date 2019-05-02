@@ -410,30 +410,14 @@ void HetuwMod::initSettings() {
 }
 
 void HetuwMod::initOnBirth() {
-	lastPosX = 9999;
-	lastPosY = 9999;
 
-	upKeyDown = false;
-	downKeyDown = false;
-	leftKeyDown = false;
-	rightKeyDown = false;
+	initOnServerJoin();
 
 	currentEmote = -1;
 	lastSpecialEmote = 0;
 
-	stopAutoRoadRun = false;
-	activateAutoRoadRun = false;
-	stopAutoRoadRunTime = 0;
-
-	waitForDoorToOpen = false;
-	lastDoorToOpenX = 9999;
-	lastDoorToOpenY = 9999;
-	
 	playersInMap.clear();
 	playersInMap.shrink_to_fit();
-
-	mapZoomInKeyDown = false;
-	mapZoomInKeyDown = false;
 
 	playersInRangeNum = 0;
 	youngWomenInRange = 0;
@@ -444,10 +428,31 @@ void HetuwMod::initOnBirth() {
 	homePosStack.clear();
 	homePosStack.shrink_to_fit();
 
-	bNextCharForHome = false;
-
 	cordOffset = { 0, 0 };
 	addHomeLocation( 0, 0, false, 12 ); // add birth location
+}
+
+void HetuwMod::initOnServerJoin() {
+	lastPosX = 9999;
+	lastPosY = 9999;
+
+	upKeyDown = false;
+	downKeyDown = false;
+	leftKeyDown = false;
+	rightKeyDown = false;
+
+	mapZoomInKeyDown = false;
+	mapZoomInKeyDown = false;
+
+	stopAutoRoadRun = false;
+	activateAutoRoadRun = false;
+	stopAutoRoadRunTime = 0;
+
+	waitForDoorToOpen = false;
+	lastDoorToOpenX = 9999;
+	lastDoorToOpenY = 9999;
+	
+	bNextCharForHome = false;
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject>* inGameObjects) {
