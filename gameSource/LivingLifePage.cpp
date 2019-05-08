@@ -18692,6 +18692,9 @@ bool LivingLifePage::hetuwMouseIsDown() {
 }
 
 void LivingLifePage::pointerDown( float inX, float inY ) {
+	if (HetuwMod::livingLifePageMouseDown( inX, inY ))
+		return;
+
     lastMouseX = inX;
     lastMouseY = inY;
 

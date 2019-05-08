@@ -78,6 +78,8 @@ public:
 		int y;
 		bool ancient;
 		char c;
+		doublePair drawStartPos;
+		doublePair drawEndPos;
 	} HomePos;
 
 	static const int defaultViewWidth = 1280;
@@ -173,6 +175,7 @@ public:
 	static bool livingLifeKeyDown(unsigned char inASCII);
 	static bool livingLifeKeyUp(unsigned char inASCII);
 	static bool livingLifeSpecialKeyDown(unsigned char inKeyCode);
+	static bool livingLifePageMouseDown( float mX, float mY );
 
 	static void setEmote(int id);
 
@@ -182,6 +185,8 @@ public:
 
 	static void getRelationNameColor( const char* name, float* color );
 	static void drawPlayerNames( LiveObject* player );
+
+	static void hDrawRect( doublePair startPos, doublePair endPos );
 
 	static void onPlayerUpdate( LiveObject* o, const char* line );
 	static void removeLastName(char *newName, const char* name );

@@ -640,6 +640,9 @@ void HetuwMod::addHomeLocation( int x, int y, bool ancient, char c ) {
 void HetuwMod::drawHomeCords() {
 	if (homePosStack.size() <= 0) return;
 
+	int mouseX, mouseY;
+	livingLifePage->hetuwGetMouseXY( mouseX, mouseY );
+
 	doublePair drawPosA = livingLifePage->hetuwGetLastScreenViewCenter();
 	drawPosA.x -= HetuwMod::viewWidth/2 - (20*guiScale);
 	drawPosA.y += HetuwMod::viewHeight/2 - (40*guiScale);
@@ -695,8 +698,29 @@ void HetuwMod::drawHomeCords() {
 			setDrawColor( 0.2, 0.8, 1.0, 1.0 );
 		}
 		livingLifePage->hetuwDrawScaledHandwritingFont( sBufA, drawPosA, guiScale );
+		homePosStack[i]->drawStartPos.x = drawPosB.x-recWidth-6*guiScale;
+		homePosStack[i]->drawEndPos.x = drawPosB.x+recWidth+6*guiScale;
+		homePosStack[i]->drawEndPos.y = drawPosA.y+14*guiScale;
+		homePosStack[i]->drawStartPos.y = drawPosA.y-14*guiScale;
 		drawPosA.y -= 24*guiScale;
+		if (mouseX >= homePosStack[i]->drawStartPos.x && mouseX <= homePosStack[i]->drawEndPos.x) {
+			if (mouseY >= homePosStack[i]->drawStartPos.y && mouseY <= homePosStack[i]->drawEndPos.y) {
+				setDrawColor( 1, 1, 1, 0.4 );
+				hDrawRect( homePosStack[i]->drawStartPos, homePosStack[i]->drawEndPos );
+			}
+		}
+
 	}
+}
+
+void HetuwMod::hDrawRect( doublePair startPos, doublePair endPos ) {
+	double width = endPos.x - startPos.x;
+	double height = endPos.y - startPos.y;
+	width /= 2;
+	height /= 2;
+	startPos.x += width;
+	startPos.y += height;
+	drawRect( startPos, width, height );
 }
 
 void HetuwMod::getRelationNameColor( const char* name, float* color ) {
@@ -1292,6 +1316,23 @@ bool HetuwMod::livingLifeSpecialKeyDown(unsigned char inKeyCode) {
 	}
 
 	return r;
+}
+
+bool HetuwMod::livingLifePageMouseDown( float mX, float mY ) {
+
+	if (bDrawHomeCords) {
+		for (unsigned i=0; i<homePosStack.size(); i++) {
+			if (mX >= homePosStack[i]->drawStartPos.x && mX <= homePosStack[i]->drawEndPos.x) {
+				if (mY >= homePosStack[i]->drawStartPos.y && mY <= homePosStack[i]->drawEndPos.y) {
+					cordOffset.x = -homePosStack[i]->x;
+					cordOffset.y = -homePosStack[i]->y;
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
 }
 
 bool HetuwMod::tileIsSafeToWalk(int x, int y) {
