@@ -114,6 +114,14 @@ bool HetuwMod::bNextCharForHome;
 
 GridPos HetuwMod::cordOffset;
 
+bool HetuwMod::bDrawInputString;
+string HetuwMod::tempInputString;
+
+int HetuwMod::getCustomCords;
+char HetuwMod::tempCordChar;
+int HetuwMod::tempCordX;
+int HetuwMod::tempCordY;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -453,6 +461,9 @@ void HetuwMod::initOnServerJoin() {
 	lastDoorToOpenY = 9999;
 	
 	bNextCharForHome = false;
+
+	bDrawInputString = false;
+	getCustomCords = 0;
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject>* inGameObjects) {
@@ -575,32 +586,6 @@ void HetuwMod::livingLifeStep() {
 	}
 }
 
-void HetuwMod::livingLifeDraw() {
-
- 	ourLiveObject = livingLifePage->getOurLiveObject();
-	if (!ourLiveObject) return;
-
-	drawAge();
-
-	if (bDrawCords) drawCords();
-
-	if (bDrawPlayersInRangePanel) drawPlayersInRangePanel();
-
-	if (bDrawDeathMessages) drawDeathMessages();
-
-	if (bDrawHomeCords) drawHomeCords();
-
-	if (bDrawMap) drawMap();
-
-	if (bDrawHelp) drawHelp();
-
-	//setDrawColor( 1.0, 0, 0, 1.0 );
-	//drawRect( debugRecPos, 10, 10 );
-	//setDrawColor( 0.0, 1.0, 0, 1.0 );
-	//drawRect( debugRecPos2, 10, 10 );
-
-}
-
 void HetuwMod::addHomeLocation( int x, int y, bool ancient, char c ) {
 	int id = -1;
 	if (c != 0) {
@@ -635,6 +620,54 @@ void HetuwMod::addHomeLocation( int x, int y, bool ancient, char c ) {
 	p->ancient = ancient;
 	p->c = c;
 	homePosStack.push_back(p);
+}
+
+void HetuwMod::livingLifeDraw() {
+
+ 	ourLiveObject = livingLifePage->getOurLiveObject();
+	if (!ourLiveObject) return;
+
+	drawAge();
+
+	if (bDrawCords) drawCords();
+
+	if (bDrawPlayersInRangePanel) drawPlayersInRangePanel();
+
+	if (bDrawDeathMessages) drawDeathMessages();
+
+	if (bDrawHomeCords) drawHomeCords();
+
+	if (bDrawMap) drawMap();
+
+	if (bDrawInputString) drawInputString();
+
+	if (bDrawHelp) drawHelp();
+
+	//setDrawColor( 1.0, 0, 0, 1.0 );
+	//drawRect( debugRecPos, 10, 10 );
+	//setDrawColor( 0.0, 1.0, 0, 1.0 );
+	//drawRect( debugRecPos2, 10, 10 );
+
+}
+
+void HetuwMod::hDrawRect( doublePair startPos, doublePair endPos ) {
+	double width = endPos.x - startPos.x;
+	double height = endPos.y - startPos.y;
+	width /= 2;
+	height /= 2;
+	startPos.x += width;
+	startPos.y += height;
+	drawRect( startPos, width, height );
+}
+
+void HetuwMod::drawInputString() {
+	doublePair drawPosA = livingLifePage->hetuwGetLastScreenViewCenter();
+	const char *sBufA = tempInputString.c_str();
+	float textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( sBufA, guiScale );
+	setDrawColor( 0, 0, 0, 0.8 );
+	drawRect( drawPosA, (textWidth/2) + 6*guiScale, 14*guiScale );
+	setDrawColor( 1, 1, 1, 1 );
+	livingLifePage->hetuwDrawScaledHandwritingFont( sBufA, drawPosA, guiScale, alignCenter );
 }
 
 void HetuwMod::drawHomeCords() {
@@ -711,16 +744,6 @@ void HetuwMod::drawHomeCords() {
 		}
 
 	}
-}
-
-void HetuwMod::hDrawRect( doublePair startPos, doublePair endPos ) {
-	double width = endPos.x - startPos.x;
-	double height = endPos.y - startPos.y;
-	width /= 2;
-	height /= 2;
-	startPos.x += width;
-	startPos.y += height;
-	drawRect( startPos, width, height );
 }
 
 void HetuwMod::getRelationNameColor( const char* name, float* color ) {
@@ -1022,6 +1045,20 @@ bool HetuwMod::isCharKey(char c, char key) {
 	return (c == key || c == toupper(key));
 }
 
+bool HetuwMod::addToTempInputString( unsigned char c, bool onlyNumbers, int minStrLen ) {
+	if (c == 8) { // EREASE
+		if (tempInputString.length() <= (unsigned)minStrLen) return true;
+		tempInputString = tempInputString.substr(0, tempInputString.length()-1);
+		return true;
+	}
+	if (onlyNumbers) {
+		if ((c < '0' || c > '9') && c != '-')
+			return false;
+	}
+	tempInputString += c;
+	return true;
+}
+
 // when return true -> end/return in keyDown function in LivingLife
 bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 
@@ -1033,11 +1070,66 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	bool commandKey = isCommandKeyDown();
 	bool shiftKey = isShiftKeyDown();
 
+	if (!commandKey && !shiftKey && inASCII == 27) { // ESCAPE KEY
+		upKeyDown = false;
+		leftKeyDown = false;
+		downKeyDown = false;
+		rightKeyDown = false;
+		bDrawHelp = false;
+		bDrawMap = false;
+		lastPosX = 9999;
+		lastPosY = 9999;
+		stopAutoRoadRunTime = time(NULL);
+		activateAutoRoadRun = true;
+		getCustomCords = 0;
+		bDrawInputString = false;
+	}
+
 	if (bNextCharForHome) {
 		bNextCharForHome = false;
 		char c = toupper(inASCII);
 		if (c >= 65 && c <= 90) {
 			addHomeLocation( ourLiveObject->xd, ourLiveObject->yd, false, c );
+			return true;
+		}
+	}
+
+	if (getCustomCords > 0) {
+		if (getCustomCords == 1) {
+			tempCordChar = toupper(inASCII);
+			tempInputString = "X: ";
+			getCustomCords++;
+			bDrawInputString = true;
+			return true;
+		} else {
+			if (inASCII == 13) { // ENTER
+				if (getCustomCords == 3) {
+					string cordStr = tempInputString.substr(3, tempInputString.length());
+					try {
+						tempCordY = stoi( cordStr );
+					} catch(std::exception const & e) {
+						getCustomCords = 0;
+						bDrawInputString = false;
+						return true;
+					}
+					addHomeLocation( tempCordX-cordOffset.x, tempCordY-cordOffset.y, false, tempCordChar );
+					getCustomCords = 0;
+					bDrawInputString = false;
+					return true;
+				}
+				string cordStr = tempInputString.substr(3, tempInputString.length());
+				try {
+					tempCordX = stoi( cordStr );
+				} catch(std::exception const & e) {
+					getCustomCords = 0;
+					bDrawInputString = false;
+					return true;
+				}
+				tempInputString = "Y: ";
+				getCustomCords++;
+				return true;
+			}
+			addToTempInputString( inASCII, true, 3);
 			return true;
 		}
 	}
@@ -1098,8 +1190,12 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		bDrawHomeCords = !bDrawHomeCords;
 		return true;
 	}
-	if (!commandKey && isCharKey(inASCII, charKey_CreateHome)) {
+	if (!commandKey && !shiftKey && isCharKey(inASCII, charKey_CreateHome)) {
 		bNextCharForHome = true;
+		return true;
+	}
+	if (!commandKey && shiftKey && isCharKey(inASCII, charKey_CreateHome)) {
+		getCustomCords = 1;
 		return true;
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_FixCamera)) {
@@ -1205,19 +1301,6 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	if (!commandKey && isCharKey(inASCII, charKey_MapZoomOut)) {
 		mapZoomOutKeyDown = true;
 		return true;
-	}
-
-	if (!commandKey && !shiftKey && inASCII == 27) { // ESCAPE KEY
-		upKeyDown = false;
-		leftKeyDown = false;
-		downKeyDown = false;
-		rightKeyDown = false;
-		bDrawHelp = false;
-		bDrawMap = false;
-		lastPosX = 9999;
-		lastPosY = 9999;
-		stopAutoRoadRunTime = time(NULL);
-		activateAutoRoadRun = true;
 	}
 
 	return false;
@@ -2066,6 +2149,9 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( "CTRL+ARROWKEYS SCALE GUI", drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c THEN KEY - REMEMBER CORDS", toupper(charKey_CreateHome));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+	sprintf(str, "SHIFT+%c THEN KEY - REMEMBER CUSTOM CORDS", toupper(charKey_CreateHome));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "SHIFT+%c - RESET CORDS TO WHERE YOU ARE STANDING", toupper(charKey_ShowCords));

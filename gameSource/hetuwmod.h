@@ -274,6 +274,17 @@ private:
 	static bool bNextCharForHome;
 
 	static void writeCharKeyToStream( ofstream &ofs, const char* keyName, char key );
+
+	static void drawInputString();
+	static bool addToTempInputString( unsigned char c, bool onlyNumbers, int minStrLen );
+	static bool bDrawInputString;
+	static string tempInputString;
+
+	static int getCustomCords;
+	static char tempCordChar;
+	static int tempCordX;
+	static int tempCordY;
+
 };
 
 
