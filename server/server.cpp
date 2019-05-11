@@ -48,6 +48,8 @@
 #include "names.h"
 #include "curses.h"
 #include "lineageLimit.h"
+#include "objectSurvey.h"
+#include "language.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -1300,6 +1302,11 @@ void quitCleanup() {
     freeFoodLog();
     freeFailureLog();
     
+    freeObjectSurvey();
+    
+    freeLanguage();
+    
+
     freeTriggers();
 
     freeMap();
@@ -3791,8 +3798,12 @@ GridPos findClosestEmptyMapSpot( int inX, int inY, int inMaxPointsToCheck,
 
 
 
-SimpleVector<char> newSpeech;
 SimpleVector<ChangePosition> newSpeechPos;
+
+SimpleVector<char*> newSpeechPhrases;
+SimpleVector<int> newSpeechPlayerIDs;
+SimpleVector<char> newSpeechCurseFlags;
+
 
 
 SimpleVector<char*> newLocationSpeech;
@@ -3842,17 +3853,11 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     if( isCurse ) {
         curseFlag = 1;
         }
-
     
-    char *line = autoSprintf( "%d/%d %s\n", 
-                              inPlayer->id,
-                              curseFlag,
-                              inToSay );
-                        
-    newSpeech.appendElementString( line );
-                        
-    delete [] line;
-                        
+
+    newSpeechPhrases.push_back( stringDuplicate( inToSay ) );
+    newSpeechCurseFlags.push_back( curseFlag );
+    newSpeechPlayerIDs.push_back( inPlayer->id );
 
                         
     ChangePosition p = { inPlayer->xd, inPlayer->yd, false };
@@ -4985,8 +4990,8 @@ int processLoggedInPlayer( Socket *inSock,
                 }
             
             if( canHaveBaby ) {
-                if( ( inCurseStatus.curseLevel == 0 && 
-                      player->curseStatus.curseLevel == 0 ) 
+                if( ( inCurseStatus.curseLevel <= 0 && 
+                      player->curseStatus.curseLevel <= 0 ) 
                     || 
                     ( inCurseStatus.curseLevel > 0 && 
                       player->curseStatus.curseLevel > 0 ) ) {
@@ -5280,7 +5285,7 @@ int processLoggedInPlayer( Socket *inSock,
                 
                 char forceDifferentRace = false;
 
-                if( getRaceSize( parentObject->race ) < 4 ) {
+                if( getRaceSize( parentObject->race ) < 3 ) {
                     // no room in race for diverse family members
                     
                     // pick a different race for child to ensure village 
@@ -5705,6 +5710,14 @@ int processLoggedInPlayer( Socket *inSock,
     else {
         players.push_back( newObject );            
         }
+
+    if( newObject.isEve ) {
+        addEveLanguage( newObject.id );
+        }
+    else {
+        incrementLanguageCount( newObject.lineageEveID );
+        }
+    
     
 
     if( ! newObject.isTutorial )        
@@ -5958,7 +5971,7 @@ static char directLineBlocked( GridPos inSource, GridPos inDest ) {
         double error = deltaErr - 0.5;
         
         int y = inSource.y;
-        for( int x=inSource.x; x != inDest.x; x += xStep ) {
+        for( int x=inSource.x; x != inDest.x || y != inDest.y; x += xStep ) {
             if( isMapSpotBlocking( x, y ) ) {
                 return true;
                 }
@@ -7774,6 +7787,11 @@ int main() {
 
     initFoodLog();
     initFailureLog();
+
+    initObjectSurvey();
+    
+    initLanguage();
+    
     
     initTriggers();
 
@@ -7987,6 +8005,29 @@ int main() {
         
         
         int numLive = players.size();
+
+
+
+        if( shouldRunObjectSurvey() ) {
+            SimpleVector<GridPos> livePlayerPos;
+            
+            for( int i=0; i<numLive; i++ ) {
+                LiveObject *nextPlayer = players.getElement( i );
+            
+                if( nextPlayer->error ) {
+                    continue;
+                    }
+                
+                livePlayerPos.push_back( getPlayerPos( nextPlayer ) );
+                }
+
+            startObjectSurvey( &livePlayerPos );
+            }
+        
+        stepObjectSurvey();
+        
+        stepLanguage();
+
         
         double secPerYear = 1.0 / getAgeRate();
         
@@ -10673,6 +10714,21 @@ int main() {
                                     
                                     char someoneHit = false;
 
+
+                                    if( hitPlayer != NULL &&
+                                        strstr( heldObj->description,
+                                                "otherFamilyOnly" ) ) {
+                                        // make sure victim is in
+                                        // different family
+                                        
+                                        if( hitPlayer->lineageEveID ==
+                                            nextPlayer->lineageEveID ) {
+                                            
+                                            hitPlayer = NULL;
+                                            }
+                                        }
+                                    
+
                                     if( hitPlayer != NULL ) {
                                         someoneHit = true;
                                         // break the connection with 
@@ -12961,7 +13017,10 @@ int main() {
             else if( nextPlayer->error && ! nextPlayer->deleteSent ) {
                 
                 removeAllOwnership( nextPlayer );
-
+                
+                decrementLanguageCount( nextPlayer->lineageEveID );
+                
+                
                 if( nextPlayer->heldByOther ) {
                     
                     handleForcedBabyDrop( nextPlayer,
@@ -14514,34 +14573,6 @@ int main() {
                 delete [] email;
                 }
             }
-        
-
-
-        unsigned char *speechMessage = NULL;
-        int speechMessageLength = 0;
-        
-        if( newSpeech.size() > 0 ) {
-            newSpeech.push_back( '#' );
-            char *temp = newSpeech.getElementString();
-
-            char *speechMessageText = concatonate( "PS\n", temp );
-            delete [] temp;
-
-            speechMessageLength = strlen( speechMessageText );
-            
-            if( speechMessageLength < maxUncompressedSize ) {
-                speechMessage = (unsigned char*)speechMessageText;
-                }
-            else {
-                // compress for all players once here
-                speechMessage = makeCompressedMessage( 
-                    speechMessageText, 
-                    speechMessageLength, &speechMessageLength );
-                
-                delete [] speechMessageText;
-                }
-
-            }
 
 
 
@@ -16003,7 +16034,7 @@ int main() {
                             }
                         }
                     }
-                if( speechMessage != NULL && nextPlayer->connected ) {
+                if( newSpeechPos.size() > 0 && nextPlayer->connected ) {
                     double minUpdateDist = 64;
                     
                     for( int u=0; u<newSpeechPos.size(); u++ ) {
@@ -16020,17 +16051,96 @@ int main() {
                         }
 
                     if( minUpdateDist <= maxDist ) {
-                        int numSent = 
-                            nextPlayer->sock->send( 
-                                speechMessage, 
-                                speechMessageLength, 
-                                false, false );
+
+                        SimpleVector<char> messageWorking;
+                        messageWorking.appendElementString( "PS\n" );
                         
-                        nextPlayer->gotPartOfThisFrame = true;
                         
-                        if( numSent != speechMessageLength ) {
-                            setPlayerDisconnected( nextPlayer, 
-                                                   "Socket write failed" );
+                        for( int u=0; u<newSpeechPos.size(); u++ ) {
+
+                            ChangePosition *p = newSpeechPos.getElement( u );
+                        
+                            // speech never global
+                            
+                            double d = intDist( p->x, p->y, 
+                                                playerXD, playerYD );
+                            
+                            if( d < maxDist ) {
+
+                                int speakerID = 
+                                    newSpeechPlayerIDs.getElementDirect( u );
+                                LiveObject *speakerObj =
+                                    getLiveObject( speakerID );
+                                
+                                int listenerEveID = nextPlayer->lineageEveID;
+
+                                int speakerEveID;
+                                
+                                if( speakerObj != NULL ) {
+                                    speakerEveID = speakerObj->lineageEveID;
+                                    }
+                                else {
+                                    // speaker dead, doesn't matter what we
+                                    // do
+                                    speakerEveID = listenerEveID;
+                                    }
+                                
+                                char *translatedPhrase =
+                                    mapLanguagePhrase( 
+                                        newSpeechPhrases.getElementDirect( u ),
+                                        speakerEveID,
+                                        listenerEveID );
+                                        
+                                int curseFlag =
+                                    newSpeechCurseFlags.getElementDirect( u );
+
+                                char *line = autoSprintf( "%d/%d %s\n", 
+                                                          speakerID,
+                                                          curseFlag,
+                                                          translatedPhrase );
+                                delete [] translatedPhrase;
+                                
+                                messageWorking.appendElementString( line );
+                                
+                                delete [] line;
+                                }
+                            messageWorking.appendElementString( "#" );
+                            
+                            char *messageText = 
+                                messageWorking.getElementString();
+                            
+                            int messageLen = strlen( messageText );
+            
+                            unsigned char *message = 
+                                (unsigned char*) messageText;
+                            
+
+                            if( messageLen >= maxUncompressedSize ) {
+                                char *old = messageText;
+                                int oldLen = messageLen;
+                                
+                                message = makeCompressedMessage( 
+                                    old, 
+                                    oldLen, &messageLen );
+                                
+                                delete [] old;
+                                }
+
+                            
+                            int numSent = 
+                                nextPlayer->sock->send( 
+                                    message, 
+                                    messageLen, 
+                                    false, false );
+                        
+                            delete [] message;
+                            
+                            nextPlayer->gotPartOfThisFrame = true;
+                        
+                            if( numSent != messageLen ) {
+                                setPlayerDisconnected( nextPlayer, 
+                                                       "Socket write failed" );
+                                }
                             }
                         }
                     }
@@ -16394,9 +16504,6 @@ int main() {
             }
 
         
-        if( speechMessage != NULL ) {
-            delete [] speechMessage;
-            }
         if( lineageMessage != NULL ) {
             delete [] lineageMessage;
             }
@@ -16417,15 +16524,22 @@ int main() {
             }
         
         
-        // this one is global, so we must clear it every loop
-        newSpeech.deleteAll();
-        newSpeechPos.deleteAll();
-        
-        newLocationSpeech.deallocateStringElements();
-        newLocationSpeechPos.deleteAll();
-        
         newOwnerStrings.deallocateStringElements();
         
+        
+        // these are global, so we must clear it every loop
+        newSpeechPos.deleteAll();
+        newSpeechPlayerIDs.deleteAll();
+        newSpeechCurseFlags.deleteAll();
+        newSpeechPhrases.deallocateStringElements();
+
+        newLocationSpeech.deallocateStringElements();
+        newLocationSpeechPos.deleteAll();
+
+
+        
+        
+
         
         // handle end-of-frame for all players that need it
         const char *frameMessage = "FM\n#";
