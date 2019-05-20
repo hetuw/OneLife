@@ -15,7 +15,7 @@ for windows this would be "OneLifeApp_H_windows.exe"<br>
 place this file inside your ohol folder and then start it.
 
 <h2 id="heading-changes">Changes:</h2>
-#### Help page
+<h4>Help page</h2>
 press H in game to show all the hotkeys and commands
 
 #### Zoom
