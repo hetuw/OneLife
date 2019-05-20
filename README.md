@@ -2,12 +2,16 @@
 
 This is a modified version of OneLife https://github.com/jasonrohrer/OneLife
 
-## Installation:
+[- Installation](#heading-installation)<br>
+[- Changes](#heading-changes)<br>
+[- Compiling](#heading-compiling)<br>
+
+<h2 id="heading-installation">Installation:</h2>
 you can download the executable here: https://github.com/hetuw/OneLife/releases<br>
 for windows this would be "OneLifeApp_H_windows.exe"<br>
 place this file inside your ohol folder and then start it.
 
-## Changes:
+<h2 id="heading-changes">Changes:</h2>
 #### Help page
 press H in game to show all the hotkeys and commands
 
@@ -73,6 +77,8 @@ similar to right click on the tile you are standing on
 
 #### F
 press F to stop the camera from moving, with the default client you have to keep holding SPACE to achieve this effect
+
+<h2 id="heading-compiling">Compiling:</h2>
 
 <br><br><b>other mods:</b><br>
 https://github.com/Awbz/OneLife<br>
