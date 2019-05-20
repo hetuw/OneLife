@@ -88,7 +88,7 @@ You will need to install the following:
 <blockquote>
 sudo apt-get install git g++ make imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
 </blockquote>
-Then download this script: <a href="https://raw.githubusercontent.com/hetuw/OneLife/master/scripts/hetuwScripts/hetuwPullLatest.sh">hetuwPullLatest.sh</a>
+Then download this script: <a href="https://raw.githubusercontent.com/hetuw/OneLife/master/scripts/hetuwScripts/hetuwPullLatest.sh">hetuwPullLatest.sh</a><br>
 Put it inside an empty folder and open a terminal inside this folder.<br><br>
 First set the executeable bit by writing:<br>
 <blockquote>
