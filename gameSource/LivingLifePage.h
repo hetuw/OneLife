@@ -480,6 +480,7 @@ class LivingLifePage : public GamePage, public ActionListener {
 		int hetuwGetObjId( int mapX, int mapY );
 		void hetuwClickMove( float x, float y );
 		double hetuwGetAge( LiveObject *inObj );
+		void hetuwGetStringAge( char* str, LiveObject *inObj );
 		void hetuwGetMouseXY( int &x, int &y );
 		bool hetuwMouseIsDown();
 		void hetuwToggleFixCamera();

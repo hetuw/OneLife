@@ -883,6 +883,12 @@ double LivingLifePage::hetuwGetAge( LiveObject *inObj ) {
 	return computeCurrentAge( inObj );
 }
 
+void LivingLifePage::hetuwGetStringAge( char* str, LiveObject *inObj ) {
+	int age = (int)(computeCurrentAge(inObj)*10);
+	int ageDecimal = age - int(age*0.1)*10;
+	age = (int)((age-ageDecimal)*0.1);
+	sprintf(str, "%d.%d", age, ageDecimal);
+}
 
 static void stripDescriptionComment( char *inString ) {
     // pound sign is used for trailing developer comments
@@ -8273,6 +8279,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     desToDelete = des;
                     }
+				if ( otherObj != NULL ) { // hetuw mod
+					char ageStr[16]; // hetuw mod
+					hetuwGetStringAge( ageStr, otherObj ); // hetuw mod
+                    des = autoSprintf( "%s %s", des, ageStr ); // hetuw mod
+                    desToDelete = des; // hetuw mod
+					} // hetuw mod
                 }
             else {
                 ObjectRecord *o = getObject( idToDescribe );
