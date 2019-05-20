@@ -85,7 +85,7 @@ press F to stop the camera from moving, with the default client you have to keep
 The following instructions are for compiling this mod with linux.<br>
 <br>
 Download this script: <a href="https://raw.githubusercontent.com/hetuw/OneLife/master/scripts/hetuwScripts/hetuwPullLatest.sh">hetuwPullLatest.sh</a><br>
-Put it inside an empty folder and open a terminal inside this folder.<br>
+Put it inside an empty folder and open a terminal inside this folder.<br><br>
 First set the executeable bit by writing:<br>
 <blockquote>
 chmod +x hetuwPullLatest.sh
