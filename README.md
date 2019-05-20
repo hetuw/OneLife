@@ -84,7 +84,11 @@ press F to stop the camera from moving, with the default client you have to keep
 <h2 id="heading-compiling">Compiling:</h2>
 The following instructions are for compiling this mod with linux.<br>
 <br>
-Download this script: <a href="https://raw.githubusercontent.com/hetuw/OneLife/master/scripts/hetuwScripts/hetuwPullLatest.sh">hetuwPullLatest.sh</a><br>
+You will need to install the following:
+<blockquote>
+sudo apt-get install git g++ make imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
+</blockquote>
+Then download this script: <a href="https://raw.githubusercontent.com/hetuw/OneLife/master/scripts/hetuwScripts/hetuwPullLatest.sh">hetuwPullLatest.sh</a>
 Put it inside an empty folder and open a terminal inside this folder.<br><br>
 First set the executeable bit by writing:<br>
 <blockquote>
@@ -107,6 +111,11 @@ To start it type:
 cd linux<br>
 ./OneLifeApp
 </blockquote>
+<br>
+<b>more information about how to compile ohol:</b>
+http://onehouronelife.com/compileNotes.php?nocounter=1<br>
+https://onehouronelife.com/forums/viewtopic.php?id=1438<br>
+https://onehouronelife.com/forums/viewtopic.php?id=423<br>
 <br><br><a id="heading-other-mods"><b>other mods:</b></a><br>
 https://github.com/Awbz/OneLife<br>
 https://github.com/JustinLove/onelife-client-patches<br>
