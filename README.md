@@ -1,10 +1,13 @@
 # OneLife
 
-This is a modified version of OneLife https://github.com/jasonrohrer/OneLife
+This is a modified version of OneLife https://github.com/jasonrohrer/OneLife<br>
+<br>
 
-[- Installation](#heading-installation)<br>
-[- Changes](#heading-changes)<br>
-[- Compiling](#heading-compiling)<br>
+<b>Table of Contents</b><br>
+[* Installation](#heading-installation)<br>
+[* Changes](#heading-changes)<br>
+[* Compiling](#heading-compiling)<br>
+[* Other Mods](#heading-other-mods)<br>
 
 <h2 id="heading-installation">Installation:</h2>
 you can download the executable here: https://github.com/hetuw/OneLife/releases<br>
@@ -79,8 +82,32 @@ similar to right click on the tile you are standing on
 press F to stop the camera from moving, with the default client you have to keep holding SPACE to achieve this effect
 
 <h2 id="heading-compiling">Compiling:</h2>
-
-<br><br><b>other mods:</b><br>
+The following instructions are for compiling this mod with linux.<br>
+<br>
+Download this script: <a href="https://raw.githubusercontent.com/hetuw/OneLife/master/scripts/hetuwScripts/hetuwPullLatest.sh">hetuwPullLatest.sh</a><br>
+Put it inside an empty folder and open a terminal inside this folder.<br>
+First set the executeable bit by writing:<br>
+```
+chmod +x hetuwPullLatest.sh
+```
+Then execute the script in order to download the latest version:<br>
+```
+./hetuwPullLatest.sh linux 1
+```
+You can also download it for windows, like this:<br>
+```
+./hetuwPullLatest.sh windows 3
+```
+In order to compile you can type:
+```
+./hetuwCompileAll.sh
+```
+To start it type:
+```
+cd linux
+./OneLifeApp
+```
+<br><br><a id="heading-other-mods"><b>other mods:</b></a><br>
 https://github.com/Awbz/OneLife<br>
 https://github.com/JustinLove/onelife-client-patches<br>
 https://gitlab.com/_zed_/OneLife/<br>
