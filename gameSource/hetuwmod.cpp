@@ -1090,6 +1090,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		char c = toupper(inASCII);
 		if (c >= 65 && c <= 90) {
 			addHomeLocation( ourLiveObject->xd, ourLiveObject->yd, false, c );
+			bDrawHomeCords = true;
 			return true;
 		}
 	}
@@ -1115,6 +1116,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 					addHomeLocation( tempCordX-cordOffset.x, tempCordY-cordOffset.y, false, tempCordChar );
 					getCustomCords = 0;
 					bDrawInputString = false;
+					bDrawHomeCords = true;
 					return true;
 				}
 				string cordStr = tempInputString.substr(3, tempInputString.length());
