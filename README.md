@@ -112,7 +112,7 @@ cd linux<br>
 ./OneLifeApp
 </blockquote>
 <br>
-<b>more information about how to compile ohol:</b>
+<b>more information about how to compile ohol:</b><br>
 http://onehouronelife.com/compileNotes.php?nocounter=1<br>
 https://onehouronelife.com/forums/viewtopic.php?id=1438<br>
 https://onehouronelife.com/forums/viewtopic.php?id=423<br>
