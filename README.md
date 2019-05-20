@@ -4,10 +4,10 @@ This is a modified version of OneLife https://github.com/jasonrohrer/OneLife<br>
 <br>
 
 <b>Table of Contents</b><br>
-[* Installation](#heading-installation)<br>
-[* Changes](#heading-changes)<br>
-[* Compiling](#heading-compiling)<br>
-[* Other Mods](#heading-other-mods)<br>
+[- Installation](#heading-installation)<br>
+[- Changes](#heading-changes)<br>
+[- Compiling](#heading-compiling)<br>
+[- Other Mods](#heading-other-mods)<br>
 
 <h2 id="heading-installation">Installation:</h2>
 you can download the executable here: https://github.com/hetuw/OneLife/releases<br>
@@ -87,26 +87,26 @@ The following instructions are for compiling this mod with linux.<br>
 Download this script: <a href="https://raw.githubusercontent.com/hetuw/OneLife/master/scripts/hetuwScripts/hetuwPullLatest.sh">hetuwPullLatest.sh</a><br>
 Put it inside an empty folder and open a terminal inside this folder.<br>
 First set the executeable bit by writing:<br>
-```
+<blockquote>
 chmod +x hetuwPullLatest.sh
-```
+</blockquote>
 Then execute the script in order to download the latest version:<br>
-```
+<blockquote>
 ./hetuwPullLatest.sh linux 1
-```
+</blockquote>
 You can also download it for windows, like this:<br>
-```
+<blockquote>
 ./hetuwPullLatest.sh windows 3
-```
+</blockquote>
 In order to compile you can type:
-```
+<blockquote>
 ./hetuwCompileAll.sh
-```
+</blockquote>
 To start it type:
-```
-cd linux
+<blockquote>
+cd linux<br>
 ./OneLifeApp
-```
+</blockquote>
 <br><br><a id="heading-other-mods"><b>other mods:</b></a><br>
 https://github.com/Awbz/OneLife<br>
 https://github.com/JustinLove/onelife-client-patches<br>
