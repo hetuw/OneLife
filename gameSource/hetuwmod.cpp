@@ -1745,6 +1745,7 @@ void HetuwMod::updatePlayersInRangePanel() {
 }
 
 #define hetuwDeathMessageRange 200
+// 1341060 2464 0 0 0 0 798 0 0 0 -1 0.24 0 0 X X 50.67 60.00 2.81 2885;202;0;0;200;198,560,3101 0 0 -1 0 reason_killed_152
 void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
 	if ( inO == NULL ) return;
 	if ( ourLiveObject == NULL ) return;
@@ -1769,6 +1770,26 @@ void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
 
 	DeathMsg* deathMsg = new DeathMsg();
 
+	string strLine(line);
+	string reasonKilled = "reason_killed_"; // reason_killed_
+	size_t reasonKilledIndex = strLine.find(reasonKilled);
+	if (reasonKilledIndex != string::npos) {
+		deathMsg->deathReason = 2; // killer
+		string sstr = strLine.substr(reasonKilledIndex + reasonKilled.length());
+		string strKillerId;
+		for (unsigned i = 0; i < sstr.length(); i++) {
+			if (sstr[i] < '0' || sstr[i] > '9') break;
+			strKillerId += sstr[i]; 
+		}
+		int killerId = stoi(strKillerId); // object id - like knife or grizzly bear
+		for (int i = 0; i < dangerousAnimalsLength; i++) {
+			if (killerId == dangerousAnimals[i]) {
+				deathMsg->deathReason = 1; // animal
+				break;
+			}
+		}
+	}
+
 	deathMsg->timeReci = time(NULL);
 
 	deathMsg->name = new char[64];
@@ -1777,7 +1798,6 @@ void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
 	deathMsg->age = (int)livingLifePage->hetuwGetAge( o );
 	if ( getObject( o->displayID ) )
 		deathMsg->male = getObject( o->displayID )->male;
-	deathMsg->killed = strstr( line, "kille" ) != NULL;
 
 	getRelationNameColor( o->relationName, deathMsg->nameColor );
 
@@ -1811,7 +1831,8 @@ void HetuwMod::drawDeathMessages() {
 
 	drawPos.x -= textWidth/2;
 
-	if ( dm->killed ) setDrawColor( 1, 0.2, 0, 1 );
+	if ( dm->deathReason == 1 ) setDrawColor( 1, 0.8, 0, 1 ); // animal
+	else if ( dm->deathReason == 2 ) setDrawColor( 1, 0.2, 0, 1 ); // killer
 	else setDrawColor( 1, 1, 1, 1 );
 	livingLifePage->hetuwDrawScaledHandwritingFont( "RIP " , drawPos, guiScale );
 	drawPos.x += ripWidth;

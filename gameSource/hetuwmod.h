@@ -58,10 +58,10 @@ class HetuwMod
 		float nameColor[3];
 		int age;
 		bool male;
-		bool killed;
+		int deathReason;
 		DeathMsg() {
 			name = NULL;
-			killed = false;
+			deathReason = 0;
 		}
 		~DeathMsg() {
 			if (name) {
