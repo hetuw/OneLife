@@ -1427,7 +1427,7 @@ bool HetuwMod::tileIsSafeToWalk(int x, int y) {
 			if (objId == dangerousAnimals[i]) return false;
 		}
 		ObjectRecord* obj = getObject(objId);
-		if (obj->blocksWalking) {
+		if (obj && obj->blocksWalking) {
 			if (ourLiveObject->xd == x || ourLiveObject->yd == y)
 				if (tileHasClosedDoor( x, y )) return true;
 			return false;
