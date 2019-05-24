@@ -15796,7 +15796,7 @@ void LivingLifePage::step() {
                             existing->currentEmot = getEmotion( emotIndex );
 
 							if (ourObject != existing && distance(existing->currentPos, ourObject->currentPos) < 5) {
-								if (oldEmot != NULL && strstr(existing->currentEmot->triggerWord, "/HAPPY") && strstr(oldEmot->triggerWord, "/YOOHOO")) {
+								if (oldEmot != NULL && existing->currentEmot && existing->currentEmot->triggerWord && oldEmot->triggerWord && strstr(existing->currentEmot->triggerWord, "/HAPPY") && strstr(oldEmot->triggerWord, "/YOOHOO")) {
 									if (HetuwMod::lastSpecialEmote+120 < time(NULL)) {
 										HetuwMod::lastSpecialEmote = time(NULL);
 										int emotId = getEmotionIndex(oldEmot->triggerWord);
