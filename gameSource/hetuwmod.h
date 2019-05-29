@@ -100,31 +100,32 @@ public:
 	static int panelOffsetX;
 	static int panelOffsetY;
 	
-	static char charKey_Up;
-	static char charKey_Down;
-	static char charKey_Left;
-	static char charKey_Right;
-	static char charKey_TileStandingOn;
+	static unsigned char charKey_Up;
+	static unsigned char charKey_Down;
+	static unsigned char charKey_Left;
+	static unsigned char charKey_Right;
+	static unsigned char charKey_TileStandingOn;
 
-	static char charKey_Backpack;
-	static char charKey_Eat;
-	static char charKey_Baby;
+	static unsigned char charKey_Backpack;
+	static unsigned char charKey_Eat;
+	static unsigned char charKey_Baby;
 
-	static char charKey_ShowHelp;
-	static char charKey_ShowNames;
-	static char charKey_ShowCords;
-	static char charKey_ShowPlayersInRange;
-	static char charKey_ShowDeathMessages;
-	static char charKey_ShowHomeCords;
+	static unsigned char charKey_ShowHelp;
+	static unsigned char charKey_ShowNames;
+	static unsigned char charKey_ShowCords;
+	static unsigned char charKey_ShowPlayersInRange;
+	static unsigned char charKey_ShowDeathMessages;
+	static unsigned char charKey_ShowHomeCords;
+	static unsigned char charKey_ShowHostileTiles;
 
-	static char charKey_ShowMap;
-	static char charKey_MapZoomIn;
-	static char charKey_MapZoomOut;
+	static unsigned char charKey_ShowMap;
+	static unsigned char charKey_MapZoomIn;
+	static unsigned char charKey_MapZoomOut;
 
-	static char charKey_CreateHome;
-	static char charKey_FixCamera;
+	static unsigned char charKey_CreateHome;
+	static unsigned char charKey_FixCamera;
 
-	static bool isCharKey( char c, char charKey );
+	static bool isCharKey( unsigned char c, unsigned char charKey );
 
 	static time_t lastSpecialEmote;
 
@@ -187,6 +188,7 @@ public:
 	static void drawPlayerNames( LiveObject* player );
 
 	static void hDrawRect( doublePair startPos, doublePair endPos );
+	static void drawTileRect( int x, int y );
 
 	static void onPlayerUpdate( LiveObject* o, const char* line );
 	static void removeLastName(char *newName, const char* name );
@@ -203,7 +205,9 @@ public:
 
 	static void getSettingsFileLine( char* name, char* value, string line );
 	static bool setSetting( const char* name, const char* value );
-	static bool setCharKey( char &key, const char *value );
+	static bool setCharKey( unsigned char &key, const char *value );
+
+	static bool isDangerousAnimal( int objId );
 
 private:
 
@@ -216,6 +220,9 @@ private:
 
 	static bool bDrawCords;
 	static void drawCords();
+
+	static bool bDrawHostileTiles;
+	static void drawHostileTiles();
 
 	static bool bDrawMap;
 	static void drawMap();

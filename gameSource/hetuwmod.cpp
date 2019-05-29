@@ -33,24 +33,29 @@ bool HetuwMod::bDrawHelp;
 float HetuwMod::lastPosX;
 float HetuwMod::lastPosY;
 
-char HetuwMod::charKey_Up;
-char HetuwMod::charKey_Down;
-char HetuwMod::charKey_Left;
-char HetuwMod::charKey_Right;
-char HetuwMod::charKey_TileStandingOn;
+unsigned char HetuwMod::charKey_Up;
+unsigned char HetuwMod::charKey_Down;
+unsigned char HetuwMod::charKey_Left;
+unsigned char HetuwMod::charKey_Right;
+unsigned char HetuwMod::charKey_TileStandingOn;
 
-char HetuwMod::charKey_Backpack;
-char HetuwMod::charKey_Eat;
-char HetuwMod::charKey_Baby;
-char HetuwMod::charKey_ShowHelp;
-char HetuwMod::charKey_ShowNames;
-char HetuwMod::charKey_ShowCords;
-char HetuwMod::charKey_ShowPlayersInRange;
-char HetuwMod::charKey_ShowDeathMessages;
-char HetuwMod::charKey_ShowHomeCords;
+unsigned char HetuwMod::charKey_Backpack;
+unsigned char HetuwMod::charKey_Eat;
+unsigned char HetuwMod::charKey_Baby;
+unsigned char HetuwMod::charKey_ShowHelp;
+unsigned char HetuwMod::charKey_ShowNames;
+unsigned char HetuwMod::charKey_ShowCords;
+unsigned char HetuwMod::charKey_ShowPlayersInRange;
+unsigned char HetuwMod::charKey_ShowDeathMessages;
+unsigned char HetuwMod::charKey_ShowHomeCords;
+unsigned char HetuwMod::charKey_ShowHostileTiles;
 
-char HetuwMod::charKey_CreateHome;
-char HetuwMod::charKey_FixCamera;
+unsigned char HetuwMod::charKey_CreateHome;
+unsigned char HetuwMod::charKey_FixCamera;
+
+unsigned char HetuwMod::charKey_ShowMap;
+unsigned char HetuwMod::charKey_MapZoomIn;
+unsigned char HetuwMod::charKey_MapZoomOut;
 
 bool HetuwMod::upKeyDown;
 bool HetuwMod::downKeyDown;
@@ -84,6 +89,8 @@ doublePair HetuwMod::playerNamePos;
 
 bool HetuwMod::bDrawCords;
 
+bool HetuwMod::bDrawHostileTiles;
+
 int HetuwMod::stepCount;
 double HetuwMod::ourAge;
 
@@ -95,9 +102,6 @@ float HetuwMod::mapScale;
 float HetuwMod::mapOffsetX;
 float HetuwMod::mapOffsetY;
 
-char HetuwMod::charKey_ShowMap;
-char HetuwMod::charKey_MapZoomIn;
-char HetuwMod::charKey_MapZoomOut;
 bool HetuwMod::mapZoomInKeyDown;
 bool HetuwMod::mapZoomOutKeyDown;
 
@@ -136,6 +140,7 @@ void HetuwMod::init() {
 	bDrawHomeCords = false;
 	iDrawNames = 1;
 	bDrawCords = true;
+	bDrawHostileTiles = false;
 
 	charKey_Up = 'w';
 	charKey_Down = 's';
@@ -152,6 +157,7 @@ void HetuwMod::init() {
 	charKey_ShowPlayersInRange = 'p';
 	charKey_ShowDeathMessages = 't';
 	charKey_ShowHomeCords = 'g';
+	charKey_ShowHostileTiles = 'u';
 
 	charKey_ShowMap = 'm';
 	charKey_MapZoomIn = 'u';
@@ -181,47 +187,60 @@ void HetuwMod::initDangerousAnimals() {
 		delete[] dangerousAnimals;
 		dangerousAnimals = NULL;
 	}
-	dangerousAnimalsLength = 35;
+	dangerousAnimalsLength = 38;
 	dangerousAnimals = new int[dangerousAnimalsLength];
-	dangerousAnimals[0] = 2156; // Mosquito swarm
 
-	dangerousAnimals[1] = 764; // Rattle Snake
-	dangerousAnimals[2] = 1385; // Attacking Rattle Snake
+	int a = -1;
 
-	dangerousAnimals[3] = 1323; // Wild Boar
-	dangerousAnimals[4] = 1328; // Wild Boar with Piglet 
-	dangerousAnimals[5] = 1333; // Attacking Wild Boar
-	dangerousAnimals[6] = 1334; // Attacking Wild Boar with Piglet
-	dangerousAnimals[7] = 1339; // Domestic Boar
-	dangerousAnimals[8] = 1341; // Domestic Boar with Piglet
-	dangerousAnimals[9] = 1347; // Attacking Boar# domestic
-	dangerousAnimals[10] = 1348; // Attacking Boar with Piglet# domestic
+	a++; dangerousAnimals[a] = 2156; // Mosquito swarm
 
-	dangerousAnimals[11] = 418; // Wolf
-	dangerousAnimals[12] = 1630; // Semi-tame Wolf
-	dangerousAnimals[13] = 420; // Shot Wolf
-	dangerousAnimals[14] = 428; // Attacking Shot Wolf
-	dangerousAnimals[15] = 429; // Dying Shot Wolf
-	dangerousAnimals[16] = 1761; // Dying Semi-tame Wolf
-	dangerousAnimals[17] = 1640; // Semi-tame Wolf# just fed
-	dangerousAnimals[18] = 1642; // Semi-tame Wolf# pregnant
-	dangerousAnimals[19] = 1636; // Semi-tame Wolf with Puppy#1
-	dangerousAnimals[20] = 1635; // Semi-tame Wolf with Puppies#2
-	dangerousAnimals[21] = 1631; // Semi-tame Wolf with Puppies#3
-	dangerousAnimals[22] = 1748; // Old Semi-tame Wolf
-	dangerousAnimals[23] = 1641; // @ Deadly Wolf
+	a++; dangerousAnimals[a] = 764; // Rattle Snake
+	a++; dangerousAnimals[a] = 1385; // Attacking Rattle Snake
+
+	a++; dangerousAnimals[a] = 1323; // Wild Boar
+	a++; dangerousAnimals[a] = 1328; // Wild Boar with Piglet 
+	a++; dangerousAnimals[a] = 1333; // Attacking Wild Boar
+	a++; dangerousAnimals[a] = 1334; // Attacking Wild Boar with Piglet
+	a++; dangerousAnimals[a] = 1339; // Domestic Boar
+	a++; dangerousAnimals[a] = 1341; // Domestic Boar with Piglet
+	a++; dangerousAnimals[a] = 1347; // Attacking Boar# domestic
+	a++; dangerousAnimals[a] = 1348; // Attacking Boar with Piglet# domestic
+
+	a++; dangerousAnimals[a] = 418; // Wolf
+	a++; dangerousAnimals[a] = 1630; // Semi-tame Wolf
+	a++; dangerousAnimals[a] = 420; // Shot Wolf
+	a++; dangerousAnimals[a] = 428; // Attacking Shot Wolf
+	a++; dangerousAnimals[a] = 429; // Dying Shot Wolf
+	a++; dangerousAnimals[a] = 1761; // Dying Semi-tame Wolf
+	a++; dangerousAnimals[a] = 1640; // Semi-tame Wolf# just fed
+	a++; dangerousAnimals[a] = 1642; // Semi-tame Wolf# pregnant
+	a++; dangerousAnimals[a] = 1636; // Semi-tame Wolf with Puppy#1
+	a++; dangerousAnimals[a] = 1635; // Semi-tame Wolf with Puppies#2
+	a++; dangerousAnimals[a] = 1631; // Semi-tame Wolf with Puppies#3
+	a++; dangerousAnimals[a] = 1748; // Old Semi-tame Wolf
+	a++; dangerousAnimals[a] = 1641; // @ Deadly Wolf
 	
-	dangerousAnimals[24] = 628; // Grizzly Bear
-	dangerousAnimals[25] = 655; // Shot Grizzly Bear#2 attacking
-	dangerousAnimals[26] = 653; // Hungry Grizzly Bear#attacking
-	dangerousAnimals[27] = 644; // Dying Shot Grizzly Bear#3
-	dangerousAnimals[28] = 631; // Hungry Grizzly Bear
-	dangerousAnimals[29] = 646; // @ Unshot Grizzly Bear
-	dangerousAnimals[30] = 635; // Shot Grizzly Bear#2
-	dangerousAnimals[31] = 645; // Fed Grizzly Bear
-	dangerousAnimals[32] = 632; // Shot Grizzly Bear#1
-	dangerousAnimals[33] = 637; // Shot Grizzly Bear#3
-	dangerousAnimals[34] = 654; // Shot Grizzly Bear#1 attacking
+	a++; dangerousAnimals[a] = 628; // Grizzly Bear
+	a++; dangerousAnimals[a] = 655; // Shot Grizzly Bear#2 attacking
+	a++; dangerousAnimals[a] = 653; // Hungry Grizzly Bear#attacking
+	a++; dangerousAnimals[a] = 644; // Dying Shot Grizzly Bear#3
+	a++; dangerousAnimals[a] = 631; // Hungry Grizzly Bear
+	a++; dangerousAnimals[a] = 646; // @ Unshot Grizzly Bear
+	a++; dangerousAnimals[a] = 635; // Shot Grizzly Bear#2
+	a++; dangerousAnimals[a] = 645; // Fed Grizzly Bear
+	a++; dangerousAnimals[a] = 632; // Shot Grizzly Bear#1
+	a++; dangerousAnimals[a] = 637; // Shot Grizzly Bear#3
+	a++; dangerousAnimals[a] = 654; // Shot Grizzly Bear#1 attacking
+
+	a++; dangerousAnimals[a] = 1789; // Abused Pit Bull
+	a++; dangerousAnimals[a] = 1747; // Mean Pit Bull
+	a++; dangerousAnimals[a] = 1712; // Attacking Pit Bull
+
+	a++;
+	if (a != dangerousAnimalsLength) {
+		printf("hetuw ERROR: a != dangerousAnimalsLength\n");
+		printf("hetuw ERROR: %i != %i\n", a, dangerousAnimalsLength);
+	}
 }
 
 void HetuwMod::initClosedDoorIDs() {
@@ -270,7 +289,7 @@ void HetuwMod::getSettingsFileLine( char* name, char* value, string line ) {
 	value[v] = 0;
 }
 
-bool HetuwMod::setCharKey( char &key, const char *value ) {
+bool HetuwMod::setCharKey( char unsigned &key, const char *value ) {
 	if (value[0] != '<') {
 		key = value[0];
 		return true;
@@ -326,6 +345,9 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	if (strstr(name, "key_show_homecords")) {
 		return setCharKey( charKey_ShowHomeCords, value );
 	}
+	if (strstr(name, "key_show_hostiletiles")) {
+		return setCharKey( charKey_ShowHostileTiles, value );
+	}
 	if (strstr(name, "key_remembercords")) {
 		return setCharKey( charKey_CreateHome, value );
 	}
@@ -351,6 +373,10 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	}
 	if (strstr(name, "init_show_homecords")) {
 		bDrawHomeCords = bool(value[0]-48);
+		return true;
+	}
+	if (strstr(name, "init_show_hostiletiles")) {
+		bDrawHostileTiles = bool(value[0]-48);
 		return true;
 	}
 
@@ -389,6 +415,7 @@ void HetuwMod::initSettings() {
 		writeCharKeyToStream( ofs, "key_show_playersinrange", charKey_ShowPlayersInRange );
 		writeCharKeyToStream( ofs, "key_show_deathmessages", charKey_ShowDeathMessages );
 		writeCharKeyToStream( ofs, "key_show_homecords", charKey_ShowHomeCords );
+		writeCharKeyToStream( ofs, "key_show_hostiletiles", charKey_ShowHostileTiles );
 		ofs << endl;
 		writeCharKeyToStream( ofs, "key_remembercords", charKey_CreateHome );
 		writeCharKeyToStream( ofs, "key_fixcamera", charKey_FixCamera );
@@ -398,6 +425,7 @@ void HetuwMod::initSettings() {
 		ofs << "init_show_playersinrange = " << (char)(bDrawPlayersInRangePanel+48) << endl;
 		ofs << "init_show_deathmessages = " << (char)(bDrawDeathMessages+48) << endl;
 		ofs << "init_show_homecords = " << (char)(bDrawHomeCords+48) << endl;
+		ofs << "init_show_hostiletiles = " << (char)(bDrawHostileTiles+48) << endl;
 
 		ofs.close();
 		return;
@@ -637,6 +665,8 @@ void HetuwMod::livingLifeDraw() {
 
 	if (bDrawHomeCords) drawHomeCords();
 
+	if (bDrawHostileTiles) drawHostileTiles();
+
 	if (bDrawMap) drawMap();
 
 	if (bDrawInputString) drawInputString();
@@ -658,6 +688,38 @@ void HetuwMod::hDrawRect( doublePair startPos, doublePair endPos ) {
 	startPos.x += width;
 	startPos.y += height;
 	drawRect( startPos, width, height );
+}
+
+void HetuwMod::drawTileRect( int x, int y ) {
+	doublePair startPos = { (double)x, (double)y };
+	startPos.x *= CELL_D;
+	startPos.y *= CELL_D;
+	drawRect( startPos, CELL_D/2, CELL_D/2 );
+}
+
+void HetuwMod::drawHostileTiles() {
+	float alpha = 0.2;
+	float interv = stepCount % 40 / (float)40;
+	if (interv > 0.5) interv = 1 - interv;
+	alpha += interv;
+	setDrawColor( 1, 0, 0, alpha );
+	//drawTileRect( ourLiveObject->xd, ourLiveObject->yd );
+
+	int radius = 32;
+	int startX = ourLiveObject->xd - radius;
+	int endX = ourLiveObject->xd + radius;
+	int startY = ourLiveObject->yd - radius;
+	int endY = ourLiveObject->yd + radius;
+	for (int x = startX; x < endX; x++) {
+		for (int y = startY; y < endY; y++) {
+			int objId = livingLifePage->hetuwGetObjId( x, y );
+			if (objId > 0) {
+				bool drawTile = false;
+				drawTile = isDangerousAnimal( objId );
+				if (drawTile) drawTileRect( x, y );
+			}
+		}
+	}
 }
 
 void HetuwMod::drawInputString() {
@@ -1041,7 +1103,7 @@ void HetuwMod::setEmote(int id) {
 	currentEmote = id;
 }
 
-bool HetuwMod::isCharKey(char c, char key) {
+bool HetuwMod::isCharKey(unsigned char c, unsigned char key) {
 	return (c == key || c == toupper(key));
 }
 
@@ -1066,6 +1128,8 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		return false;
 	}
 	// player is not trying to say something
+
+	//printf("hetuw key pressed %c, value: %i\n", inASCII, (int)inASCII);
 
 	bool commandKey = isCommandKeyDown();
 	bool shiftKey = isShiftKeyDown();
@@ -1136,6 +1200,20 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		}
 	}
 
+	// for debugging
+	if (true && inASCII == 'i') {
+		int mouseX, mouseY;
+		livingLifePage->hetuwGetMouseXY( mouseX, mouseY );
+		int x = round( mouseX / (float)CELL_D );
+		int y = round( mouseY / (float)CELL_D );
+		int objId = livingLifePage->hetuwGetObjId( x, y );
+		printf("hetuw cell: %i, %i objID: %i\n", x, y, objId);
+		ObjectRecord *o = getObject( objId );
+		if (o) {
+			printf("hetuw description: %s\n", o->description);
+		}
+	}
+
 	// emotes
 	if (!commandKey && !shiftKey) {
 		int jic = (int)inASCII - 48;
@@ -1202,6 +1280,10 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_FixCamera)) {
 		livingLifePage->hetuwToggleFixCamera();
+		return true;
+	}
+	if (!commandKey && isCharKey(inASCII, charKey_ShowHostileTiles)) {
+		bDrawHostileTiles = !bDrawHostileTiles;
 		return true;
 	}
 	
@@ -1304,6 +1386,8 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		mapZoomOutKeyDown = true;
 		return true;
 	}
+
+	//printf("hetuw unknown key %c, value: %i\n", inASCII, (int)inASCII);
 
 	return false;
 }
@@ -1420,12 +1504,31 @@ bool HetuwMod::livingLifePageMouseDown( float mX, float mY ) {
 	return false;
 }
 
+bool HetuwMod::isDangerousAnimal( int objId ) {
+	if (objId <= 0) return false;
+	for (int i = 0; i < dangerousAnimalsLength; i++) {
+		if (objId == dangerousAnimals[i]) return true;
+	}
+
+	ObjectRecord *o = getObject( objId );
+	if (!o) return false;
+
+	if (strstr( o->description, "Wild Boar") != NULL)
+		return true;
+	if (strstr( o->description, "Domestic Boar") != NULL)
+		return true;
+
+	if (strstr( o->description, "Semi-tame Wolf") != NULL)
+		return true;
+
+	return false;
+}
+
 bool HetuwMod::tileIsSafeToWalk(int x, int y) {
 	int objId = livingLifePage->hetuwGetObjId( x, y);
 	if (objId > 0) {
-		for (int i = 0; i < dangerousAnimalsLength; i++) {
-			if (objId == dangerousAnimals[i]) return false;
-		}
+		if (isDangerousAnimal(objId)) return false;
+
 		ObjectRecord* obj = getObject(objId);
 		if (obj && obj->blocksWalking) {
 			if (ourLiveObject->xd == x || ourLiveObject->yd == y)
@@ -1438,11 +1541,7 @@ bool HetuwMod::tileIsSafeToWalk(int x, int y) {
 
 bool HetuwMod::tileHasNoDangerousAnimals(int x, int y) {
 	int objId = livingLifePage->hetuwGetObjId( x, y);
-	if (objId > 0) {
-		for (int i = 0; i < dangerousAnimalsLength; i++) {
-			if (objId == dangerousAnimals[i]) return false;
-		}
-	}
+	if (isDangerousAnimal(objId)) return false;
 	return true;
 }
 
@@ -1781,12 +1880,9 @@ void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
 			if (sstr[i] < '0' || sstr[i] > '9') break;
 			strKillerId += sstr[i]; 
 		}
-		int killerId = stoi(strKillerId); // object id - like knife or grizzly bear
-		for (int i = 0; i < dangerousAnimalsLength; i++) {
-			if (killerId == dangerousAnimals[i]) {
-				deathMsg->deathReason = 1; // animal
-				break;
-			}
+		int killerObjId = stoi(strKillerId); // object id - like knife or grizzly bear
+		if (isDangerousAnimal(killerObjId)) {
+			deathMsg->deathReason = 1; // animal
 		}
 	}
 
@@ -2129,6 +2225,9 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c TOGGLE SHOW HOME CORDS", toupper(charKey_ShowHomeCords));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+	sprintf(str, "%c TOGGLE SHOW HOSTILE TILES", toupper(charKey_ShowHostileTiles));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 
