@@ -50,6 +50,7 @@
 #include "lineageLimit.h"
 #include "objectSurvey.h"
 #include "language.h"
+#include "familySkipList.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -905,8 +906,8 @@ static double pickBirthCooldownSeconds() {
     
     // v is in [0..1], the value range of Kumaraswamy
 
-    // put max at 5 minutes
-    return v * 5 * 60;
+    // put max at 3 minutes
+    return v * 3 * 60;
     }
 
 
@@ -1325,7 +1326,7 @@ void quitCleanup() {
     freeObjectSurvey();
     
     freeLanguage();
-    
+    freeFamilySkipList();
 
     freeTriggers();
 
@@ -5197,6 +5198,31 @@ int processLoggedInPlayer( Socket *inSock,
             }
         else {
             // baby
+
+
+            
+            // filter parent choices by this baby's skip list
+            SimpleVector<LiveObject *> 
+                filteredParentChoices( parentChoices.size() );
+            
+            for( int i=0; i<parentChoices.size(); i++ ) {
+                LiveObject *p = parentChoices.getElementDirect( i );
+                
+                if( ! isSkipped( inEmail, p->lineageEveID ) ) {
+                    filteredParentChoices.push_back( p );
+                    }
+                }
+
+            if( filteredParentChoices.size() == 0 ) {
+                // baby has skipped everyone
+                
+                // clear their list and let them start over again
+                clearSkipList( inEmail );
+                
+                filteredParentChoices.push_back_other( &parentChoices );
+                }
+            
+
             
             // pick random mother from a weighted distribution based on 
             // each mother's temperature
@@ -5205,8 +5231,8 @@ int processLoggedInPlayer( Socket *inSock,
             
             int maxYumMult = 1;
 
-            for( int i=0; i<parentChoices.size(); i++ ) {
-                LiveObject *p = parentChoices.getElementDirect( i );
+            for( int i=0; i<filteredParentChoices.size(); i++ ) {
+                LiveObject *p = filteredParentChoices.getElementDirect( i );
                 
                 int yumMult = p->yummyFoodChain.size() - 1;
                 
@@ -5226,8 +5252,8 @@ int processLoggedInPlayer( Socket *inSock,
 
             double totalWeight = 0;
             
-            for( int i=0; i<parentChoices.size(); i++ ) {
-                LiveObject *p = parentChoices.getElementDirect( i );
+            for( int i=0; i<filteredParentChoices.size(); i++ ) {
+                LiveObject *p = filteredParentChoices.getElementDirect( i );
 
                 // temp part of weight
                 totalWeight += 0.5 - fabs( p->heat - 0.5 );
@@ -5249,8 +5275,8 @@ int processLoggedInPlayer( Socket *inSock,
             
             totalWeight = 0;
             
-            for( int i=0; i<parentChoices.size(); i++ ) {
-                LiveObject *p = parentChoices.getElementDirect( i );
+            for( int i=0; i<filteredParentChoices.size(); i++ ) {
+                LiveObject *p = filteredParentChoices.getElementDirect( i );
 
                 totalWeight += 0.5 - fabs( p->heat - 0.5 );
 
@@ -5460,7 +5486,17 @@ int processLoggedInPlayer( Socket *inSock,
         // else starts at civ outskirts (lone Eve)
         
         SimpleVector<GridPos> otherPeoplePos( numPlayers );
+
+
+        // consider players to be near Eve location that match
+        // Eve's curse status
+        char seekingCursed = false;
         
+        if( inCurseStatus.curseLevel > 0 ) {
+            seekingCursed = true;
+            }
+        
+
         for( int i=0; i<numPlayers; i++ ) {
             LiveObject *player = players.getElement( i );
             
@@ -5470,6 +5506,15 @@ int processLoggedInPlayer( Socket *inSock,
                 player->vogMode ) {
                 continue;
                 }
+
+            if( seekingCursed && player->curseStatus.curseLevel <= 0 ) {
+                continue;
+                }
+            else if( ! seekingCursed &&
+                     player->curseStatus.curseLevel > 0 ) {
+                continue;
+                }
+
             GridPos p = { player->xs, player->ys };
             otherPeoplePos.push_back( p );
             }
@@ -8400,6 +8445,7 @@ int main() {
     initObjectSurvey();
     
     initLanguage();
+    initFamilySkipList();
     
     
     initTriggers();
@@ -8610,6 +8656,8 @@ int main() {
             stepPlayerStats();
             stepLineageLog();
             stepCurseServerRequests();
+
+            stepMapLongTermCulling( players.size() );
             }
         
         
@@ -10162,9 +10210,21 @@ int main() {
                         LiveObject *parentO = 
                             getLiveObject( parentID );
                         
-                        if( parentO != NULL && nextPlayer->everHeldByParent ) {
-                            // mother picked up this SID baby at least
-                            // one time
+                        // CHANGE:
+                        // Reset mother's cool-down whenever baby suicides
+                        // Otherwise, if DIE baby acts quick enough
+                        // they can cycle through all families, putting
+                        // each mother on cooldown, and end up as Eve
+                        // intentionally
+                        //
+                        // Old:  only if she picked up baby one time.
+                        // (also, with instant map load, it's easy
+                        //  for baby to run away before being picked
+                        //  up by a mother that wants the baby)
+                        //
+                        //if( parentO != NULL && 
+                        //    nextPlayer->everHeldByParent ) {
+                        if( parentO != NULL ) {
                             // mother can have another baby right away
                             parentO->birthCoolDown = 0;
                             }
@@ -13458,6 +13518,27 @@ int main() {
                                           &playerIndicesToSendUpdatesAbout );
                     }
                 
+                
+                if( nextPlayer->parentID != -1 ) {
+                    
+                    LiveObject *parentO = 
+                        getLiveObject( nextPlayer->parentID );
+                    
+                    if( parentO != NULL ) {
+                        
+                        if( parentO->babyIDs->getElementIndex( nextPlayer->id )
+                            == parentO->babyIDs->size() - 1 ) {
+                            
+                            // this mother's most-recent baby just died
+                            
+                            // mother can have another baby right away
+                            parentO->birthCoolDown = 0;
+                            }
+                        }
+                    }
+                
+                
+
 
                 newDeleteUpdates.push_back( 
                     getUpdateRecord( nextPlayer, true ) );                
@@ -13546,16 +13627,30 @@ int main() {
                 double yearsLived = 
                     getSecondsPlayed( nextPlayer ) * getAgeRate();
 
-                if( ! nextPlayer->isTutorial )
-                recordLineage( nextPlayer->email, 
-                               nextPlayer->originalBirthPos,
-                               yearsLived, 
-                               // count true murder victims here, not suicide
-                               ( killerID > 0 && killerID != nextPlayer->id ),
-                               // killed other or committed SID suicide
-                               nextPlayer->everKilledAnyone || 
-                               nextPlayer->suicide );
-        
+                if( ! nextPlayer->isTutorial ) {
+                    
+                    recordLineage( 
+                        nextPlayer->email, 
+                        nextPlayer->originalBirthPos,
+                        yearsLived, 
+                        // count true murder victims here, not suicide
+                        ( killerID > 0 && killerID != nextPlayer->id ),
+                        // killed other or committed SID suicide
+                        // CHANGE:
+                        // no longer count SID toward lineage ban
+                        // we added this family to baby's skip
+                        // list below
+                        nextPlayer->everKilledAnyone );
+                    
+                    if( nextPlayer->suicide ) {
+                        // add to player's skip list
+                        skipFamily( nextPlayer->email, 
+                                    nextPlayer->lineageEveID );
+                        }
+                    }
+                
+                
+
                 if( ! nextPlayer->deathLogged ) {
                     char disconnect = true;
                     
