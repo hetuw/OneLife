@@ -1190,6 +1190,7 @@ void showReconnectPage() {
 
 void drawFrame( char inUpdate ) {    
 
+	HetuwMod::gameStep();
 
     if( !inUpdate ) {
         
@@ -2261,20 +2262,6 @@ void keyUp( unsigned char inASCII ) {
 
 
 void specialKeyDown( int inKey ) {
-	if (!isCommandKeyDown() && !isShiftKeyDown()) {
-		if( inKey == MG_KEY_LEFT ) { // hetuw mod
-			HetuwMod::zoomDecrease();
-		} else if( inKey == MG_KEY_RIGHT ) { // hetuw mod
-			HetuwMod::zoomIncrease();
-		}
-	}
-	if (isCommandKeyDown()) {
-		if( inKey == MG_KEY_LEFT ) { // hetuw mod
-			HetuwMod::guiScaleDecrease();
-		} else if( inKey == MG_KEY_RIGHT ) { // hetuw mod
-			HetuwMod::guiScaleIncrease();
-		}
-	}
 
     if( isPaused() ) {
         return;

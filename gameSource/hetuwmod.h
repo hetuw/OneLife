@@ -85,6 +85,9 @@ public:
 	static const int defaultViewWidth = 1280;
 	static const int defaultViewHeight = 720;
 
+	static constexpr float zoomValueKey = 0.25f;
+	static constexpr float zoomValueScroll = 0.1f;
+
 	static int dangerousAnimalsLength;
 	static int* dangerousAnimals;
 
@@ -155,8 +158,8 @@ public:
 
 	static void setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject> *inGameObjects);
 
-	static void zoomIncrease();
-	static void zoomDecrease();
+	static void zoomIncrease(float value);
+	static void zoomDecrease(float value);
 	static void setZoom(float newZoom);
 	static void guiScaleIncrease();
 	static void guiScaleDecrease();
@@ -170,6 +173,8 @@ public:
 
 	static void useBackpack( bool replace=false);
 	static void useOnSelf();
+
+	static void gameStep();
 
 	static void livingLifeStep();
 	static void livingLifeDraw();

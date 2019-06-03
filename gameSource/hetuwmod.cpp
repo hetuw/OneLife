@@ -10,6 +10,7 @@
 #include "emotion.h"
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/game/drawUtils.h"
+#include "minorGems/graphics/openGL/ScreenGL.h"
 #include "groundSprites.h"
 
 using namespace std;
@@ -538,14 +539,14 @@ void HetuwMod::zoomCalc() {
 	hetuwSetViewSize();
 }
 
-void HetuwMod::zoomIncrease() {
-	zoomScale *= 1.25f;
+void HetuwMod::zoomIncrease(float value) {
+	zoomScale *= 1.0f + value;
 	if (zoomScale > 10.0f) zoomScale = 10.0f;
 	zoomCalc();
 }
 
-void HetuwMod::zoomDecrease() {
-	zoomScale *= 0.75f;
+void HetuwMod::zoomDecrease(float value) {
+	zoomScale *= 1.0f - value;
 	if (zoomScale < 1.0f) zoomScale = 1.0f;
 	zoomCalc();
 }
@@ -565,6 +566,21 @@ void HetuwMod::guiScaleDecrease() {
 	guiScaleRaw *= 1.1f;
 	if (guiScaleRaw > 1.5) guiScaleRaw = 1.5;
 	guiScale = guiScaleRaw * zoomScale;
+}
+
+void HetuwMod::gameStep() {
+	HetuwMouseActionBuffer* mouseBuffer = hetuwGetMouseActionBuffer();
+	for (int i = 0; i < mouseBuffer->bufferPos; i++) {
+		switch (mouseBuffer->buffer[i]) {
+			case MouseButton::WHEELUP:
+				zoomDecrease(HetuwMod::zoomValueScroll);
+				break;
+			case MouseButton::WHEELDOWN:
+				zoomIncrease(HetuwMod::zoomValueScroll);
+				break;
+		}
+	}
+	mouseBuffer->Reset();
 }
 
 void HetuwMod::livingLifeStep() {
@@ -1456,6 +1472,21 @@ bool HetuwMod::livingLifeSpecialKeyDown(unsigned char inKeyCode) {
 	bool commandKey = isCommandKeyDown();
 	bool shiftKey = isShiftKeyDown();
 	bool r = false;
+
+	if (!isCommandKeyDown() && !isShiftKeyDown()) {
+		if( inKeyCode == MG_KEY_LEFT ) { 
+			zoomDecrease(HetuwMod::zoomValueKey);
+		} else if( inKeyCode == MG_KEY_RIGHT ) { 
+			zoomIncrease(HetuwMod::zoomValueKey);
+		}
+	}
+	if (isCommandKeyDown()) {
+		if( inKeyCode == MG_KEY_LEFT ) {
+			guiScaleDecrease();
+		} else if( inKeyCode == MG_KEY_RIGHT ) {
+			guiScaleIncrease();
+		}
+	}
 
 	if (!commandKey && !shiftKey) {
 		if ( inKeyCode == MG_KEY_F1 ) {
