@@ -1224,9 +1224,11 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		int y = round( mouseY / (float)CELL_D );
 		int objId = livingLifePage->hetuwGetObjId( x, y );
 		printf("hetuw cell: %i, %i objID: %i\n", x, y, objId);
-		ObjectRecord *o = getObject( objId );
-		if (o) {
-			printf("hetuw description: %s\n", o->description);
+		if (objId > 0) {
+			ObjectRecord *o = getObject( objId );
+			if (o && o->description) {
+				printf("hetuw description: %s\n", o->description);
+			}
 		}
 	}
 
