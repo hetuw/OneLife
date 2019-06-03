@@ -136,7 +136,7 @@ void HetuwMod::init() {
 	colorRainbow = new RainbowColor();
 
 	bDrawHelp = false;
-	bDrawPlayersInRangePanel = true;
+	bDrawPlayersInRangePanel = false;
 	bDrawDeathMessages = true;
 	bDrawHomeCords = false;
 	iDrawNames = 1;
