@@ -86,7 +86,7 @@ public:
 	static const int defaultViewHeight = 720;
 
 	static constexpr float zoomValueKey = 0.25f;
-	static constexpr float zoomValueScroll = 0.1f;
+	static constexpr float zoomValueScroll = 0.15f;
 
 	static int dangerousAnimalsLength;
 	static int* dangerousAnimals;
