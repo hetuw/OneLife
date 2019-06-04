@@ -59,14 +59,20 @@ class HetuwMod
 		int age;
 		bool male;
 		int deathReason;
+		char *description; // can be NULL
 		DeathMsg() {
 			name = NULL;
 			deathReason = 0;
+			description = NULL;
 		}
 		~DeathMsg() {
 			if (name) {
 				delete[] name;
 				name = NULL;
+			}
+			if (description) {
+				delete[] description;
+				description = NULL;
 			}
 		}
 	};
@@ -191,6 +197,8 @@ public:
 
 	static void getRelationNameColor( const char* name, float* color );
 	static void drawPlayerNames( LiveObject* player );
+
+	static void drawTextWithBckgr( doublePair pos, const char* text );
 
 	static void hDrawRect( doublePair startPos, doublePair endPos );
 	static void drawTileRect( int x, int y );

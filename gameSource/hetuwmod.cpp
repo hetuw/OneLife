@@ -696,6 +696,14 @@ void HetuwMod::livingLifeDraw() {
 
 }
 
+void HetuwMod::drawTextWithBckgr( doublePair pos, const char* text ) {
+	float textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( text, guiScale );
+	setDrawColor( 0, 0, 0, 0.8 );
+	drawRect( pos, (textWidth/2) + 6*guiScale, 14*guiScale );
+	setDrawColor( 1, 1, 1, 1 );
+	livingLifePage->hetuwDrawScaledHandwritingFont( text, pos, guiScale, alignCenter );
+}
+
 void HetuwMod::hDrawRect( doublePair startPos, doublePair endPos ) {
 	double width = endPos.x - startPos.x;
 	double height = endPos.y - startPos.y;
@@ -1885,6 +1893,8 @@ void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
 	bool isDeathMsg = ( strstr( line, "X X" ) != NULL );
 	if ( !isDeathMsg ) return;
 
+	//printf("hetuw %s\n", line);
+
 	LiveObject *o = NULL;
 	for(int i=0; i<gameObjects->size(); i++) {
 		LiveObject *kO = gameObjects->getElement(i);
@@ -1901,6 +1911,7 @@ void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
 	if ( diffY > hetuwDeathMessageRange || diffY < -hetuwDeathMessageRange) return;
 
 	DeathMsg* deathMsg = new DeathMsg();
+	deathMsg->description = new char[128];
 
 	string strLine(line);
 	string reasonKilled = "reason_killed_"; // reason_killed_
@@ -1917,6 +1928,28 @@ void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
 		if (isDangerousAnimal(killerObjId)) {
 			deathMsg->deathReason = 1; // animal
 		}
+		ObjectRecord *ko = getObject( killerObjId );
+		if ( ko && ko->description ) {
+			char capitalDesc[128];
+			int k = 0;
+			for ( ; ko->description[k] != 0 && k < 128; k++) {
+				if (ko->description[k] == '#') break;
+				capitalDesc[k] = toupper(ko->description[k]);
+			}
+			capitalDesc[k] = 0;
+			sprintf( deathMsg->description, "KILLED BY %s", capitalDesc );
+		} else {
+			sprintf( deathMsg->description, "KILLED BY ID %i", killerObjId );
+		}
+	} else if ( strLine.find("reason_hunger") != string::npos ) {
+		sprintf( deathMsg->description, "KILLED BY STARVATION" );
+	} else if ( strLine.find("reason_SID") != string::npos ) {
+		sprintf( deathMsg->description, "SUDDEN INFANT DEATH" );
+	} else if ( strLine.find("reason_age") != string::npos ) {
+		sprintf( deathMsg->description, "KILLED BY OLD AGE" );
+	} else {
+		delete[] deathMsg->description;
+		deathMsg->description = NULL;
 	}
 
 	deathMsg->timeReci = time(NULL);
@@ -1977,6 +2010,24 @@ void HetuwMod::drawDeathMessages() {
 
 	setDrawColor( dm->nameColor[0], dm->nameColor[1], dm->nameColor[2], 1 );
 	livingLifePage->hetuwDrawScaledHandwritingFont( dm->name , drawPos, guiScale );
+
+	int mouseX, mouseY;
+	livingLifePage->hetuwGetMouseXY( mouseX, mouseY );
+
+	float recStartX = recDrawPos.x - textWidth/2 - 10*guiScale;
+	float recEndX = recDrawPos.x + textWidth/2 + 10*guiScale;
+	float recStartY = recDrawPos.y - 20*guiScale;
+	float recEndY = recDrawPos.y + 20*guiScale;
+
+	if (mouseX >= recStartX && mouseX <= recEndX) {
+		if (mouseY >= recStartY && mouseY <= recEndY) {
+			doublePair descDrawPos = { (double)mouseX, (double)mouseY };
+			if ( dm->description )
+				drawTextWithBckgr( descDrawPos, dm->description );
+			else
+				drawTextWithBckgr( descDrawPos, "UNKNOWN DEATH" );
+		}
+	}
 
 	if ( dm->timeReci+15 < time(NULL) ) {
 		delete deathMessages[0];
