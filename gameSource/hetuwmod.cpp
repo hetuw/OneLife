@@ -1568,7 +1568,7 @@ bool HetuwMod::isDangerousAnimal( int objId ) {
 bool HetuwMod::tileIsSafeToWalk(int x, int y) {
 	int objId = livingLifePage->hetuwGetObjId( x, y);
 	if (objId > 0) {
-		if (isDangerousAnimal(objId)) return false;
+		if (!tileHasNoDangerousAnimals(x, y)) return false;
 
 		ObjectRecord* obj = getObject(objId);
 		if (obj && obj->blocksWalking) {
@@ -1582,7 +1582,20 @@ bool HetuwMod::tileIsSafeToWalk(int x, int y) {
 
 bool HetuwMod::tileHasNoDangerousAnimals(int x, int y) {
 	int objId = livingLifePage->hetuwGetObjId( x, y);
-	if (isDangerousAnimal(objId)) return false;
+	if (objId <= 0) return true;
+	if (ourLiveObject->holdingID > 0 && getObject(ourLiveObject->holdingID)->rideable) {
+		if (ourLiveObject->holdingID == 2395 || // Crude Car with Empty Tank
+			ourLiveObject->holdingID == 2400 || // Crude Car with Empty Tank#driven
+			ourLiveObject->holdingID == 2396 || // Running Crude Car
+			ourLiveObject->holdingID == 2394) { // Unpowered Crude Car
+				return true; // no dangerous animals for cars
+		}
+		// check dangerous animals for horses
+		if (objId == 764) return false; // Rattle Snake	
+		if (objId == 1385) return false; // Attacking Rattle Snake
+	} else { // moving by walking / not riding
+		if (isDangerousAnimal(objId)) return false;
+	}
 	return true;
 }
 
