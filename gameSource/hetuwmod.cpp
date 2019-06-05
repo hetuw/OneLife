@@ -934,18 +934,21 @@ void HetuwMod::remvTileRelativeToMe( int x, int y ) {
 }
 
 bool HetuwMod::objIdReverseAction( int objId ) {
+	if (objId <= 0) return false;
+
 	bool r = false;
 	if ( ourLiveObject->holdingID <= 0 ) {
 		switch (objId) {
 			case 253: // full berry clay bowl
-			case 3026: // 1 berry inside
-			case 3027: // 2 berry inside
-			case 3028: // 3 berry inside
-			case 3029: // 4 berry inside
-			case 3030: // 5 berry inside
 			case 225: // wheat bundle
-				r = true;
+				return true;
 				break;
+		}
+		if ( getObject(objId) ) {
+			char* descr	= getObject(objId)->description;
+			if ( strstr(descr, "Bowl of") != NULL ) {
+				return true;
+			}
 		}
 	}
 	return r;
