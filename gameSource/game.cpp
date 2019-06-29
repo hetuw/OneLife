@@ -1,4 +1,4 @@
-int versionNumber = 243;
+int versionNumber = 245;
 int dataVersionNumber = 0;
 
 int binVersionNumber = versionNumber;
@@ -76,6 +76,7 @@ CustomRandomSource randSource( 34957197 );
 #include "emotion.h"
 #include "photos.h"
 #include "lifeTokens.h"
+#include "fitnessScore.h"
 
 
 #include "FinalMessagePage.h"
@@ -89,6 +90,7 @@ CustomRandomSource randSource( 34957197 );
 #include "ReviewPage.h"
 #include "TwinPage.h"
 #include "PollPage.h"
+#include "GeneticHistoryPage.h"
 //#include "TestPage.h"
 
 #include "ServerActionPage.h"
@@ -144,6 +146,7 @@ SettingsPage *settingsPage;
 ReviewPage *reviewPage;
 TwinPage *twinPage;
 PollPage *pollPage;
+GeneticHistoryPage *geneticHistoryPage;
 //TestPage *testPage = NULL;
 
 
@@ -650,7 +653,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
     pollPage = new PollPage( reviewURL );
     delete [] reviewURL;
-
+    
+    geneticHistoryPage = new GeneticHistoryPage();
+    
 
     // 0 music headroom needed, because we fade sounds before playing music
     setVolumeScaling( 10, 0 );
@@ -738,6 +743,7 @@ void freeFrameDrawer() {
     delete reviewPage;
     delete twinPage;
     delete pollPage;
+    delete geneticHistoryPage;
     
     //if( testPage != NULL ) {
     //    delete testPage;
@@ -764,7 +770,7 @@ void freeFrameDrawer() {
     
     freePhotos();
     freeLifeTokens();
-    
+    freeFitnessScore();
 
     if( reflectorURL != NULL ) {
         delete [] reflectorURL;
@@ -1620,7 +1626,8 @@ void drawFrame( char inUpdate ) {
                     initPhotos();
                     
                     initLifeTokens();
-
+                    initFitnessScore();
+                    
                     initMusicPlayer();
                     setMusicLoudness( musicLoudness );
                     
@@ -1684,6 +1691,10 @@ void drawFrame( char inUpdate ) {
                 }
             else if( existingAccountPage->checkSignal( "poll" ) ) {
                 currentGamePage = pollPage;
+                currentGamePage->base_makeActive( true );
+                }
+            else if( existingAccountPage->checkSignal( "genes" ) ) {
+                currentGamePage = geneticHistoryPage;
                 currentGamePage->base_makeActive( true );
                 }
             else if( existingAccountPage->checkSignal( "settings" ) ) {
@@ -2052,6 +2063,17 @@ void drawFrame( char inUpdate ) {
                 currentGamePage->base_makeActive( true );
                 }
             }
+        else if( currentGamePage == geneticHistoryPage ) {
+            if( geneticHistoryPage->checkSignal( "done" ) ) {
+                if( !isHardToQuitMode() ) {
+                    currentGamePage = existingAccountPage;
+                    }
+                else {
+                    currentGamePage = rebirthChoicePage;
+                    }
+                currentGamePage->base_makeActive( true );
+                }
+            }
         else if( currentGamePage == rebirthChoicePage ) {
             if( rebirthChoicePage->checkSignal( "reborn" ) ) {
                 // get server address again from scratch, in case
@@ -2071,6 +2093,10 @@ void drawFrame( char inUpdate ) {
                 }
             else if( rebirthChoicePage->checkSignal( "menu" ) ) {
                 currentGamePage = existingAccountPage;
+                currentGamePage->base_makeActive( true );
+                }
+            else if( rebirthChoicePage->checkSignal( "genes" ) ) {
+                currentGamePage = geneticHistoryPage;
                 currentGamePage->base_makeActive( true );
                 }
             else if( rebirthChoicePage->checkSignal( "quit" ) ) {
