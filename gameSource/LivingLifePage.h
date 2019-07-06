@@ -879,7 +879,6 @@ class LivingLifePage : public GamePage, public ActionListener {
         void drawOffScreenSounds();
         
 
->>>>>>> fdbb726b03903b9577446d16cc599d3615e3115f
 
         // returns an animation pack that can be used to draw the
         // held object.  The pack's object ID is -1 if nothing is held
