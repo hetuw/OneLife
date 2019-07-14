@@ -1311,7 +1311,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		livingLifePage->hetuwToggleFixCamera();
 		return true;
 	}
-	if (!commandKey && isCharKey(inASCII, charKey_ShowHostileTiles)) {
+	if (!bDrawMap && !commandKey && isCharKey(inASCII, charKey_ShowHostileTiles)) {
 		bDrawHostileTiles = !bDrawHostileTiles;
 		return true;
 	}
@@ -2123,7 +2123,7 @@ void HetuwMod::drawMap() {
 	setDrawColor( 0, 0, 0, 0.8 );
 
 	char strZoomKeys[64];
-	sprintf( strZoomKeys, "USE %c/%c TO ZOOM IN/OUT", toupper(charKey_MapZoomIn), toupper(charKey_MapZoomOut)); 
+	sprintf( strZoomKeys, "USE %c/%c TO ZOOM IN/OUT - CLOSE IT WITH SHIFT+%c", toupper(charKey_MapZoomIn), toupper(charKey_MapZoomOut), toupper(charKey_ShowMap)); 
 	float strZoomKeysWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( strZoomKeys, guiScale ); 
 	doublePair drawKeysRecPos;
 	drawKeysRecPos.x = screenCenter.x - viewWidth/2;
