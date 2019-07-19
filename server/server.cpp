@@ -3963,6 +3963,16 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     SimpleVector<int> pipesIn;
     GridPos playerPos = getPlayerPos( inPlayer );
     
+    
+    if( inPlayer->heldByOther ) {    
+        LiveObject *holdingPlayer = 
+            getLiveObject( inPlayer->heldByOtherID );
+                
+        if( holdingPlayer != NULL ) {
+            playerPos = getPlayerPos( holdingPlayer );
+            }
+        }
+    
     getSpeechPipesIn( playerPos.x, playerPos.y, &pipesIn );
     
     if( pipesIn.size() > 0 ) {
@@ -4538,11 +4548,20 @@ static char isYummy( LiveObject *inPlayer, int inObjectID ) {
 
 
 
-static void updateYum( LiveObject *inPlayer, int inFoodEatenID ) {
+static void updateYum( LiveObject *inPlayer, int inFoodEatenID,
+                       char inFedSelf = true ) {
 
+    char wasYummy = true;
+    
     if( ! isYummy( inPlayer, inFoodEatenID ) ) {
+        wasYummy = false;
+        
         // chain broken
-        inPlayer->yummyFoodChain.deleteAll();
+        
+        // only feeding self can break chain
+        if( inFedSelf ) {
+            inPlayer->yummyFoodChain.deleteAll();
+            }
         }
     
     
@@ -4555,8 +4574,13 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID ) {
     
     // add to chain
     // might be starting a new chain
-    inPlayer->yummyFoodChain.push_back( inFoodEatenID );
-
+    // (do this if fed yummy food by other player too)
+    if( wasYummy ||
+        inPlayer->yummyFoodChain.size() == 0 ) {
+        
+        inPlayer->yummyFoodChain.push_back( inFoodEatenID );
+        }
+    
 
     int currentBonus = inPlayer->yummyFoodChain.size() - 1;
 
@@ -4564,7 +4588,12 @@ static void updateYum( LiveObject *inPlayer, int inFoodEatenID ) {
         currentBonus = 0;
         }    
 
-    inPlayer->yummyBonusStore += currentBonus;
+    if( wasYummy ) {
+        // only get bonus if actually was yummy (whether fed self or not)
+        // chain not broken if fed non-yummy by other, but don't get bonus
+        inPlayer->yummyBonusStore += currentBonus;
+        }
+    
     }
 
 
@@ -4915,6 +4944,30 @@ int processLoggedInPlayer( char inAllowReconnect,
                            int inForceDisplayID = -1,
                            GridPos *inForcePlayerPos = NULL ) {
     
+
+    // new behavior:
+    // allow this new connection from same
+    // email (most likely a re-connect
+    // by same person, when the old connection
+    // hasn't broken on our end yet)
+    
+    // to make it work, force-mark
+    // the old connection as broken
+    for( int p=0; p<players.size(); p++ ) {
+        LiveObject *o = players.getElement( p );
+        
+        if( ! o->error && 
+            o->connected && 
+            strcmp( o->email, inEmail ) == 0 ) {
+            
+            setPlayerDisconnected( o, "Authentic reconnect received" );
+            
+            break;
+            }
+        }
+
+
+
     // see if player was previously disconnected
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *o = players.getElement( i );
@@ -6357,7 +6410,7 @@ static char directLineBlocked( GridPos inSource, GridPos inDest ) {
     else {
         double deltaErr = fabs( deltaY / (double)deltaX );
         
-        double error = deltaErr - 0.5;
+        double error = 0;
         
         int y = inSource.y;
         for( int x=inSource.x; x != inDest.x || y != inDest.y; x += xStep ) {
@@ -6367,6 +6420,17 @@ static char directLineBlocked( GridPos inSource, GridPos inDest ) {
             error += deltaErr;
             
             if( error >= 0.5 ) {
+                y += yStep;
+                error -= 1.0;
+                }
+            
+            // we may need to take multiple steps in y
+            // if line is vertically oriented
+            while( error >= 0.5 ) {
+                if( isMapSpotBlocking( x, y ) ) {
+                    return true;
+                    }
+
                 y += yStep;
                 error -= 1.0;
                 }
@@ -6861,6 +6925,9 @@ char removeFromContainerToHold( LiveObject *inPlayer,
 // to contain it)
 static char addHeldToClothingContainer( LiveObject *inPlayer, 
                                         int inC,
+                                        // true if we should over-pack
+                                        // container in anticipation of a swap
+                                        char inWillSwap = false,
                                         char *outCouldHaveGoneIn = NULL ) {    
     // drop into own clothing
     ObjectRecord *cObj = 
@@ -6890,9 +6957,11 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
             *outCouldHaveGoneIn = true;
             }
 
-        if( oldNum < cObj->numSlots &&
+        if( ( oldNum < cObj->numSlots
+              || ( oldNum == cObj->numSlots && inWillSwap ) )
+            &&
             containSize <= slotSize ) {
-            // room
+            // room (or will swap, so we can over-pack it)
             inPlayer->clothingContained[inC].
                 push_back( 
                     inPlayer->holdingID );
@@ -10107,42 +10176,11 @@ int main() {
                                 }
                             
 
-                            char emailAlreadyLoggedIn = false;
-                            
-
-                            for( int p=0; p<players.size(); p++ ) {
-                                LiveObject *o = players.getElement( p );
-                                
-
-                                if( ! o->error && 
-                                    o->connected && 
-                                    strcmp( o->email, 
-                                            nextConnection->email ) == 0 ) {
-                                    emailAlreadyLoggedIn = true;
-                                    break;
-                                    }
-                                }
-
-                            if( emailAlreadyLoggedIn ) {
-                                AppLog::infoF( 
-                                    "Another client already "
-                                    "connected as %s, "
-                                    "client rejected.",
-                                    nextConnection->email );
-                                
-                                nextConnection->error = true;
-                                nextConnection->errorCauseString =
-                                    "Duplicate email";
-                                nextConnection->curseStatus.curseLevel = 0;
-                                nextConnection->curseStatus.excessPoints = 0;
-                                }
-                            else {
-                                // this may return -1 if curse server
-                                // request is pending
-                                // we'll catch that case later above
-                                nextConnection->curseStatus =
-                                    getCurseLevel( nextConnection->email );
-                                }
+                            // this may return -1 if curse server
+                            // request is pending
+                            // we'll catch that case later above
+                            nextConnection->curseStatus =
+                                getCurseLevel( nextConnection->email );
                             
 
                             if( requireClientPassword &&
@@ -13493,6 +13531,7 @@ int main() {
                                     addHeldToClothingContainer( 
                                         nextPlayer,
                                         m.i,
+                                        false,
                                         &couldHaveGoneIn) ) {
                                     // worked!
                                     }
@@ -13541,7 +13580,8 @@ int main() {
                                     
                                     targetPlayer->foodStore += obj->foodValue;
                                     
-                                    updateYum( targetPlayer, obj->id );
+                                    updateYum( targetPlayer, obj->id,
+                                               targetPlayer == nextPlayer );
 
                                     logEating( obj->id,
                                                obj->foodValue,
@@ -13942,7 +13982,8 @@ int main() {
                                     // first add to top of container
                                     // if possible
                                     addHeldToClothingContainer( nextPlayer,
-                                                                m.c );
+                                                                m.c,
+                                                                true );
                                     if( nextPlayer->holdingID == 0 ) {
                                         // add to top worked
 
@@ -13975,6 +14016,24 @@ int main() {
                                                     nextPlayer, m.c, s );
                                                 break;
                                                 }
+                                            }
+                                        
+                                        // check to make sure remove worked
+                                        // (otherwise swap failed)
+                                        ObjectRecord *cObj = 
+                                            clothingByIndex( 
+                                                nextPlayer->clothing, m.c );
+                                        if( nextPlayer->clothingContained[m.c].
+                                            size() > cObj->numSlots ) {
+                                            
+                                            // over-full, remove failed
+                                            
+                                            // pop top item back off into hand
+                                            removeFromClothingContainerToHold(
+                                                nextPlayer, m.c, 
+                                                nextPlayer->
+                                                clothingContained[m.c].
+                                                size() - 1 );
                                             }
                                         }
                                     
