@@ -50,6 +50,7 @@ unsigned char HetuwMod::charKey_ShowPlayersInRange;
 unsigned char HetuwMod::charKey_ShowDeathMessages;
 unsigned char HetuwMod::charKey_ShowHomeCords;
 unsigned char HetuwMod::charKey_ShowHostileTiles;
+unsigned char HetuwMod::charKey_xRay;
 
 unsigned char HetuwMod::charKey_CreateHome;
 unsigned char HetuwMod::charKey_FixCamera;
@@ -127,6 +128,8 @@ char HetuwMod::tempCordChar;
 int HetuwMod::tempCordX;
 int HetuwMod::tempCordY;
 
+bool HetuwMod::bxRay;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -159,6 +162,7 @@ void HetuwMod::init() {
 	charKey_ShowDeathMessages = 't';
 	charKey_ShowHomeCords = 'g';
 	charKey_ShowHostileTiles = 'u';
+	charKey_xRay = 'x';
 
 	charKey_ShowMap = 'm';
 	charKey_MapZoomIn = 'u';
@@ -174,6 +178,8 @@ void HetuwMod::init() {
 	mapScale = 20000;
 	mapOffsetX = 0;
 	mapOffsetY = 0;
+
+	bxRay = false;
 
 	initDangerousAnimals();	
 	initClosedDoorIDs();
@@ -349,6 +355,9 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	if (strstr(name, "key_show_hostiletiles")) {
 		return setCharKey( charKey_ShowHostileTiles, value );
 	}
+	if (strstr(name, "key_xray")) {
+		return setCharKey( charKey_xRay, value );
+	}
 	if (strstr(name, "key_remembercords")) {
 		return setCharKey( charKey_CreateHome, value );
 	}
@@ -417,6 +426,7 @@ void HetuwMod::initSettings() {
 		writeCharKeyToStream( ofs, "key_show_deathmessages", charKey_ShowDeathMessages );
 		writeCharKeyToStream( ofs, "key_show_homecords", charKey_ShowHomeCords );
 		writeCharKeyToStream( ofs, "key_show_hostiletiles", charKey_ShowHostileTiles );
+		writeCharKeyToStream( ofs, "key_xray", charKey_xRay );
 		ofs << endl;
 		writeCharKeyToStream( ofs, "key_remembercords", charKey_CreateHome );
 		writeCharKeyToStream( ofs, "key_fixcamera", charKey_FixCamera );
@@ -1315,7 +1325,10 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		bDrawHostileTiles = !bDrawHostileTiles;
 		return true;
 	}
-	
+	if (!commandKey && isCharKey(inASCII, charKey_xRay)) {
+		bxRay = true;
+		return true;
+	}
 
 	if (commandKey) {
 		if (isCharKey(inASCII, charKey_TileStandingOn)) {
@@ -1460,6 +1473,11 @@ bool HetuwMod::livingLifeKeyUp(unsigned char inASCII) {
 			rightKeyDown = false;
 			r = true;
 		}
+	}
+
+	if (!commandKey && isCharKey(inASCII, charKey_xRay)) {
+		bxRay = false;
+		r = true;
 	}
 
 	if (inASCII == charKey_MapZoomIn || inASCII == toupper(charKey_MapZoomIn)) {
@@ -2328,6 +2346,9 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c TOGGLE SHOW HOSTILE TILES", toupper(charKey_ShowHostileTiles));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+	sprintf(str, "%c X-RAY VISION", toupper(charKey_xRay));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 

@@ -126,6 +126,7 @@ public:
 	static unsigned char charKey_ShowDeathMessages;
 	static unsigned char charKey_ShowHomeCords;
 	static unsigned char charKey_ShowHostileTiles;
+	static unsigned char charKey_xRay;
 
 	static unsigned char charKey_ShowMap;
 	static unsigned char charKey_MapZoomIn;
@@ -221,6 +222,8 @@ public:
 	static bool setCharKey( unsigned char &key, const char *value );
 
 	static bool isDangerousAnimal( int objId );
+
+	static bool bxRay;
 
 private:
 
