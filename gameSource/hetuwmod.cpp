@@ -405,55 +405,53 @@ void HetuwMod::writeCharKeyToStream( ofstream &ofs, const char* keyName, char ke
 void HetuwMod::initSettings() {
 	ifstream ifs( hetuwSettingsFileName );
 
-	if (!ifs.good()) { // file doesnt exist
-		//printf("hetuw creating %s\n", hetuwSettingsFileName);
-		ofstream ofs( hetuwSettingsFileName, ofstream::out );
-
-		writeCharKeyToStream( ofs, "key_up", charKey_Up );
-		writeCharKeyToStream( ofs, "key_down", charKey_Down );
-		writeCharKeyToStream( ofs, "key_left", charKey_Left );
-		writeCharKeyToStream( ofs, "key_right", charKey_Right );
-		writeCharKeyToStream( ofs, "key_center", charKey_TileStandingOn );
-		ofs << endl;
-		writeCharKeyToStream( ofs, "key_backpack", charKey_Backpack );
-		writeCharKeyToStream( ofs, "key_eat", charKey_Eat );
-		writeCharKeyToStream( ofs, "key_baby", charKey_Baby );
-		ofs << endl;
-		writeCharKeyToStream( ofs, "key_show_help", charKey_ShowHelp );
-		writeCharKeyToStream( ofs, "key_show_names", charKey_ShowNames );
-		writeCharKeyToStream( ofs, "key_show_cords", charKey_ShowCords );
-		writeCharKeyToStream( ofs, "key_show_playersinrange", charKey_ShowPlayersInRange );
-		writeCharKeyToStream( ofs, "key_show_deathmessages", charKey_ShowDeathMessages );
-		writeCharKeyToStream( ofs, "key_show_homecords", charKey_ShowHomeCords );
-		writeCharKeyToStream( ofs, "key_show_hostiletiles", charKey_ShowHostileTiles );
-		writeCharKeyToStream( ofs, "key_xray", charKey_xRay );
-		ofs << endl;
-		writeCharKeyToStream( ofs, "key_remembercords", charKey_CreateHome );
-		writeCharKeyToStream( ofs, "key_fixcamera", charKey_FixCamera );
-		ofs << endl;
-		ofs << "init_show_names = " << (char)(iDrawNames+48) << endl;
-		ofs << "init_show_cords = " << (char)(bDrawCords+48) << endl;
-		ofs << "init_show_playersinrange = " << (char)(bDrawPlayersInRangePanel+48) << endl;
-		ofs << "init_show_deathmessages = " << (char)(bDrawDeathMessages+48) << endl;
-		ofs << "init_show_homecords = " << (char)(bDrawHomeCords+48) << endl;
-		ofs << "init_show_hostiletiles = " << (char)(bDrawHostileTiles+48) << endl;
-
-		ofs.close();
-		return;
+	if (ifs.good()) { // file exists
+		string line;
+		while (getline(ifs, line)) {
+			//printf("hetuw read line: %s\n", line.c_str());
+			if (line.length() < 2) continue;
+			char name[64];
+			char value[64];
+			getSettingsFileLine( name, value, line );
+			if (strlen(name) < 1) continue;
+			//printf("hetuw name: %s, value: %s\n", name, value);
+			if (!setSetting( name, value ))
+				printf("hetuw WARNING invalid %s line: %s\n", hetuwSettingsFileName, line.c_str());
+		}
 	}
 
-	string line;
-	while (getline(ifs, line)) {
-		//printf("hetuw read line: %s\n", line.c_str());
-		if (line.length() < 2) continue;
-		char name[64];
-		char value[64];
-		getSettingsFileLine( name, value, line );
-		if (strlen(name) < 1) continue;
-		//printf("hetuw name: %s, value: %s\n", name, value);
-		if (!setSetting( name, value ))
-			printf("hetuw WARNING invalid %s line: %s\n", hetuwSettingsFileName, line.c_str());
-	}
+	ofstream ofs( hetuwSettingsFileName, ofstream::out );
+
+	writeCharKeyToStream( ofs, "key_up", charKey_Up );
+	writeCharKeyToStream( ofs, "key_down", charKey_Down );
+	writeCharKeyToStream( ofs, "key_left", charKey_Left );
+	writeCharKeyToStream( ofs, "key_right", charKey_Right );
+	writeCharKeyToStream( ofs, "key_center", charKey_TileStandingOn );
+	ofs << endl;
+	writeCharKeyToStream( ofs, "key_backpack", charKey_Backpack );
+	writeCharKeyToStream( ofs, "key_eat", charKey_Eat );
+	writeCharKeyToStream( ofs, "key_baby", charKey_Baby );
+	ofs << endl;
+	writeCharKeyToStream( ofs, "key_show_help", charKey_ShowHelp );
+	writeCharKeyToStream( ofs, "key_show_names", charKey_ShowNames );
+	writeCharKeyToStream( ofs, "key_show_cords", charKey_ShowCords );
+	writeCharKeyToStream( ofs, "key_show_playersinrange", charKey_ShowPlayersInRange );
+	writeCharKeyToStream( ofs, "key_show_deathmessages", charKey_ShowDeathMessages );
+	writeCharKeyToStream( ofs, "key_show_homecords", charKey_ShowHomeCords );
+	writeCharKeyToStream( ofs, "key_show_hostiletiles", charKey_ShowHostileTiles );
+	writeCharKeyToStream( ofs, "key_xray", charKey_xRay );
+	ofs << endl;
+	writeCharKeyToStream( ofs, "key_remembercords", charKey_CreateHome );
+	writeCharKeyToStream( ofs, "key_fixcamera", charKey_FixCamera );
+	ofs << endl;
+	ofs << "init_show_names = " << (char)(iDrawNames+48) << endl;
+	ofs << "init_show_cords = " << (char)(bDrawCords+48) << endl;
+	ofs << "init_show_playersinrange = " << (char)(bDrawPlayersInRangePanel+48) << endl;
+	ofs << "init_show_deathmessages = " << (char)(bDrawDeathMessages+48) << endl;
+	ofs << "init_show_homecords = " << (char)(bDrawHomeCords+48) << endl;
+	ofs << "init_show_hostiletiles = " << (char)(bDrawHostileTiles+48) << endl;
+
+	ofs.close();
 }
 
 void HetuwMod::initOnBirth() {
