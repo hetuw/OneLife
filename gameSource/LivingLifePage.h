@@ -502,6 +502,11 @@ class LivingLifePage : public GamePage, public ActionListener {
         char mForceRunTutorial;
         int mTutorialNumber;
 
+        char mGlobalMessageShowing;
+        double mGlobalMessageStartTime;
+        SimpleVector<char*>mGlobalMessagesToDestroy;
+        
+
         int mFirstServerMessagesReceived;
         
         char mStartedLoadingFirstObjectSet;
