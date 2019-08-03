@@ -181,7 +181,6 @@ void HetuwMod::init() {
 
 	bxRay = false;
 
-	initDangerousAnimals();	
 	initClosedDoorIDs();
 
 	initSettings();
@@ -189,11 +188,37 @@ void HetuwMod::init() {
 	initOnBirth();
 }
 
+// does not check for all dangerous animals, use isDangerousAnimal(int objId) instead
+bool HetuwMod::strContainsDangerousAnimal(const char* str) {
+	if (strstr( str, "Grizzly Bear") != NULL)
+		return true;
+	if (strstr( str, "Wild Boar") != NULL)
+		return true;
+	if (strstr( str, "Domestic Boar") != NULL)
+		return true;
+	if (strstr( str, "Semi-tame Wolf") != NULL)
+		return true;
+	return false;
+}
+
 void HetuwMod::initDangerousAnimals() {
 	if (dangerousAnimals != NULL) {
 		delete[] dangerousAnimals;
 		dangerousAnimals = NULL;
 	}
+
+    SimpleVector<int> vecAnimalIds;
+
+	for (int i = 0; i < 5000; i++) {
+		ObjectRecord* obj = getObject(i);
+		if (!obj) continue;
+		//printf("hetuw obj %i. %s\n", i, obj->description);
+		if (obj->description && strContainsDangerousAnimal(obj->description)) {
+			//printf("hetuw obj %i. %s\n", i, obj->description);
+			vecAnimalIds.push_back(i);
+		}
+	}
+
 	dangerousAnimalsLength = 38;
 	dangerousAnimals = new int[dangerousAnimalsLength];
 
@@ -247,6 +272,32 @@ void HetuwMod::initDangerousAnimals() {
 	if (a != dangerousAnimalsLength) {
 		printf("hetuw ERROR: a != dangerousAnimalsLength\n");
 		printf("hetuw ERROR: %i != %i\n", a, dangerousAnimalsLength);
+	}
+
+	for (int b = 0; b < dangerousAnimalsLength; b++) {
+		int animalId = dangerousAnimals[b];
+		bool exist = false;
+		for (int i = 0; i < vecAnimalIds.size(); i++) {
+			if (*(vecAnimalIds.getElement(i)) == animalId) {
+				exist = true;
+				break;
+			}
+		}
+		if (!exist) {
+			//printf("hetuw %i. %s\n", animalId, getObject(animalId)->description);
+			vecAnimalIds.push_back(animalId);
+		}
+	}
+	//printf("hetuw %i dangerous animals found\n", vecAnimalIds.size());
+
+	delete[] dangerousAnimals;
+	dangerousAnimalsLength = vecAnimalIds.size();
+	dangerousAnimals = new int[dangerousAnimalsLength];
+
+	for (int i = 0; i < vecAnimalIds.size(); i++) {
+		int k = *(vecAnimalIds.getElement(i));
+		dangerousAnimals[i] = k;
+		//printf("hetuw %i. %s\n", k, getObject(k)->description);
 	}
 }
 
@@ -506,6 +557,8 @@ void HetuwMod::initOnServerJoin() {
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject>* inGameObjects) {
 	livingLifePage = inLivingLifePage;
 	gameObjects = inGameObjects;
+
+	initDangerousAnimals();	
 }
 
 HetuwMod::RainbowColor::RainbowColor() {
@@ -1569,18 +1622,6 @@ bool HetuwMod::isDangerousAnimal( int objId ) {
 	for (int i = 0; i < dangerousAnimalsLength; i++) {
 		if (objId == dangerousAnimals[i]) return true;
 	}
-
-	ObjectRecord *o = getObject( objId );
-	if (!o) return false;
-
-	if (strstr( o->description, "Wild Boar") != NULL)
-		return true;
-	if (strstr( o->description, "Domestic Boar") != NULL)
-		return true;
-
-	if (strstr( o->description, "Semi-tame Wolf") != NULL)
-		return true;
-
 	return false;
 }
 
