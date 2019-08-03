@@ -2430,12 +2430,12 @@ LivingLifePage::LivingLifePage()
 
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
         
-        mTutorialHideOffset[i].x = -914;
+        mTutorialHideOffset[i].x = -914 - HetuwMod::panelOffsetX;
         mTutorialFlips[i] = false;
         
         if( i % 2 == 1 ) {
             // odd on right side of screen
-            mTutorialHideOffset[i].x = 914;
+            mTutorialHideOffset[i].x = 914 + HetuwMod::panelOffsetX;
             mTutorialFlips[i] = true;
             }
         
