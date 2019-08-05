@@ -1,6 +1,6 @@
 #!/bin/sh
 
-sh ./hetuwPullFromJason.sh
+./hetuwPullFromJason.sh
 
 echo
 echo "next step compiling"
@@ -16,21 +16,21 @@ echo "next step pushing to hetuw"
 echo "press enter to continue"
 read ANSWER
 
-sh ./hetuwPushToHetuw.sh
+./hetuwPushToHetuw.sh
 
 echo
 echo "next step update windows"
 echo "press enter to continue"
 read ANSWER
 
-sh ./hetuwPullLatest.sh windows 3
+./hetuwPullLatest.sh windows 3
 
 echo
 echo "next step compiling all and clearing cache"
 echo "press enter to continue"
 read ANSWER
 
-sh ./hetuwCompileAll.sh
+./hetuwCompileAll.sh
 
-sh ./hetuwClearCache.sh
+./hetuwClearCache.sh
 

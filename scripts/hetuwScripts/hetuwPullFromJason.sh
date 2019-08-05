@@ -4,12 +4,8 @@ echo
 echo "pulling update from jason to linux"
 echo
 
-cd OneLifeData7
-echo 
-echo "UPDATE OneLifeData7"
-echo
-git pull https://github.com/jasonrohrer/OneLifeData7
-cd ..
+./hetuwUpdateData.sh
+
 cd linux
 cd OneLife
 echo 
@@ -24,3 +20,4 @@ echo
 git pull https://github.com/jasonrohrer/minorGems
 cd ..
 cd ..
+
