@@ -21411,12 +21411,14 @@ void LivingLifePage::hetuwSetPanelOffsets() {
 		mHomeSlipPosOffset = mHomeSlipPosTargetOffset;
 	}
 
-    for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
+    for( int i=0; i<NUM_YUM_SLIPS; i++ ) {
+		int targetDiffY = mYumSlipPosTargetOffset[i].y - mYumSlipHideOffset[i].y;
+		int posDiffY = mYumSlipPosOffset[i].y - mYumSlipHideOffset[i].y;
         mYumSlipHideOffset[i].y = -330 - HetuwMod::panelOffsetY;
-	}
-    for( int i=0; i<NUM_YUM_SLIPS; i++ ) { 
         mYumSlipPosOffset[i] = mYumSlipHideOffset[i];
         mYumSlipPosTargetOffset[i] = mYumSlipHideOffset[i];
+		mYumSlipPosOffset[i].y += posDiffY;
+		mYumSlipPosTargetOffset[i].y += targetDiffY;
 	}
     for( int i=0; i<3; i++ ) {    
         mHungerSlipShowOffsets[i].y = -250 - HetuwMod::panelOffsetY;
