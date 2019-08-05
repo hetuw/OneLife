@@ -192,14 +192,26 @@ void HetuwMod::init() {
 
 // does not check for all dangerous animals, use isDangerousAnimal(int objId) instead
 bool HetuwMod::strContainsDangerousAnimal(const char* str) {
-	if (strstr( str, "Grizzly Bear") != NULL)
-		return true;
-	if (strstr( str, "Wild Boar") != NULL)
-		return true;
-	if (strstr( str, "Domestic Boar") != NULL)
-		return true;
-	if (strstr( str, "Semi-tame Wolf") != NULL)
-		return true;
+	if (strstr( str, "Dying Semi-tame Wolf") != NULL) return false;
+	if (strstr( str, "Dead Semi-tame Wolf") != NULL) return false;
+	if (strstr( str, "Old Semi-tame Wolf") != NULL) return false;
+	if (strstr( str, "Wolf Puppy") != NULL) return false;
+	if (strstr( str, "Semi-tame Wolf with Pup") != NULL) return false;
+	if (strstr( str, "Wolf Skin") != NULL) return false;
+	if (strstr( str, "Wolf Crown") != NULL) return false;
+	if (strstr( str, "Wolf Hat") != NULL) return false;
+	if (strstr( str, "Skinned Wolf") != NULL) return false;
+	if (strstr( str, "Skinless Wolf") != NULL) return false;
+	if (strstr( str, "Dead Wolf") != NULL) return false;
+	if (strstr( str, "Shot Domestic Boar with Piglet") != NULL) return false;
+	if (strstr( str, "Shot Wild Boar with Piglet") != NULL) return false;
+	if (strstr( str, "Dead Grizzly Bear") != NULL) return false;
+
+	if (strstr( str, "Grizzly Bear") != NULL) return true;
+	if (strstr( str, "Wild Boar") != NULL) return true;
+	if (strstr( str, "Domestic Boar") != NULL) return true;
+	if (strstr( str, "Wolf") != NULL) return true;
+
 	return false;
 }
 
@@ -221,7 +233,7 @@ void HetuwMod::initDangerousAnimals() {
 		}
 	}
 
-	dangerousAnimalsLength = 38;
+	dangerousAnimalsLength = 6;
 	dangerousAnimals = new int[dangerousAnimalsLength];
 
 	int a = -1;
@@ -230,41 +242,6 @@ void HetuwMod::initDangerousAnimals() {
 
 	a++; dangerousAnimals[a] = 764; // Rattle Snake
 	a++; dangerousAnimals[a] = 1385; // Attacking Rattle Snake
-
-	a++; dangerousAnimals[a] = 1323; // Wild Boar
-	a++; dangerousAnimals[a] = 1328; // Wild Boar with Piglet 
-	a++; dangerousAnimals[a] = 1333; // Attacking Wild Boar
-	a++; dangerousAnimals[a] = 1334; // Attacking Wild Boar with Piglet
-	a++; dangerousAnimals[a] = 1339; // Domestic Boar
-	a++; dangerousAnimals[a] = 1341; // Domestic Boar with Piglet
-	a++; dangerousAnimals[a] = 1347; // Attacking Boar# domestic
-	a++; dangerousAnimals[a] = 1348; // Attacking Boar with Piglet# domestic
-
-	a++; dangerousAnimals[a] = 418; // Wolf
-	a++; dangerousAnimals[a] = 1630; // Semi-tame Wolf
-	a++; dangerousAnimals[a] = 420; // Shot Wolf
-	a++; dangerousAnimals[a] = 428; // Attacking Shot Wolf
-	a++; dangerousAnimals[a] = 429; // Dying Shot Wolf
-	a++; dangerousAnimals[a] = 1761; // Dying Semi-tame Wolf
-	a++; dangerousAnimals[a] = 1640; // Semi-tame Wolf# just fed
-	a++; dangerousAnimals[a] = 1642; // Semi-tame Wolf# pregnant
-	a++; dangerousAnimals[a] = 1636; // Semi-tame Wolf with Puppy#1
-	a++; dangerousAnimals[a] = 1635; // Semi-tame Wolf with Puppies#2
-	a++; dangerousAnimals[a] = 1631; // Semi-tame Wolf with Puppies#3
-	a++; dangerousAnimals[a] = 1748; // Old Semi-tame Wolf
-	a++; dangerousAnimals[a] = 1641; // @ Deadly Wolf
-	
-	a++; dangerousAnimals[a] = 628; // Grizzly Bear
-	a++; dangerousAnimals[a] = 655; // Shot Grizzly Bear#2 attacking
-	a++; dangerousAnimals[a] = 653; // Hungry Grizzly Bear#attacking
-	a++; dangerousAnimals[a] = 644; // Dying Shot Grizzly Bear#3
-	a++; dangerousAnimals[a] = 631; // Hungry Grizzly Bear
-	a++; dangerousAnimals[a] = 646; // @ Unshot Grizzly Bear
-	a++; dangerousAnimals[a] = 635; // Shot Grizzly Bear#2
-	a++; dangerousAnimals[a] = 645; // Fed Grizzly Bear
-	a++; dangerousAnimals[a] = 632; // Shot Grizzly Bear#1
-	a++; dangerousAnimals[a] = 637; // Shot Grizzly Bear#3
-	a++; dangerousAnimals[a] = 654; // Shot Grizzly Bear#1 attacking
 
 	a++; dangerousAnimals[a] = 1789; // Abused Pit Bull
 	a++; dangerousAnimals[a] = 1747; // Mean Pit Bull
