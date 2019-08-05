@@ -21420,7 +21420,9 @@ void LivingLifePage::hetuwSetPanelOffsets() {
 		mYumSlipPosOffset[i].y += posDiffY;
 		mYumSlipPosTargetOffset[i].y += targetDiffY;
 	}
-    for( int i=0; i<3; i++ ) {    
+	int tempmHungerSlipHideOffsetsY[3];
+    for( int i=0; i<3; i++ ) {
+		tempmHungerSlipHideOffsetsY[i] = mHungerSlipHideOffsets[i].y; 
         mHungerSlipShowOffsets[i].y = -250 - HetuwMod::panelOffsetY;
         mHungerSlipHideOffsets[i].y = -370 - HetuwMod::panelOffsetY;
 	}
@@ -21431,8 +21433,12 @@ void LivingLifePage::hetuwSetPanelOffsets() {
     mHungerSlipShowOffsets[1].y -= 30; // hunger slip
     mHungerSlipShowOffsets[0].y += 18; // full slip
     for( int i=0; i<3; i++ ) {    
+		int targetDiffY = mHungerSlipPosTargetOffset[i].y - tempmHungerSlipHideOffsetsY[i];
+		int posDiffY = mHungerSlipPosOffset[i].y - tempmHungerSlipHideOffsetsY[i];
         mHungerSlipPosOffset[i] = mHungerSlipHideOffsets[i];
         mHungerSlipPosTargetOffset[i] = mHungerSlipPosOffset[i];
+		mHungerSlipPosOffset[i].y += posDiffY;
+		mHungerSlipPosTargetOffset[i].y += targetDiffY;
     }
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
         mHintHideOffset[i].x = 900 + HetuwMod::panelOffsetX;
@@ -21440,7 +21446,6 @@ void LivingLifePage::hetuwSetPanelOffsets() {
 		if (HetuwMod::zoomScale >= 2.0f) {
 			mHintHideOffset[i].y -= 60;
 		}
-        
         mHintTargetOffset[i] = mHintHideOffset[i];
         mHintPosOffset[i] = mHintHideOffset[i];
 	}
