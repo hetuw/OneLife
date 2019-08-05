@@ -108,6 +108,8 @@ public:
 	static float guiScaleRaw;
 	static int panelOffsetX;
 	static int panelOffsetY;
+	static int tutMessageOffsetX;
+	static int tutMessageOffsetX2;
 	
 	static unsigned char charKey_Up;
 	static unsigned char charKey_Down;

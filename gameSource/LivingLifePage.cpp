@@ -2430,12 +2430,12 @@ LivingLifePage::LivingLifePage()
 
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
         
-        mTutorialHideOffset[i].x = -914 - HetuwMod::panelOffsetX;
+        mTutorialHideOffset[i].x = -914 - HetuwMod::panelOffsetX + HetuwMod::tutMessageOffsetX;
         mTutorialFlips[i] = false;
         
         if( i % 2 == 1 ) {
             // odd on right side of screen
-            mTutorialHideOffset[i].x = 914 + HetuwMod::panelOffsetX;
+            mTutorialHideOffset[i].x = 914 + HetuwMod::panelOffsetX - HetuwMod::tutMessageOffsetX2;
             mTutorialFlips[i] = true;
             }
         
@@ -21414,7 +21414,7 @@ void LivingLifePage::hetuwSetPanelOffsets() {
     for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
         mYumSlipHideOffset[i].y = -330 - HetuwMod::panelOffsetY;
 	}
-    for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
+    for( int i=0; i<NUM_YUM_SLIPS; i++ ) { 
         mYumSlipPosOffset[i] = mYumSlipHideOffset[i];
         mYumSlipPosTargetOffset[i] = mYumSlipHideOffset[i];
 	}
@@ -21443,10 +21443,19 @@ void LivingLifePage::hetuwSetPanelOffsets() {
         mHintPosOffset[i] = mHintHideOffset[i];
 	}
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+		int targetDiffY = mTutorialTargetOffset[i].y - mTutorialHideOffset[i].y;
+		int posDiffY = mTutorialPosOffset[i].y - mTutorialHideOffset[i].y;
+
         mTutorialHideOffset[i].y = 430 + HetuwMod::panelOffsetY;
-        
+
+        mTutorialHideOffset[i].x = -914 - HetuwMod::panelOffsetX + HetuwMod::tutMessageOffsetX;
+        if( i % 2 == 1 ) {
+            mTutorialHideOffset[i].x = 914 + HetuwMod::panelOffsetX - HetuwMod::tutMessageOffsetX2;
+		}
         mTutorialTargetOffset[i] = mTutorialHideOffset[i];
+		mTutorialTargetOffset[i].y += targetDiffY;
         mTutorialPosOffset[i] = mTutorialHideOffset[i];
+        mTutorialPosOffset[i].y += posDiffY;
 	}
 }
 

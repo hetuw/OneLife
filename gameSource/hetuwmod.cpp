@@ -23,6 +23,8 @@ float HetuwMod::guiScaleRaw;
 float HetuwMod::guiScale;
 int HetuwMod::panelOffsetX;
 int HetuwMod::panelOffsetY;
+int HetuwMod::tutMessageOffsetX;
+int HetuwMod::tutMessageOffsetX2;
 
 HetuwMod::RainbowColor *HetuwMod::colorRainbow;
 
@@ -596,6 +598,8 @@ void HetuwMod::zoomCalc() {
 	viewHeight = defaultViewHeight*zoomScale;
 	panelOffsetX = (int)(viewWidth - defaultViewWidth)/2;
 	panelOffsetY = (int)(viewHeight - defaultViewHeight)/2;
+	tutMessageOffsetX = viewHeight * 0.14f;
+	tutMessageOffsetX2 = viewHeight * 0.31f;
 	guiScale = guiScaleRaw * zoomScale;
 	hetuwSetViewSize();
 }
