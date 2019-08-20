@@ -346,60 +346,25 @@ bool HetuwMod::setCharKey( char unsigned &key, const char *value ) {
 
 bool HetuwMod::setSetting( const char* name, const char* value ) {
 	if (strlen(value) < 1) return false;
-	if (strstr(name, "key_up")) {
-		return setCharKey( charKey_Up, value );
-	}
-	if (strstr(name, "key_down")) {
-		return setCharKey( charKey_Down, value );
-	}
-	if (strstr(name, "key_left")) {
-		return setCharKey( charKey_Left, value );
-	}
-	if (strstr(name, "key_right")) {
-		return setCharKey( charKey_Right, value );
-	}
-	if (strstr(name, "key_center")) {
-		return setCharKey( charKey_TileStandingOn, value );
-	}
-	if (strstr(name, "key_backpack")) {
-		return setCharKey( charKey_Backpack, value );
-	}
-	if (strstr(name, "key_eat")) {
-		return setCharKey( charKey_Eat, value );
-	}
-	if (strstr(name, "key_baby")) {
-		return setCharKey( charKey_Baby, value );
-	}
-	if (strstr(name, "key_show_help")) {
-		return setCharKey( charKey_ShowHelp, value );
-	}
-	if (strstr(name, "key_show_names")) {
-		return setCharKey( charKey_ShowNames, value );
-	}
-	if (strstr(name, "key_show_cords")) {
-		return setCharKey( charKey_ShowCords, value );
-	}
-	if (strstr(name, "key_show_playersinrange")) {
-		return setCharKey( charKey_ShowPlayersInRange, value );
-	}
-	if (strstr(name, "key_show_deathmessages")) {
-		return setCharKey( charKey_ShowDeathMessages, value );
-	}
-	if (strstr(name, "key_show_homecords")) {
-		return setCharKey( charKey_ShowHomeCords, value );
-	}
-	if (strstr(name, "key_show_hostiletiles")) {
-		return setCharKey( charKey_ShowHostileTiles, value );
-	}
-	if (strstr(name, "key_xray")) {
-		return setCharKey( charKey_xRay, value );
-	}
-	if (strstr(name, "key_remembercords")) {
-		return setCharKey( charKey_CreateHome, value );
-	}
-	if (strstr(name, "key_fixcamera")) {
-		return setCharKey( charKey_FixCamera, value );
-	}
+
+	if (strstr(name, "key_up")) return setCharKey( charKey_Up, value );
+	if (strstr(name, "key_down")) return setCharKey( charKey_Down, value );
+	if (strstr(name, "key_left")) return setCharKey( charKey_Left, value );
+	if (strstr(name, "key_right")) return setCharKey( charKey_Right, value );
+	if (strstr(name, "key_center")) return setCharKey( charKey_TileStandingOn, value );
+	if (strstr(name, "key_backpack")) return setCharKey( charKey_Backpack, value );
+	if (strstr(name, "key_eat")) return setCharKey( charKey_Eat, value );
+	if (strstr(name, "key_baby")) return setCharKey( charKey_Baby, value );
+	if (strstr(name, "key_show_help")) return setCharKey( charKey_ShowHelp, value );
+	if (strstr(name, "key_show_names")) return setCharKey( charKey_ShowNames, value );
+	if (strstr(name, "key_show_cords")) return setCharKey( charKey_ShowCords, value );
+	if (strstr(name, "key_show_playersinrange")) return setCharKey( charKey_ShowPlayersInRange, value );
+	if (strstr(name, "key_show_deathmessages")) return setCharKey( charKey_ShowDeathMessages, value );
+	if (strstr(name, "key_show_homecords")) return setCharKey( charKey_ShowHomeCords, value );
+	if (strstr(name, "key_show_hostiletiles")) return setCharKey( charKey_ShowHostileTiles, value );
+	if (strstr(name, "key_xray")) return setCharKey( charKey_xRay, value );
+	if (strstr(name, "key_remembercords")) return setCharKey( charKey_CreateHome, value );
+	if (strstr(name, "key_fixcamera")) return setCharKey( charKey_FixCamera, value );
 
 	if (strstr(name, "init_show_names")) {
 		iDrawNames = (int)(value[0]-'0');
@@ -724,28 +689,19 @@ void HetuwMod::livingLifeDraw() {
 	if (!ourLiveObject) return;
 
 	drawAge();
-
 	if (bDrawCords) drawCords();
-
 	if (bDrawPlayersInRangePanel) drawPlayersInRangePanel();
-
 	if (bDrawDeathMessages) drawDeathMessages();
-
 	if (bDrawHomeCords) drawHomeCords();
-
 	if (bDrawHostileTiles) drawHostileTiles();
-
 	if (bDrawMap) drawMap();
-
 	if (bDrawInputString) drawInputString();
-
 	if (bDrawHelp) drawHelp();
 
 	//setDrawColor( 1.0, 0, 0, 1.0 );
 	//drawRect( debugRecPos, 10, 10 );
 	//setDrawColor( 0.0, 1.0, 0, 1.0 );
 	//drawRect( debugRecPos2, 10, 10 );
-
 }
 
 void HetuwMod::drawTextWithBckgr( doublePair pos, const char* text ) {
