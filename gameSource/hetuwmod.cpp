@@ -484,7 +484,7 @@ void HetuwMod::initSettings() {
 	ofs.close();
 }
 
-void HetuwMod::initOnBirth() {
+void HetuwMod::initOnBirth() { // will be called from LivingLifePage.cpp and hetuwmod.cpp
 
 	initOnServerJoin();
 
@@ -507,7 +507,7 @@ void HetuwMod::initOnBirth() {
 	addHomeLocation( 0, 0, false, 12 ); // add birth location
 }
 
-void HetuwMod::initOnServerJoin() {
+void HetuwMod::initOnServerJoin() { // will be called from LivingLifePage.cpp and hetuwmod.cpp
 	lastPosX = 9999;
 	lastPosY = 9999;
 
@@ -531,6 +531,8 @@ void HetuwMod::initOnServerJoin() {
 
 	bDrawInputString = false;
 	getCustomCords = 0;
+
+	bxRay = false;
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject>* inGameObjects) {
@@ -1216,6 +1218,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		activateAutoRoadRun = true;
 		getCustomCords = 0;
 		bDrawInputString = false;
+		bxRay = false;
 	}
 
 	if (bNextCharForHome) {
