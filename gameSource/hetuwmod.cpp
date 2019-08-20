@@ -130,6 +130,7 @@ char HetuwMod::tempCordChar;
 int HetuwMod::tempCordX;
 int HetuwMod::tempCordY;
 
+bool HetuwMod::takingPhoto;
 bool HetuwMod::bxRay;
 
 void HetuwMod::init() {
@@ -181,6 +182,7 @@ void HetuwMod::init() {
 	mapOffsetX = 0;
 	mapOffsetY = 0;
 
+	takingPhoto = false;
 	bxRay = false;
 
 	initClosedDoorIDs();
@@ -188,6 +190,10 @@ void HetuwMod::init() {
 	initSettings();
 
 	initOnBirth();
+}
+
+void HetuwMod::setTakingPhoto(bool inTakingPhoto) {
+	takingPhoto = inTakingPhoto;
 }
 
 // does not check for all dangerous animals, use isDangerousAnimal(int objId) instead
@@ -532,6 +538,7 @@ void HetuwMod::initOnServerJoin() { // will be called from LivingLifePage.cpp an
 	bDrawInputString = false;
 	getCustomCords = 0;
 
+	takingPhoto = false;
 	bxRay = false;
 }
 
@@ -711,6 +718,7 @@ void HetuwMod::addHomeLocation( int x, int y, bool ancient, char c ) {
 }
 
 void HetuwMod::livingLifeDraw() {
+	if (takingPhoto) return; // dont draw special mod stuff while taking a photo
 
  	ourLiveObject = livingLifePage->getOurLiveObject();
 	if (!ourLiveObject) return;

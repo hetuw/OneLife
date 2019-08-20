@@ -7355,6 +7355,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                        &subjectNames );
             
             takingPhoto = false;
+			HetuwMod::setTakingPhoto(takingPhoto);
             delete [] photoSig;
             photoSig = NULL;
             photoSequenceNumber = -1;
@@ -12826,6 +12827,7 @@ void LivingLifePage::step() {
                                 takingPhotoGlobalPos.y = y;
                                 takingPhotoFlip = mMapTileFlips[ mapI ];
                                 takingPhoto = true;
+								HetuwMod::setTakingPhoto(takingPhoto);
                                 }
                             
                             }
@@ -18217,6 +18219,7 @@ void LivingLifePage::makeActive( char inFresh ) {
     
 
     takingPhoto = false;
+	HetuwMod::setTakingPhoto(takingPhoto);
     photoSequenceNumber = -1;
     waitingForPhotoSig = false;
     if( photoSig != NULL ) {

@@ -226,6 +226,9 @@ public:
 	static bool strContainsDangerousAnimal(const char* str);
 	static bool isDangerousAnimal( int objId );
 
+	static void setTakingPhoto( bool inTakingPhoto );
+	static bool takingPhoto;
+
 	static bool bxRay;
 
 private:
