@@ -3642,7 +3642,7 @@ void LivingLifePage::drawMapCell( int inMapI,
         char flip = mMapTileFlips[ inMapI ];
         
         ObjectRecord *obj = getObject( oID );
-		if (HetuwMod::bxRay && obj->blocksWalking) return;
+		if (!takingPhoto && HetuwMod::bxRay && obj->blocksWalking) return;
         if( obj->noFlip ||
             ( obj->permanent && 
               ( obj->blocksWalking || obj->drawBehindPlayer || 
