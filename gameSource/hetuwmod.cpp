@@ -110,8 +110,8 @@ bool HetuwMod::mapZoomInKeyDown;
 bool HetuwMod::mapZoomOutKeyDown;
 
 int HetuwMod::playersInRangeNum;
-int HetuwMod::youngWomenInRange;
 bool HetuwMod::bDrawPlayersInRangePanel;
+std::vector<HetuwMod::FamilyInRange*> HetuwMod::familiesInRange;
 
 bool HetuwMod::bDrawDeathMessages;
 std::vector<HetuwMod::DeathMsg*> HetuwMod::deathMessages;
@@ -132,6 +132,9 @@ int HetuwMod::tempCordY;
 
 bool HetuwMod::takingPhoto;
 bool HetuwMod::bxRay;
+
+bool HetuwMod::bFoundFamilyName;
+string HetuwMod::ourFamilyName;
 
 void HetuwMod::init() {
 	zoomScale = 1.5f;
@@ -466,7 +469,11 @@ void HetuwMod::initOnBirth() { // will be called from LivingLifePage.cpp and het
 	playersInMap.shrink_to_fit();
 
 	playersInRangeNum = 0;
-	youngWomenInRange = 0;
+
+	familiesInRange.clear();
+	familiesInRange.shrink_to_fit();
+	familiesInRange.push_back(new FamilyInRange());
+	strcpy(familiesInRange[0]->name, hetuwDefaultOurFamilyName);
 
 	deathMessages.clear();
 	deathMessages.shrink_to_fit();
@@ -505,6 +512,9 @@ void HetuwMod::initOnServerJoin() { // will be called from LivingLifePage.cpp an
 
 	takingPhoto = false;
 	bxRay = false;
+
+	bFoundFamilyName = false;
+	ourFamilyName = hetuwDefaultOurFamilyName;
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject>* inGameObjects) {
@@ -627,6 +637,7 @@ void HetuwMod::livingLifeStep() {
 	}
 
 	if (stepCount % 46 == 0) {
+		if (!bFoundFamilyName) getOurFamilyName();
 		updatePlayersInRangePanel();
 	}
 
@@ -838,6 +849,40 @@ void HetuwMod::drawHomeCords() {
 		}
 
 	}
+}
+
+void HetuwMod::setOurFamilyName(const char* lastName) {
+	bFoundFamilyName = true;
+	ourFamilyName = string(lastName);
+	familiesInRange[0]->setName(ourFamilyName.c_str());
+}
+
+void HetuwMod::getOurFamilyName() {
+	if (!gameObjects) return;
+	if (ourLiveObject) {
+		char lastName[32];
+		getLastName(lastName, ourLiveObject->name);
+		if (lastName[0] != 0) {
+			setOurFamilyName(lastName);
+			return;
+		}
+	}
+	for(int i=0; i<gameObjects->size(); i++) {
+		LiveObject *o = gameObjects->getElement( i );
+		if (!isRelated(o)) continue;
+		char lastName[32];
+		getLastName(lastName, o->name);
+		if (lastName[0] == 0) continue;
+		setOurFamilyName(lastName);
+		return;
+	}
+	ourFamilyName = hetuwDefaultOurFamilyName;
+	bFoundFamilyName = false;
+}
+
+bool HetuwMod::isRelated( LiveObject* player ) {
+	if (!player->relationName) return false;
+	return true;
 }
 
 void HetuwMod::getRelationNameColor( const char* name, float* color ) {
@@ -1801,6 +1846,10 @@ void HetuwMod::removeLastName(char *newName, const char* name) {
 }
 
 void HetuwMod::getLastName(char* lastName, const char* name) {
+	if (!name) {
+		lastName[0] = 0;
+		return;
+	}
 	int k = -1;
 	for (int i=0; name[i] != 0; i++) {
 		if (name[i] == ' ') {
@@ -1829,9 +1878,9 @@ void HetuwMod::setLastNameColor( const char* lastName, float alpha ) {
 		num += (int)lastName[i];
 	}
 	setDrawColor(
-		0.0 + (num%100)/100.0f,  
-		0.0 + (num%182)/150.0f,  
-		0.0 + (num%77)/77.0f,  
+		0.15 + (num%100)/70.0f,  
+		0.15 + (num%182)/140.0f,  
+		0.15 + (num%77)/50.0f,  
 		alpha );
 }
 
@@ -1885,11 +1934,17 @@ void HetuwMod::updateMap() {
 #define hetuwPlayersInRangeDistance 50
 void HetuwMod::updatePlayersInRangePanel() {
 	playersInRangeNum = 0;
-	youngWomenInRange = 0;
+	char lastName[32];
+
+	for(int i=0; (unsigned)i<familiesInRange.size(); i++)
+		familiesInRange[i]->reset();
+
 	for(int i=0; i<gameObjects->size(); i++) {
 		LiveObject *o = gameObjects->getElement( i );
 
+		if ( o == ourLiveObject ) continue;
 		if ( o->outOfRange ) continue;
+
 		int distX = o->xd - ourLiveObject->xd;
 		if ( distX > hetuwPlayersInRangeDistance || distX < -hetuwPlayersInRangeDistance)
 			continue;
@@ -1899,9 +1954,50 @@ void HetuwMod::updatePlayersInRangePanel() {
 
 		playersInRangeNum++;
 
+		int youngWoman = 0;
 		if ( !getObject( o->displayID )->male )
 			if ( livingLifePage->hetuwGetAge( o ) < 40 )
-				youngWomenInRange++;
+				youngWoman = 1;
+
+		if (isRelated(o)) {
+			familiesInRange[0]->count++;
+			familiesInRange[0]->youngWomenCount += youngWoman;
+			continue;
+		}
+
+		getLastName(lastName, o->name);
+		if (lastName[0] != 0) {
+			FamilyInRange *fam = NULL;
+			for (int k=1; (unsigned)k < familiesInRange.size(); k++) {
+				if (familiesInRange[k]->nameEqualsName(lastName)) {
+					fam = familiesInRange[k];
+					break;
+				}
+			}
+			if (!fam) {
+				fam = new FamilyInRange();
+				fam->setName(lastName);
+				familiesInRange.push_back(fam);
+			}
+			fam->count++;
+			fam->youngWomenCount += youngWoman;
+			continue;
+		}
+		// person without family name
+		FamilyInRange *fam = NULL;
+		for (int k=1; (unsigned)k < familiesInRange.size(); k++) {
+			if (familiesInRange[k]->nameEqualsName("UNKNOWN")) {
+				fam = familiesInRange[k];
+				break;
+			}
+		}
+		if (!fam) {
+			fam = new FamilyInRange();
+			fam->setName("UNKNOWN");
+			familiesInRange.push_back(fam);
+		}
+		fam->count++;
+		fam->youngWomenCount += youngWoman;
 	}
 }
 
@@ -2174,10 +2270,16 @@ void HetuwMod::drawMap() {
 }
 
 void HetuwMod::drawPlayersInRangePanel() {
+	int listSize = 0;
+	for (int k=0; (unsigned)k < familiesInRange.size(); k++) {
+		if (k != 0 && familiesInRange[k]->count <= 0) continue;
+		listSize++;
+	}
+
 	setDrawColor( 0, 0, 0, 0.8 );
 	doublePair bckgrRecPos = livingLifePage->hetuwGetLastScreenViewCenter();
 	int bckgrRecWidthHalf = 140*guiScale;
-	int bckgrRecHeightHalf = 35*guiScale;
+	int bckgrRecHeightHalf = (int)(10 + listSize*12.5f + 12.5f)*guiScale;
 	bckgrRecPos.x += viewWidth/2;
 	bckgrRecPos.y += viewHeight/2;
 	doublePair textPos = bckgrRecPos;
@@ -2193,19 +2295,17 @@ void HetuwMod::drawPlayersInRangePanel() {
 	else if (playersInRangeNum < 100) sprintf(text, "PLAYERS IN RANGE:  %d", playersInRangeNum);
 	else sprintf(text, "PLAYERS IN RANGE: %d", playersInRangeNum);
 	livingLifePage->hetuwDrawScaledHandwritingFont( text, textPos, guiScale, alignRight );
-	textPos.y -= 25*guiScale;
 
-	if (youngWomenInRange <= 0) setDrawColor( 1, 0.2, 0, 1 );
-	else if (youngWomenInRange == 1) setDrawColor( 1, 0.7, 0, 1);
-	else if (youngWomenInRange == 2) setDrawColor( 1, 0.9, 0, 1);
-	else if (youngWomenInRange == 3) setDrawColor( 0.8, 1, 0, 1);
-	else if (youngWomenInRange == 4) setDrawColor( 0.5, 1, 0, 1);
-	else if (youngWomenInRange == 5) setDrawColor( 0.3, 1, 0, 1);
-	else setDrawColor( 0.0, 1, 0, 1);
-	if (youngWomenInRange < 10) sprintf(text, "YOUNG WOMEN:   %d", youngWomenInRange);
-	else if (youngWomenInRange < 100) sprintf(text, "YOUNG WOMEN:  %d", youngWomenInRange);
-	else sprintf(text, "YOUNG WOMEN: %d", youngWomenInRange);
-	livingLifePage->hetuwDrawScaledHandwritingFont( text, textPos, guiScale, alignRight );
+	for (int k=0; (unsigned)k < familiesInRange.size(); k++) {
+		FamilyInRange* fam = familiesInRange[k];
+		if (k != 0 && fam->count <= 0) continue;
+		textPos.y -= 25*guiScale;
+		setLastNameColor(fam->name, 1.0f);
+		char text[32];
+		sprintf( text, "%s  F:%i  %i", fam->name, fam->youngWomenCount, fam->count);
+		livingLifePage->hetuwDrawScaledHandwritingFont( text, textPos, guiScale, alignRight );
+	}
+
 }
 
 void HetuwMod::drawAge() {

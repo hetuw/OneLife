@@ -77,6 +77,41 @@ class HetuwMod
 		}
 	};
 
+	#define hetuwDefaultOurFamilyName "MYFAMILY"
+	#define hetuwMaxFamilyNameLen 13
+	struct FamilyInRange {
+		char* name;
+		int count;
+		int youngWomenCount;
+		FamilyInRange() {
+			name = new char[hetuwMaxFamilyNameLen];
+			count = 0;
+			youngWomenCount = 0;
+		}
+		~FamilyInRange() {
+			if (name) { delete name; name = NULL; }
+		}
+		void reset() {
+			count = 0;
+			youngWomenCount = 0;
+		}
+		void setName(const char* inName) {
+			int i=0;
+			for ( ; i < (hetuwMaxFamilyNameLen-1); i++) {
+				name[i] = inName[i];
+				if (inName[i] == 0) break;
+			}
+			name[i] = 0;
+		}
+		bool nameEqualsName(const char* inName) {
+			for (int i=0; i < (hetuwMaxFamilyNameLen-1); i++) {
+				if (inName[i] == 0) break;
+				if (name[i] != inName[i]) return false;
+			}
+			return true;
+		}
+	};
+
 public:
 
 	typedef struct {
@@ -198,6 +233,9 @@ public:
 	static bool tileHasNoDangerousAnimals(int x, int y);
 	static bool tileHasClosedDoor(int x, int y);
 
+	static void setOurFamilyName(const char* lastName);
+	static void getOurFamilyName();
+	static bool isRelated( LiveObject* player );
 	static void getRelationNameColor( const char* name, float* color );
 	static void drawPlayerNames( LiveObject* player );
 
@@ -212,7 +250,6 @@ public:
 	static void setLastNameColor( const char* lastName, float alpha );
 
 	static int playersInRangeNum;
-	static int youngWomenInRange;
 
 	static std::vector<HomePos*> homePosStack;
 	static void addHomeLocation( int x, int y, bool ancient = false, char c = 0 );
@@ -230,6 +267,10 @@ public:
 	static bool takingPhoto;
 
 	static bool bxRay;
+
+	static bool bFoundFamilyName;
+	static std::vector<FamilyInRange*> familiesInRange;
+	static string ourFamilyName;
 
 private:
 
