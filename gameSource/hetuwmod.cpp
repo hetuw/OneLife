@@ -181,7 +181,7 @@ void HetuwMod::init() {
 	debugRecPos2 = { 0.0, 0.0 };
 
 	bDrawMap = false;
-	mapScale = 20000;
+	mapScale = 85;
 	mapOffsetX = 0;
 	mapOffsetY = 0;
 
@@ -2191,7 +2191,7 @@ void HetuwMod::drawMap() {
 			drawPos.y > mouseY-recHeightHalf && drawPos.y < mouseY+recHeightHalf) {
 			bDrawMouseOver = true;
 			if (playersInMap[k]->lastName) {
-				sprintf(drawMouseOver, "%s X:%d Y:%d", playersInMap[k]->lastName, playersInMap[k]->x, playersInMap[k]->y);
+				sprintf(drawMouseOver, "%s X:%d Y:%d", playersInMap[k]->name, playersInMap[k]->x, playersInMap[k]->y);
 			} else {
 				sprintf(drawMouseOver, "X:%d Y:%d", playersInMap[k]->x, playersInMap[k]->y);
 			}
