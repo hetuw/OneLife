@@ -325,7 +325,7 @@ private:
 
 	static void updateMap();
 
-	static bool bDrawPlayersInRangePanel;
+	static int iDrawPlayersInRangePanel;
 	static void updatePlayersInRangePanel();
 	static void drawPlayersInRangePanel();
 

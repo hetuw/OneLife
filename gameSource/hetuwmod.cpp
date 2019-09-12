@@ -110,7 +110,7 @@ bool HetuwMod::mapZoomInKeyDown;
 bool HetuwMod::mapZoomOutKeyDown;
 
 int HetuwMod::playersInRangeNum;
-bool HetuwMod::bDrawPlayersInRangePanel;
+int HetuwMod::iDrawPlayersInRangePanel;
 std::vector<HetuwMod::FamilyInRange*> HetuwMod::familiesInRange;
 
 bool HetuwMod::bDrawDeathMessages;
@@ -145,7 +145,7 @@ void HetuwMod::init() {
 	colorRainbow = new RainbowColor();
 
 	bDrawHelp = false;
-	bDrawPlayersInRangePanel = false;
+	iDrawPlayersInRangePanel = 0;
 	bDrawDeathMessages = true;
 	bDrawHomeCords = false;
 	iDrawNames = 1;
@@ -378,7 +378,7 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 		return true;
 	}
 	if (strstr(name, "init_show_playersinrange")) {
-		bDrawPlayersInRangePanel = bool(value[0]-48);
+		iDrawPlayersInRangePanel = (int)(value[0]-'0');
 		return true;
 	}
 	if (strstr(name, "init_show_deathmessages")) {
@@ -450,7 +450,7 @@ void HetuwMod::initSettings() {
 	ofs << endl;
 	ofs << "init_show_names = " << (char)(iDrawNames+48) << endl;
 	ofs << "init_show_cords = " << (char)(bDrawCords+48) << endl;
-	ofs << "init_show_playersinrange = " << (char)(bDrawPlayersInRangePanel+48) << endl;
+	ofs << "init_show_playersinrange = " << (char)(iDrawPlayersInRangePanel+48) << endl;
 	ofs << "init_show_deathmessages = " << (char)(bDrawDeathMessages+48) << endl;
 	ofs << "init_show_homecords = " << (char)(bDrawHomeCords+48) << endl;
 	ofs << "init_show_hostiletiles = " << (char)(bDrawHostileTiles+48) << endl;
@@ -701,7 +701,7 @@ void HetuwMod::livingLifeDraw() {
 
 	drawAge();
 	if (bDrawCords) drawCords();
-	if (bDrawPlayersInRangePanel) drawPlayersInRangePanel();
+	if (iDrawPlayersInRangePanel > 0) drawPlayersInRangePanel();
 	if (bDrawDeathMessages) drawDeathMessages();
 	if (bDrawHomeCords) drawHomeCords();
 	if (bDrawHostileTiles) drawHostileTiles();
@@ -1342,7 +1342,8 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		return true;
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_ShowPlayersInRange)) {
-		bDrawPlayersInRangePanel = !bDrawPlayersInRangePanel;
+		iDrawPlayersInRangePanel++;
+		if (iDrawPlayersInRangePanel >= 3) iDrawPlayersInRangePanel = 0;
 		return true;
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_ShowDeathMessages)) {
@@ -1943,14 +1944,17 @@ void HetuwMod::updatePlayersInRangePanel() {
 		LiveObject *o = gameObjects->getElement( i );
 
 		if ( o == ourLiveObject ) continue;
-		if ( o->outOfRange ) continue;
+		
+		if (iDrawPlayersInRangePanel == 1) {
+			if ( o->outOfRange ) continue;
 
-		int distX = o->xd - ourLiveObject->xd;
-		if ( distX > hetuwPlayersInRangeDistance || distX < -hetuwPlayersInRangeDistance)
-			continue;
-		int distY = o->yd - ourLiveObject->yd;
-		if ( distY > hetuwPlayersInRangeDistance || distY < -hetuwPlayersInRangeDistance)
-			continue;
+			int distX = o->xd - ourLiveObject->xd;
+			if ( distX > hetuwPlayersInRangeDistance || distX < -hetuwPlayersInRangeDistance)
+				continue;
+			int distY = o->yd - ourLiveObject->yd;
+			if ( distY > hetuwPlayersInRangeDistance || distY < -hetuwPlayersInRangeDistance)
+				continue;
+		}
 
 		playersInRangeNum++;
 
@@ -2291,9 +2295,16 @@ void HetuwMod::drawPlayersInRangePanel() {
 	char text[32];
 	textPos.y -= 20*guiScale;
 	textPos.x -= 20*guiScale;
-	if (playersInRangeNum < 10) sprintf(text, "PLAYERS IN RANGE:   %d", playersInRangeNum);
-	else if (playersInRangeNum < 100) sprintf(text, "PLAYERS IN RANGE:  %d", playersInRangeNum);
-	else sprintf(text, "PLAYERS IN RANGE: %d", playersInRangeNum);
+	
+	if (iDrawPlayersInRangePanel == 1) {
+		if (playersInRangeNum < 10) sprintf(text, "PLAYERS IN RANGE:   %d", playersInRangeNum);
+		else if (playersInRangeNum < 100) sprintf(text, "PLAYERS IN RANGE:  %d", playersInRangeNum);
+		else sprintf(text, "PLAYERS IN RANGE: %d", playersInRangeNum);
+	} else {
+		if (playersInRangeNum < 10) sprintf(text, "PLAYERS ON SERVER:   %d", playersInRangeNum);
+		else if (playersInRangeNum < 100) sprintf(text, "PLAYERS ON SERVER:  %d", playersInRangeNum);
+		else sprintf(text, "PLAYERS ON SERVER: %d", playersInRangeNum);
+	}
 	livingLifePage->hetuwDrawScaledHandwritingFont( text, textPos, guiScale, alignRight );
 
 	for (int k=0; (unsigned)k < familiesInRange.size(); k++) {
