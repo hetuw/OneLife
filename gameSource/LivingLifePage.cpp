@@ -21631,6 +21631,7 @@ void LivingLifePage::keyUp( unsigned char inASCII ) {
 
 void LivingLifePage::hetuwToggleFixCamera() {
 	shouldMoveCamera = !shouldMoveCamera;
+	HetuwMod::SetFixCamera(shouldMoveCamera);
 }
 
 // hetuw mod - if changes are made here they also need to be made in the constructor above

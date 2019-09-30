@@ -286,6 +286,9 @@ public:
 	static bool *objIsBeingSearched;
 	static void SetSearchArray();
 
+	static bool cameraIsFixed;
+	static void SetFixCamera(bool b);
+
 private:
 
  	static LiveObject *ourLiveObject;
@@ -294,6 +297,8 @@ private:
 
 	static bool bDrawHelp;
 	static void drawHelp();
+	static void setHelpColorNormal();
+	static void setHelpColorSpecial();
 
 	static bool bDrawCords;
 	static void drawCords();

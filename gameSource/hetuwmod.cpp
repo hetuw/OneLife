@@ -151,6 +151,8 @@ bool HetuwMod::bxRay;
 bool HetuwMod::bFoundFamilyName;
 string HetuwMod::ourFamilyName;
 
+bool HetuwMod::cameraIsFixed;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -2703,13 +2705,25 @@ void HetuwMod::drawCords() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( sBufB, drawPosB, guiScale );
 }
 
+void HetuwMod::SetFixCamera(bool b) {
+	cameraIsFixed = !b;
+}
+
+void HetuwMod::setHelpColorNormal() {
+	setDrawColor( 1.0f, 1.0f, 1.0f, 1 );
+}
+
+void HetuwMod::setHelpColorSpecial() {
+	setDrawColor( colorRainbow->color[0], 1.0f, colorRainbow->color[2], 1 );
+}
+
 void HetuwMod::drawHelp() {
 	float guiScale = (guiScaleRaw+0.1) * zoomScale;
 	char str[128];
 	setDrawColor( 0, 0, 0, 0.8 );
 	drawRect( livingLifePage->hetuwGetLastScreenViewCenter(), viewWidth/2, viewHeight/2 );
 
-	setDrawColor( colorRainbow->color[0], 1.0f, colorRainbow->color[2], 1 );
+	setHelpColorNormal();
 
 	double lineHeight = 30*guiScale;
 
@@ -2718,7 +2732,7 @@ void HetuwMod::drawHelp() {
 	drawPos.x -= viewWidth/2 - 20*guiScale;
 	drawPos.y += viewHeight/2 - 80*guiScale;
 	SimpleVector<Emotion> emotions = hetuwGetEmotions();
-    for( int i=0; i<emotions.size(); i++ ) {
+    for( int i=0; i<emotions.size()-1; i++ ) {
 		if (i == 7 || i == 8) continue;
 		int id = i;
 		if (i > 6) id -= 2;
@@ -2729,6 +2743,7 @@ void HetuwMod::drawHelp() {
 		livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 		drawPos.y -= lineHeight;
 	}
+	drawPos.y -= lineHeight;
 	livingLifePage->hetuwDrawScaledHandwritingFont( "PRESS NUMBER KEY FOR SHORT EMOTE", drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	livingLifePage->hetuwDrawScaledHandwritingFont( "WRITE EMOTE FOR PERMANENT EMOTE", drawPos, guiScale );
@@ -2756,35 +2771,63 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 
+	livingLifePage->hetuwDrawScaledHandwritingFont( "= MAKE SCREENSHOT", drawPos, guiScale );
+	drawPos.y -= lineHeight;
+
+	setHelpColorSpecial();
 	sprintf(str, "%c TOGGLE SHOW HELP", toupper(charKey_ShowHelp));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
-	livingLifePage->hetuwDrawScaledHandwritingFont( "= MAKE SCREENSHOT", drawPos, guiScale );
-	drawPos.y -= lineHeight;
+
+	if (cameraIsFixed) setHelpColorSpecial();
+	else setHelpColorNormal();
 	sprintf(str, "%c TOGGLE FIX CAMERA", toupper(charKey_FixCamera));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
+
+	if (iDrawNames > 0) setHelpColorSpecial();
+	else setHelpColorNormal();
 	sprintf(str, "%c TOGGLE SHOW NAMES", toupper(charKey_ShowNames));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
+
+	if (bDrawCords) setHelpColorSpecial();
+	else setHelpColorNormal();
 	sprintf(str, "%c TOGGLE SHOW CORDS", toupper(charKey_ShowCords));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
+
+	if (iDrawPlayersInRangePanel > 0) setHelpColorSpecial();
+	else setHelpColorNormal();
 	sprintf(str, "%c TOGGLE SHOW PLAYERS IN RANGE", toupper(charKey_ShowPlayersInRange));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
+
+	if (bDrawDeathMessages) setHelpColorSpecial();
+	else setHelpColorNormal();
 	sprintf(str, "%c TOGGLE SHOW DEATH MESSAGES", toupper(charKey_ShowDeathMessages));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
+
+	if (bDrawHomeCords) setHelpColorSpecial();
+	else setHelpColorNormal();
 	sprintf(str, "%c TOGGLE SHOW HOME CORDS", toupper(charKey_ShowHomeCords));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
+
+	if (bDrawHostileTiles) setHelpColorSpecial();
+	else setHelpColorNormal();
 	sprintf(str, "%c TOGGLE SHOW HOSTILE TILES", toupper(charKey_ShowHostileTiles));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
+
+	if (bxRay) setHelpColorSpecial();
+	else setHelpColorNormal();
 	sprintf(str, "%c X-RAY VISION", toupper(charKey_xRay));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
+
+	setHelpColorNormal();
 
 	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
 	drawPos.x -= viewWidth/2 - 640*guiScale;
@@ -2832,6 +2875,9 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "SHIFT+%c - RESET CORDS TO WHERE YOU ARE STANDING", toupper(charKey_ShowCords));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+	sprintf(str, "%c - SEARCH FOR AN OBJECT", toupper(charKey_Search));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 }
