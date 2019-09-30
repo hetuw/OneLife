@@ -71,6 +71,29 @@ extern Font *handwritingFont;
 extern Font *pencilFont;
 extern Font *pencilErasedFont;
 
+void LivingLifePage::hetuwDrawMainFont(const char* str, doublePair drawPos, TextAlignment align) {
+	mainFont->drawString( str, drawPos, align );
+}
+
+double LivingLifePage::hetuwMeasureStringMainFont(const char* str) {
+	return mainFont->measureString( str );
+}
+
+void LivingLifePage::hetuwDrawScaledMainFont(const char* str, doublePair drawPos, double customScale, TextAlignment align ) {
+	double scale = mainFont->hetuwGetScaleFactor();
+	mainFont->hetuwSetScaleFactor(scale * customScale);
+	mainFont->drawString( str, drawPos, align );
+	mainFont->hetuwSetScaleFactor(scale);
+}
+
+double LivingLifePage::hetuwMeasureScaledMainFont(const char* str, double customScale) {
+	double scale = mainFont->hetuwGetScaleFactor();
+	mainFont->hetuwSetScaleFactor(scale * customScale);
+	double r = mainFont->measureString( str );
+	mainFont->hetuwSetScaleFactor(scale);
+	return r;
+}
+
 void LivingLifePage::hetuwDrawWithHandwritingFont(const char* str, doublePair drawPos, TextAlignment align) {
 	handwritingFont->drawString( str, drawPos, align );
 }
@@ -2124,6 +2147,13 @@ void LivingLifePage::hetuwSetNextActionEating( bool b ) {
 	nextActionEating = b;
 }
 
+int LivingLifePage::hetuwGetMapI( int tileX, int tileY ) {
+	int mapX = tileX - mMapOffsetX + mMapD / 2;
+	int mapY = tileY - mMapOffsetY + mMapD / 2;
+	if (mapX >= mMapD || mapY >= mMapD) return -1;
+	return mapY * mMapD + mapX;
+}
+
 int LivingLifePage::hetuwGetObjId( int tileX, int tileY ) {
 	int mapX = tileX - mMapOffsetX + mMapD / 2;
 	int mapY = tileY - mMapOffsetY + mMapD / 2;
@@ -2573,7 +2603,7 @@ LivingLifePage::LivingLifePage()
         mTutorialNumber = 1;
         }
 
-	HetuwMod::setLivingLifePage(this, &gameObjects);
+	HetuwMod::setLivingLifePage(this, &gameObjects, mMapContainedStacks, mMapSubContainedStacks, mMapD);
 
     }
 

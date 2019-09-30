@@ -481,6 +481,10 @@ class LivingLifePage : public GamePage, public ActionListener {
 		void hetuwSetPanelOffsets();
 		bool hetuwSayFieldIsFocused() { return mSayField.isFocused(); }
 		doublePair hetuwGetLastScreenViewCenter();
+		void hetuwDrawMainFont( const char* str, doublePair drawPos, TextAlignment align = alignLeft  );
+		double hetuwMeasureStringMainFont(const char* str);
+		void hetuwDrawScaledMainFont( const char* str, doublePair drawPos, double customScale, TextAlignment align = alignLeft  );
+		double hetuwMeasureScaledMainFont(const char* str, double customScale );
 		void hetuwDrawWithHandwritingFont( const char* str, doublePair drawPos, TextAlignment align = alignLeft  );
 		double hetuwMeasureStringHandwritingFont(const char* str);
 		void hetuwDrawScaledHandwritingFont( const char* str, doublePair drawPos, double customScale, TextAlignment align = alignLeft  );
@@ -488,6 +492,7 @@ class LivingLifePage : public GamePage, public ActionListener {
 		void hetuwSetNextActionMessage( const char* str, int x, int y );
 		void hetuwSetNextActionDropping( bool b );
 		void hetuwSetNextActionEating( bool b );
+		int hetuwGetMapI( int tileX, int tileY );
 		int hetuwGetObjId( int mapX, int mapY );
 		void hetuwClickMove( float x, float y );
 		double hetuwGetAge( LiveObject *inObj );

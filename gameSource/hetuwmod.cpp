@@ -15,6 +15,8 @@
 
 using namespace std;
 
+int HetuwMod::maxObjects;
+
 int HetuwMod::viewWidth;
 int HetuwMod::viewHeight;
 
@@ -53,6 +55,7 @@ unsigned char HetuwMod::charKey_ShowDeathMessages;
 unsigned char HetuwMod::charKey_ShowHomeCords;
 unsigned char HetuwMod::charKey_ShowHostileTiles;
 unsigned char HetuwMod::charKey_xRay;
+unsigned char HetuwMod::charKey_Search;
 
 unsigned char HetuwMod::charKey_CreateHome;
 unsigned char HetuwMod::charKey_FixCamera;
@@ -99,6 +102,9 @@ int HetuwMod::stepCount;
 double HetuwMod::ourAge;
 
 SimpleVector<LiveObject> *HetuwMod::gameObjects;
+SimpleVector<int> *HetuwMod::mMapContainedStacks;
+SimpleVector<SimpleVector<int>> *HetuwMod::mMapSubContainedStacks;
+int *HetuwMod::mMapD;
 
 std::vector<HetuwMod::PlayerInMap*> HetuwMod::playersInMap;
 bool HetuwMod::bDrawMap;
@@ -129,6 +135,15 @@ int HetuwMod::getCustomCords;
 char HetuwMod::tempCordChar;
 int HetuwMod::tempCordX;
 int HetuwMod::tempCordY;
+
+bool *HetuwMod::objIsBeingSearched;
+int HetuwMod::getSearchInput;
+std::vector<char*> HetuwMod::searchWordList;
+bool HetuwMod::bDrawSearchList;
+int HetuwMod::drawSearchListTopY;
+std::vector<doublePair*> HetuwMod::searchWordStartPos;
+std::vector<doublePair*> HetuwMod::searchWordEndPos;
+std::vector<bool> HetuwMod::searchWordListDelete;
 
 bool HetuwMod::takingPhoto;
 bool HetuwMod::bxRay;
@@ -169,6 +184,7 @@ void HetuwMod::init() {
 	charKey_ShowHomeCords = 'g';
 	charKey_ShowHostileTiles = 'u';
 	charKey_xRay = 'x';
+	charKey_Search = 'j';
 
 	charKey_ShowMap = 'm';
 	charKey_MapZoomIn = 'u';
@@ -232,7 +248,7 @@ void HetuwMod::initDangerousAnimals() {
 
     SimpleVector<int> vecAnimalIds;
 
-	for (int i = 0; i < 5000; i++) {
+	for (int i = 0; i < maxObjects; i++) {
 		ObjectRecord* obj = getObject(i);
 		if (!obj) continue;
 		//printf("hetuw obj %i. %s\n", i, obj->description);
@@ -368,6 +384,7 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	if (strstr(name, "key_xray")) return setCharKey( charKey_xRay, value );
 	if (strstr(name, "key_remembercords")) return setCharKey( charKey_CreateHome, value );
 	if (strstr(name, "key_fixcamera")) return setCharKey( charKey_FixCamera, value );
+	if (strstr(name, "key_search")) return setCharKey( charKey_Search, value );
 
 	if (strstr(name, "init_show_names")) {
 		iDrawNames = (int)(value[0]-'0');
@@ -444,6 +461,7 @@ void HetuwMod::initSettings() {
 	writeCharKeyToStream( ofs, "key_show_homecords", charKey_ShowHomeCords );
 	writeCharKeyToStream( ofs, "key_show_hostiletiles", charKey_ShowHostileTiles );
 	writeCharKeyToStream( ofs, "key_xray", charKey_xRay );
+	writeCharKeyToStream( ofs, "key_search", charKey_Search );
 	ofs << endl;
 	writeCharKeyToStream( ofs, "key_remembercords", charKey_CreateHome );
 	writeCharKeyToStream( ofs, "key_fixcamera", charKey_FixCamera );
@@ -481,6 +499,9 @@ void HetuwMod::initOnBirth() { // will be called from LivingLifePage.cpp and het
 	homePosStack.clear();
 	homePosStack.shrink_to_fit();
 
+	// searchWordList.clear();
+	// searchWordList.shrink_to_fit();
+
 	cordOffset = { 0, 0 };
 	addHomeLocation( 0, 0, false, 12 ); // add birth location
 }
@@ -510,6 +531,8 @@ void HetuwMod::initOnServerJoin() { // will be called from LivingLifePage.cpp an
 	bDrawInputString = false;
 	getCustomCords = 0;
 
+	getSearchInput = 0;
+
 	takingPhoto = false;
 	bxRay = false;
 
@@ -517,11 +540,37 @@ void HetuwMod::initOnServerJoin() { // will be called from LivingLifePage.cpp an
 	ourFamilyName = hetuwDefaultOurFamilyName;
 }
 
-void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject>* inGameObjects) {
+void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject> *inGameObjects,
+							SimpleVector<int> *inmMapContainedStacks, SimpleVector<SimpleVector<int>> *inmMapSubContainedStacks,
+							int &inmMapD) {
 	livingLifePage = inLivingLifePage;
 	gameObjects = inGameObjects;
+	mMapContainedStacks = inmMapContainedStacks;
+	mMapSubContainedStacks = inmMapSubContainedStacks;
+	mMapD = &inmMapD;
 
-	initDangerousAnimals();	
+	maxObjects = getMaxObjectID() + 1;
+
+	initDangerousAnimals();
+
+	if (objIsBeingSearched != NULL) delete[] objIsBeingSearched;
+	objIsBeingSearched = new bool[maxObjects];
+	SetSearchArray();
+}
+
+void HetuwMod::SetSearchArray() {
+	for (int i=0; i<maxObjects; i++) {
+		objIsBeingSearched[i] = false;
+		ObjectRecord *o = getObject( i );
+		if (!o) continue;
+		for (unsigned k=0; k<searchWordList.size(); k++) {
+			if (charArrContainsCharArr(o->description, searchWordList[k])) {
+				//printf("hetuw search for id: %i, desc: %s\n", i, o->description);
+				objIsBeingSearched[i] = true;
+				break;
+			}
+		}
+	}
 }
 
 HetuwMod::RainbowColor::RainbowColor() {
@@ -702,9 +751,11 @@ void HetuwMod::livingLifeDraw() {
 	drawAge();
 	if (bDrawCords) drawCords();
 	if (iDrawPlayersInRangePanel > 0) drawPlayersInRangePanel();
+	if (searchWordList.size() > 0) drawSearchList();
 	if (bDrawDeathMessages) drawDeathMessages();
 	if (bDrawHomeCords) drawHomeCords();
 	if (bDrawHostileTiles) drawHostileTiles();
+	if (searchWordList.size() > 0) drawSearchTiles();
 	if (bDrawMap) drawMap();
 	if (bDrawInputString) drawInputString();
 	if (bDrawHelp) drawHelp();
@@ -763,6 +814,163 @@ void HetuwMod::drawHostileTiles() {
 			}
 		}
 	}
+}
+
+bool HetuwMod::charArrContainsCharArr(const char* arr1, const char* arr2) {
+	int i = 0, k = 0, r = 0;
+	while (true) {
+		while (true) {
+			if (arr1[i] == 0) return false;
+			if (toupper(arr1[i]) == toupper(arr2[0])) break;
+			i++;
+		}
+		k = 0;
+		r = i;
+		while (true) {
+			if (arr2[k] == 0) return true;
+			if (arr1[i] == 0) return false;
+			if (toupper(arr1[i]) != toupper(arr2[k])) break;
+			i++; k++;
+		}
+		i = r+1;
+	}
+}
+
+void HetuwMod::objDescrToUpper(const char* arr, char* output, int maxSize) {
+	for (int i=0; arr[i] != 0; i++) {
+		if (i >= maxSize) break;
+		if (arr[i] == '#') break;
+		output[i] = toupper(arr[i]);
+	}
+}
+
+void HetuwMod::drawSearchTilesLoop(bool drawText) {
+	int radius = 32;
+	int startX = ourLiveObject->xd - radius;
+	int endX = ourLiveObject->xd + radius;
+	int startY = ourLiveObject->yd - radius;
+	int endY = ourLiveObject->yd + radius;
+
+	doublePair textPos;
+	bool drawRec = true;
+
+	for (int x = startX; x < endX; x++) {
+		for (int y = startY; y < endY; y++) {
+			if (drawText) {
+				textPos.x = x * CELL_D;
+				textPos.y = y * CELL_D - (CELL_D/2);
+			}
+			drawRec = true;
+
+			int objId = livingLifePage->hetuwGetObjId( x, y );
+			if (!objId || objId <= 0 || objId >= maxObjects) continue;
+			if (objIsBeingSearched[objId]) {
+				if (!drawText) { drawTileRect( x, y ); continue; }
+				else {
+					ObjectRecord *obj = getObject(objId);
+					if (obj && obj->description) {
+						char descr[32];
+						objDescrToUpper(obj->description, descr, 32);
+						livingLifePage->hetuwDrawScaledMainFont( obj->description, textPos, 1.2, alignCenter );
+						textPos.y += 24;
+					}
+				}
+			}
+
+			int mapI = livingLifePage->hetuwGetMapI( x, y );
+			if (mapI < 0) continue;
+			if (mMapContainedStacks[mapI].size() > 0) {
+				//int *stackArray = mMapContainedStacks[mapI].getElementArray();
+				int size = mMapContainedStacks[mapI].size();
+				for (int i=0; i < size; i++) {
+					//int objId = stackArray[i];
+					int objId = mMapContainedStacks[mapI].getElementDirect(i);
+					if (objId <= 0 || objId >= maxObjects) continue;
+					if (objIsBeingSearched[objId]) {
+						if (!drawText) { 
+							if (drawRec) drawTileRect( x, y );
+							drawRec = false;
+							break;
+						} else {
+							ObjectRecord *obj = getObject(objId);
+							if (obj && obj->description) {
+								livingLifePage->hetuwDrawMainFont( obj->description, textPos,  alignCenter );
+								textPos.y += 24;
+							}
+						}
+					}
+				}
+				//delete[] stackArray;
+			}
+			if (!drawText && !drawRec) continue;
+			if (mMapSubContainedStacks[mapI].size() > 0) {
+				//SimpleVector<int> *subStackArray = mMapSubContainedStacks[mapI].getElementArray();
+				int size = mMapSubContainedStacks[mapI].size();
+				for (int i=0; i < size; i++) {
+					if (!drawText && !drawRec) break;
+					//int *vec = subStackArray[i].getElementArray();
+					//int size2 = subStackArray[i].size();
+					SimpleVector<int> vec = mMapSubContainedStacks[mapI].getElementDirect(i);
+					int size2 = vec.size();
+					//if (!vec) continue;
+					for (int k=0; k < size2; k++) {
+						//int objId = vec[i];
+						int objId = vec.getElementDirect(k);
+						if (objId <= 0 || objId >= maxObjects) continue;
+						if (objIsBeingSearched[objId]) {
+							if (!drawText) {
+								if (drawRec) drawTileRect( x, y );
+								drawRec = false;
+								break;
+							} else {
+								ObjectRecord *obj = getObject(objId);
+								if (obj && obj->description) {
+									livingLifePage->hetuwDrawMainFont( obj->description, textPos,  alignCenter );
+									textPos.y += 24;
+								}
+							}
+						}
+					}
+					//delete[] vec;
+				}
+				//delete[] subStackArray;
+			}
+		}
+	}
+/*
+	if (!gameObjects) return;
+	for(int i=0; i<gameObjects->size(); i++) {
+		LiveObject *o = gameObjects->getElement( i );
+		if (!o) continue;
+		for(int c=0; c < o->numContained; c++ ) {
+			if (objIsBeingSearched[o->containedIDs[c]]) {
+				if (!drawText) drawTileRect( o->xd, o->yd );
+				else {
+					ObjectRecord *obj = getObject(o->containedIDs[c]);
+					if (obj && obj->description) {
+						livingLifePage->hetuwDrawMainFont( obj->description, textPos,  alignCenter );
+						textPos.y += 24;
+					}
+				}
+			}
+			for(int s=0; s < o->subContainedIDs[c].size(); s++) {
+				//o->subContainedIDs[c].getElementDirect(s);
+			}
+		}
+	}
+*/
+}
+
+void HetuwMod::drawSearchTiles() {
+	float alpha = 0.0;
+	float interv = (20+stepCount) % 60 / (float)60;
+	if (interv > 0.5) interv = 1 - interv;
+	alpha += interv;
+
+	setDrawColor( 0.2, colorRainbow->color[1], colorRainbow->color[2], alpha );
+	drawSearchTilesLoop(false);
+	setDrawColor( colorRainbow->color[1]-0.5, colorRainbow->color[2]-0.5, 0.7, 1.3-alpha );
+	drawSearchTilesLoop(true);
 }
 
 void HetuwMod::drawInputString() {
@@ -1226,6 +1434,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		stopAutoRoadRunTime = time(NULL);
 		activateAutoRoadRun = true;
 		getCustomCords = 0;
+		getSearchInput = 0;
 		bDrawInputString = false;
 		bxRay = false;
 	}
@@ -1281,8 +1490,27 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		}
 	}
 
+	if (getSearchInput > 0) {
+		if (inASCII == 13) { // ENTER
+			string strSearch = tempInputString.substr(8, tempInputString.length());
+			bDrawInputString = false;
+			getSearchInput = 0;
+			char *cstrSearchWord = new char[strSearch.size()];
+			strcpy(cstrSearchWord, strSearch.c_str());
+			searchWordList.push_back(cstrSearchWord);
+			searchWordStartPos.push_back(new doublePair());
+			searchWordEndPos.push_back(new doublePair());
+			searchWordListDelete.push_back(false);
+			SetSearchArray();
+			//printf("hetuw strSearch: %s\n", strSearch.c_str());
+		} else { // not enter
+			addToTempInputString( toupper(inASCII), false, 8);
+		}
+		return true;
+	}
+
 	// for debugging
-	if (true && inASCII == 'i') {
+	if (false && inASCII == 'i') {
 		int mouseX, mouseY;
 		livingLifePage->hetuwGetMouseXY( mouseX, mouseY );
 		int x = round( mouseX / (float)CELL_D );
@@ -1295,6 +1523,32 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 				printf("hetuw description: %s\n", o->description);
 			}
 		}
+		int mapI = livingLifePage->hetuwGetMapI( x, y );
+		if (mapI < 0) return true;
+		if (mMapContainedStacks[mapI].size() > 0) {
+			for (int i=0; i < mMapContainedStacks[mapI].size(); i++) {
+				int objId = *mMapContainedStacks[mapI].getElement(i);
+				if (objId <= 0) continue;
+				ObjectRecord *o = getObject( objId );
+				if (o && o->description) {
+					printf("hetuw contains %i. %s\n", i, o->description);
+				}
+			}
+		}
+		if (mMapSubContainedStacks[mapI].size() > 0) {
+			for (int i=0; i < mMapSubContainedStacks[mapI].size(); i++) {
+				SimpleVector<int> *vec = mMapSubContainedStacks[mapI].getElement(i);
+				for (int k=0; k < vec->size(); k++) {
+					int objId = *vec->getElement(k);
+					if (objId <= 0) continue;
+					ObjectRecord *o = getObject( objId );
+					if (o && o->description) {
+						printf("hetuw sub contains %i.%i. %s\n", i, k, o->description);
+					}
+				}
+			}
+		}
+		return true;
 	}
 
 	// emotes
@@ -1360,6 +1614,12 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	}
 	if (!commandKey && shiftKey && isCharKey(inASCII, charKey_CreateHome)) {
 		getCustomCords = 1;
+		return true;
+	}
+	if (!commandKey && isCharKey(inASCII, charKey_Search)) {
+		tempInputString = "SEARCH: ";
+		getSearchInput = 1;
+		bDrawInputString = true;
 		return true;
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_FixCamera)) {
@@ -1604,6 +1864,15 @@ bool HetuwMod::livingLifePageMouseDown( float mX, float mY ) {
 					cordOffset.y = -homePosStack[i]->y;
 					return true;
 				}
+			}
+		}
+	}
+
+	for (int k=0; (unsigned)k < searchWordList.size(); k++) {
+		if (mX >= searchWordStartPos[k]->x && mX <= searchWordEndPos[k]->x) {
+			if (mY >= searchWordStartPos[k]->y && mY <= searchWordEndPos[k]->y) {
+				searchWordListDelete[k] = true;
+				return true;
 			}
 		}
 	}
@@ -2291,6 +2560,8 @@ void HetuwMod::drawPlayersInRangePanel() {
 	bckgrRecPos.y -= bckgrRecHeightHalf;
 	drawRect( bckgrRecPos, bckgrRecWidthHalf, bckgrRecHeightHalf );
 
+	drawSearchListTopY = bckgrRecPos.y - bckgrRecHeightHalf - (int)(10*guiScale);
+
 	setDrawColor( 1, 1, 1, 1 );
 	char text[32];
 	textPos.y -= 20*guiScale;
@@ -2317,6 +2588,71 @@ void HetuwMod::drawPlayersInRangePanel() {
 		livingLifePage->hetuwDrawScaledHandwritingFont( text, textPos, guiScale, alignRight );
 	}
 
+}
+
+void HetuwMod::drawSearchList() {
+	int mouseX, mouseY;
+	livingLifePage->hetuwGetMouseXY( mouseX, mouseY );
+
+	for (unsigned i=0; i<searchWordList.size(); i++) {
+		if (searchWordListDelete[i]) {
+			//printf("hetuw searchWord delete %i. %s\n", i, searchWordList[i]);
+			delete[] searchWordList[i];
+			searchWordList.erase(searchWordList.begin()+i);
+			delete searchWordStartPos[i];
+			searchWordStartPos.erase(searchWordStartPos.begin()+i);
+			delete searchWordEndPos[i];
+			searchWordEndPos.erase(searchWordEndPos.begin()+i);
+			searchWordListDelete.erase(searchWordListDelete.begin()+i);
+			i--;
+			SetSearchArray();
+		}
+	}
+	if (searchWordList.size() == 0) return;
+
+	float biggestTextWidth = 0;
+	for (unsigned i=0; i<searchWordList.size(); i++) {
+		float textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( searchWordList[i], guiScale );
+		if (textWidth > biggestTextWidth) biggestTextWidth = textWidth;
+	}
+
+	int bckgrRecWidthHalf = (int)(10)*guiScale+(biggestTextWidth/2);
+	int bckgrRecHeightHalf = (int)(10 + searchWordList.size()*12.5f)*guiScale;
+
+	doublePair bckgrRecPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	if (iDrawPlayersInRangePanel > 0) {
+		bckgrRecPos.y = drawSearchListTopY;
+	} else {
+		bckgrRecPos.y += viewHeight/2;
+	}
+	bckgrRecPos.x += viewWidth/2;
+	doublePair textPos = bckgrRecPos;
+	bckgrRecPos.x -= bckgrRecWidthHalf;
+	bckgrRecPos.y -= bckgrRecHeightHalf;
+
+	setDrawColor( 0, 0, 0, 0.8 );
+	drawRect( bckgrRecPos, bckgrRecWidthHalf, bckgrRecHeightHalf );
+
+	textPos.x -= 10*guiScale;
+	textPos.y += 2*guiScale;
+	setDrawColor( 0.3, 1.0, 0, 1.0 );
+	for (int k=0; (unsigned)k < searchWordList.size(); k++) {
+		textPos.y -= 25*guiScale;
+		livingLifePage->hetuwDrawScaledHandwritingFont( searchWordList[k], textPos, guiScale, alignRight );
+
+		searchWordStartPos[k]->x = bckgrRecPos.x-bckgrRecWidthHalf-0*guiScale;
+		searchWordEndPos[k]->x = bckgrRecPos.x+bckgrRecWidthHalf+0*guiScale;
+		searchWordEndPos[k]->y = textPos.y+12.5*guiScale;
+		searchWordStartPos[k]->y = textPos.y-12.5*guiScale;
+	}
+	for (int k=0; (unsigned)k < searchWordList.size(); k++) {
+		if (mouseX >= searchWordStartPos[k]->x && mouseX <= searchWordEndPos[k]->x) {
+			if (mouseY >= searchWordStartPos[k]->y && mouseY <= searchWordEndPos[k]->y) {
+				setDrawColor( 1, 1, 1, 0.4 );
+				hDrawRect( *searchWordStartPos[k], *searchWordEndPos[k] );
+			}
+		}
+	}
 }
 
 void HetuwMod::drawAge() {

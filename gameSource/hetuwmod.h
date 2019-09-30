@@ -123,6 +123,8 @@ public:
 		doublePair drawEndPos;
 	} HomePos;
 
+	static int maxObjects;
+
 	static const int defaultViewWidth = 1280;
 	static const int defaultViewHeight = 720;
 
@@ -164,6 +166,7 @@ public:
 	static unsigned char charKey_ShowHomeCords;
 	static unsigned char charKey_ShowHostileTiles;
 	static unsigned char charKey_xRay;
+	static unsigned char charKey_Search;
 
 	static unsigned char charKey_ShowMap;
 	static unsigned char charKey_MapZoomIn;
@@ -191,6 +194,9 @@ public:
 
 	static SimpleVector<LiveObject> *gameObjects;
 	static std::vector<PlayerInMap*> playersInMap;
+	static SimpleVector<int> *mMapContainedStacks;
+	static SimpleVector<SimpleVector<int>> *mMapSubContainedStacks;
+	static int *mMapD;
 
 	static void pickUpBaby( int x, int y );
 	static bool playerIsInCloseRange( LiveObject* o );
@@ -200,7 +206,9 @@ public:
 	static void initOnBirth();
 	static void initOnServerJoin();
 
-	static void setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject> *inGameObjects);
+	static void setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject> *inGameObjects,
+							SimpleVector<int> *inmMapContainedStacks, SimpleVector<SimpleVector<int>> *inmMapSubContainedStacks,
+							int &inmMapD);
 
 	static void zoomIncrease(float value);
 	static void zoomDecrease(float value);
@@ -272,6 +280,12 @@ public:
 	static std::vector<FamilyInRange*> familiesInRange;
 	static string ourFamilyName;
 
+	static bool charArrContainsCharArr(const char* arr1, const char* arr2);
+	static void objDescrToUpper(const char* arr, char* output, int maxSize);
+	
+	static bool *objIsBeingSearched;
+	static void SetSearchArray();
+
 private:
 
  	static LiveObject *ourLiveObject;
@@ -329,6 +343,8 @@ private:
 	static void updatePlayersInRangePanel();
 	static void drawPlayersInRangePanel();
 
+	static void drawSearchList();
+
 	static float mapScale;
 	static float mapOffsetX;
 	static float mapOffsetY;
@@ -354,6 +370,16 @@ private:
 	static char tempCordChar;
 	static int tempCordX;
 	static int tempCordY;
+
+	static void drawSearchTiles();
+	static void drawSearchTilesLoop(bool drawText);
+	static int getSearchInput;
+	static std::vector<char*> searchWordList;
+	static bool bDrawSearchList;
+	static int drawSearchListTopY;
+	static std::vector<doublePair*> searchWordStartPos;
+	static std::vector<doublePair*> searchWordEndPos;
+	static std::vector<bool> searchWordListDelete;
 
 };
 
