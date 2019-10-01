@@ -56,6 +56,7 @@ unsigned char HetuwMod::charKey_ShowHomeCords;
 unsigned char HetuwMod::charKey_ShowHostileTiles;
 unsigned char HetuwMod::charKey_xRay;
 unsigned char HetuwMod::charKey_Search;
+unsigned char HetuwMod::charKey_TeachLanguage;
 
 unsigned char HetuwMod::charKey_CreateHome;
 unsigned char HetuwMod::charKey_FixCamera;
@@ -153,6 +154,15 @@ string HetuwMod::ourFamilyName;
 
 bool HetuwMod::cameraIsFixed;
 
+constexpr char HetuwMod::languageArray[HetuwMod::languageArraySize1][HetuwMod::languageArraySize2];
+bool HetuwMod::bTeachLanguage;
+int HetuwMod::teachLanguageCount;
+double HetuwMod::timeLastLanguage;
+
+vector<char*> HetuwMod::sayBuffer;
+double HetuwMod::timeLastSay;
+bool HetuwMod::clearSayBuffer;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -187,6 +197,7 @@ void HetuwMod::init() {
 	charKey_ShowHostileTiles = 'u';
 	charKey_xRay = 'x';
 	charKey_Search = 'j';
+	charKey_TeachLanguage = 'l';
 
 	charKey_ShowMap = 'm';
 	charKey_MapZoomIn = 'u';
@@ -205,6 +216,8 @@ void HetuwMod::init() {
 
 	takingPhoto = false;
 	bxRay = false;
+	objIsBeingSearched = NULL;
+	clearSayBuffer = false;
 
 	initClosedDoorIDs();
 
@@ -387,6 +400,7 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	if (strstr(name, "key_remembercords")) return setCharKey( charKey_CreateHome, value );
 	if (strstr(name, "key_fixcamera")) return setCharKey( charKey_FixCamera, value );
 	if (strstr(name, "key_search")) return setCharKey( charKey_Search, value );
+	if (strstr(name, "key_teachlanguage")) return setCharKey( charKey_TeachLanguage, value );
 
 	if (strstr(name, "init_show_names")) {
 		iDrawNames = (int)(value[0]-'0');
@@ -464,6 +478,7 @@ void HetuwMod::initSettings() {
 	writeCharKeyToStream( ofs, "key_show_hostiletiles", charKey_ShowHostileTiles );
 	writeCharKeyToStream( ofs, "key_xray", charKey_xRay );
 	writeCharKeyToStream( ofs, "key_search", charKey_Search );
+	writeCharKeyToStream( ofs, "key_teachlanguage", charKey_TeachLanguage );
 	ofs << endl;
 	writeCharKeyToStream( ofs, "key_remembercords", charKey_CreateHome );
 	writeCharKeyToStream( ofs, "key_fixcamera", charKey_FixCamera );
@@ -506,6 +521,14 @@ void HetuwMod::initOnBirth() { // will be called from LivingLifePage.cpp and het
 
 	cordOffset = { 0, 0 };
 	addHomeLocation( 0, 0, false, 12 ); // add birth location
+
+	bTeachLanguage = false;
+	teachLanguageCount = 0;
+	timeLastLanguage = 0;
+
+	timeLastSay = 0;
+	sayBuffer.clear();
+	sayBuffer.shrink_to_fit();
 }
 
 void HetuwMod::initOnServerJoin() { // will be called from LivingLifePage.cpp and hetuwmod.cpp
@@ -673,6 +696,8 @@ void HetuwMod::livingLifeStep() {
 
 	move();
 
+	SayStep();
+
 	colorRainbow->step();
 
 	if (stepCount % 50 == 0) {
@@ -706,6 +731,70 @@ void HetuwMod::livingLifeStep() {
 		sprintf( message, "EMOT 0 0 %i#", currentEmote);
         livingLifePage->sendToServerSocket( message );
 	}
+
+	if (bTeachLanguage) teachLanguage();
+}
+
+void HetuwMod::SayStep() {
+	if (sayBuffer.size() < 1) return;
+
+	if (clearSayBuffer) {
+		sayBuffer.clear();
+		sayBuffer.shrink_to_fit();
+		clearSayBuffer = false;
+		return;
+	}
+
+	double curTime = game_getCurrentTime();
+	if (curTime-timeLastSay < hetuwSayDelay) return;
+	timeLastSay = curTime;
+
+	livingLifePage->hetuwSay(sayBuffer.front());
+	
+	char *p = sayBuffer.front();
+	sayBuffer.erase(sayBuffer.begin(), sayBuffer.begin()+1);
+	delete[] p;
+}
+
+void HetuwMod::Say(const char *text) {
+	if (bTeachLanguage) bTeachLanguage = false;
+
+	char *msg = new char[strlen(text)+1];
+	strcpy(msg, text);
+	sayBuffer.push_back(msg);
+}
+
+void HetuwMod::teachLanguage() {
+	double curTime = game_getCurrentTime();
+	if (curTime-timeLastLanguage < hetuwSayDelay) return;
+	timeLastLanguage = curTime;
+	
+	int maxTextLength = livingLifePage->hetuwGetTextLengthLimit();
+	char text[maxTextLength+1];
+	//int size2 = sizeof(languageArray[0]);
+	//int size1 = sizeof(languageArray)/size2;
+	int size1 = languageArraySize1;
+	int size2 = languageArraySize2;
+
+	for (int i=0; i<maxTextLength; i++) {
+		for (int k=0; ; k++, i++) {
+			if (k >= size2 || languageArray[teachLanguageCount][k] == 0) {
+				teachLanguageCount++;
+				if (teachLanguageCount >= size1) {
+					teachLanguageCount = 0;
+				}
+				break;
+			}
+			if (i >= maxTextLength) break;
+			text[i] = languageArray[teachLanguageCount][k];
+		}
+		if (i < maxTextLength) text[i] = ' ';
+	}
+	text[maxTextLength] = 0;
+
+	char *msg = new char[strlen(text)+1];
+	strcpy(msg, text);
+	sayBuffer.push_back(msg);
 }
 
 void HetuwMod::addHomeLocation( int x, int y, bool ancient, char c ) {
@@ -1439,6 +1528,8 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		getSearchInput = 0;
 		bDrawInputString = false;
 		bxRay = false;
+		bTeachLanguage = false;
+		clearSayBuffer = true;
 	}
 
 	if (bNextCharForHome) {
@@ -1497,7 +1588,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 			string strSearch = tempInputString.substr(8, tempInputString.length());
 			bDrawInputString = false;
 			getSearchInput = 0;
-			char *cstrSearchWord = new char[strSearch.size()];
+			char *cstrSearchWord = new char[strSearch.size()+1];
 			strcpy(cstrSearchWord, strSearch.c_str());
 			searchWordList.push_back(cstrSearchWord);
 			searchWordStartPos.push_back(new doublePair());
@@ -1634,6 +1725,11 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_xRay)) {
 		bxRay = true;
+		return true;
+	}
+	if (!commandKey && isCharKey(inASCII, charKey_TeachLanguage)) {
+		bTeachLanguage = !bTeachLanguage;
+		if (!bTeachLanguage) teachLanguageCount = 0;
 		return true;
 	}
 
@@ -2714,7 +2810,7 @@ void HetuwMod::setHelpColorNormal() {
 }
 
 void HetuwMod::setHelpColorSpecial() {
-	setDrawColor( colorRainbow->color[0], 1.0f, colorRainbow->color[2], 1 );
+	setDrawColor( colorRainbow->color[0], 0.5f, colorRainbow->color[2], 1 );
 }
 
 void HetuwMod::drawHelp() {
@@ -2877,7 +2973,16 @@ void HetuwMod::drawHelp() {
 	sprintf(str, "SHIFT+%c - RESET CORDS TO WHERE YOU ARE STANDING", toupper(charKey_ShowCords));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
+
+	if (searchWordList.size() > 0) setHelpColorSpecial();
+	else setHelpColorNormal();
 	sprintf(str, "%c - SEARCH FOR AN OBJECT", toupper(charKey_Search));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+
+	if (bTeachLanguage) setHelpColorSpecial();
+	else setHelpColorNormal();
+	sprintf(str, "%c - TEACH LANGUAGE", toupper(charKey_TeachLanguage));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 }

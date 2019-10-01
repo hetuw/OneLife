@@ -1,6 +1,8 @@
 #ifndef HETUWMOD_H
 #define HETUWMOD_H
 
+#define hetuwSayDelay 2.1
+
 #define hetuwWaitingText "press %c in game for help"
 #define hetuwSettingsFileName "hetuw.cfg"
 
@@ -123,6 +125,10 @@ public:
 		doublePair drawEndPos;
 	} HomePos;
 
+	static constexpr int languageArraySize1 = 460;
+	static constexpr int languageArraySize2 = 9;
+	static constexpr char languageArray[460][9] = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "PEACE", "FIRE", "ABOUT", "GIRL", "ALL", "BEAR", "ALSO", "BERRY", "AND", "RADIO", "AS", "GRIEFER", "AT", "HELP", "BE", "FOOD", "BECAUSE", "FARM", "BUT", "WHEAT", "BY", "MILKWEED", "CAN", "STRING", "COME", "THREAD", "COULD", "NEEDLE", "DAY", "STONE", "DO", "GATE", "EVEN", "KEROSENE", "FIND", "PLS", "FIRST", "WASTES", "FOR", "THX", "FROM", "TY", "GET", "TEACH", "GIVE", "NEED", "GO", "ROAD", "HAVE", "CARROTS", "HE", "BOWL", "HER", "WATER", "HERE", "KNIFE", "HIM", "SHEEP", "HIS", "STOP", "HOW", "BOW", "TOWN", "IF", "NORTH", "IN", "FAMILY", "INTO", "WEST", "IT", "EAST", "ITS", "SOUTH", "JUST", "HELLO", "KNOW", "RABBITS", "LIKE", "CLOTHES", "LOOK", "START", "MAKE", "HEY", "MAN", "PLANT", "MANY", "SOIL", "ME", "COMPOST", "MORE", "HIDE", "MY", "CORN", "NEW", "STEW", "NO", "PIGS", "NOT", "BUCKET", "NOW", "ENGINE", "OF", "HORSE", "ON", "CART", "ONE", "BASKET", "ONLY", "OR", "CLAY", "OTHER", "WALL", "OUR", "ADOBE", "OUT", "TOOLS", "PEOPLE", "HOE", "SAY", "SHOVEL", "SEE", "AXE", "SHE", "PICK", "SO", "BRANCH", "SOME", "CHISEL", "TAKE", "MALLET", "TELL", "CURSE", "THAN", "TWINS", "THAT", "FROE", "THE", "FENCE", "THEIR", "RUBBER", "THEM", "HEAL", "THEN", "OIL", "THERE", "DIESEL", "THESE", "BACKPACK", "THEY", "PUMP", "THING", "SKEWER", "THINK", "OLD", "THIS", "FLINT", "THOSE", "SHARP", "TIME", "ROPE", "TO", "LASSO", "TWO", "FORGE", "UP", "STEEL", "USE", "SNARE", "VERY", "KINDLING", "WANT", "PLATES", "WAY", "PIE", "WE", "BAKE", "WELL", "JUNGLE", "WHAT", "DESERT", "WHEN", "FERTILE", "WHICH", "CISTERN", "WHO", "MOTHER", "WILL", "SISTER", "WITH", "BROTHER", "WOULD", "GOOD", "YEAR", "EVIL", "YOU", "DAUGTHER", "YOUR", "SON", "BIG", "FAR", "CLOSE", "FEED", "YES", "KILLED", "GRIEFS", "MURDER", "FOLLOW", "BABIES", "PADS", "ARROW", "GOOSE", "COAL", "PAPER", "PENCIL", "SULFUR", "BELLOWS", "MINE", "VEIN", "GOLD", "EVE", "NG", "ST", "OU", "EA", "SS", "BL", "NT", "SH", "TR", "CH", "IO", "PR", "TH", "CK", "OO", "EE", "IE", "AI", "ND", "GR", "PL", "CR", "BR", "LL", "CL", "FL", "SP", "NC", "PH", "AU", "RD", "DR", "AY", "RT", "FR", "UI", "GL", "SM", "UE", "OA", "SC", "OI", "RS", "IA", "RN", "STR", "SL", "UA", "CT", "GHT", "NK", "LD", "NS", "RK", "MP", "WH", "TCH", "EI", "SK", "RM", "DG", "SW", "EY", "LT", "WN", "SN", "SCR", "TL", "DL", "FF", "GH", "FT", "OY", "WR", "RG", "GN", "EU", "NCH", "LK", "THR", "IOU", "PT", "OE", "PS", "KN", "TT", "SQ", "AE", "RV", "RTH", "CS", "MB", "RCH", "LV", "RL", "TW", "TS", "YA", "RH", "SPR", "RC", "WL", "LM", "WS", "RB", "LS", "CHR", "SCH", "RR", "LF", "EYE", "SHR", "RP", "MS", "EAU", "PP", "NGS", "EO", "NN", "SPL", "ZL", "NTH", "YO", "YE", "SPH", "LP", "KL", "DS", "RST", "MPT", "UO", "LTH", "GG", "WK", "MN", "ZZ", "WD", "NX", "NDS", "TZ", "CKS", "RF", "EOU", "PHR", "RDS", "KR", "YEA", "NCT", "BT", "UY", "UEA", "RTS", "LG", "DD", "CHL", "NTS", "MM", "DW", "DH", "AYE", "RSH", "RKS", "NGTH", "KH", "GS", "YU", "UEE", "NKS", "LLS", "LCH", "IEU", "AA", "WZ", "HN", "BS", "UAI", "STH", "RLD", "PHL", "MPS", "IU", "XT", "RTZ", "NTZ", "GHTS", "CZ", "YI", "UOI", "WNS", "TTS", "RNT", "MPH", "LMS", "LB", "DTH", "WTH", "VR", "THW", "RRH", "RQ", "RNS", "RMS", "RGH", "HM", "GM", "FFS", "BB", "UOY", "THM", "SV", "SCL", "SCHL", "RPS", "PN"};
+
 	static int maxObjects;
 
 	static const int defaultViewWidth = 1280;
@@ -167,6 +173,7 @@ public:
 	static unsigned char charKey_ShowHostileTiles;
 	static unsigned char charKey_xRay;
 	static unsigned char charKey_Search;
+	static unsigned char charKey_TeachLanguage;
 
 	static unsigned char charKey_ShowMap;
 	static unsigned char charKey_MapZoomIn;
@@ -289,6 +296,8 @@ public:
 	static bool cameraIsFixed;
 	static void SetFixCamera(bool b);
 
+	static void Say(const char *text);
+
 private:
 
  	static LiveObject *ourLiveObject;
@@ -386,6 +395,15 @@ private:
 	static std::vector<doublePair*> searchWordEndPos;
 	static std::vector<bool> searchWordListDelete;
 
+	static bool bTeachLanguage;
+	static int teachLanguageCount;
+	static double timeLastLanguage;
+	static void teachLanguage();
+
+	static void SayStep();
+	static vector<char*> sayBuffer;
+	static double timeLastSay;
+	static bool clearSayBuffer;
 };
 
 

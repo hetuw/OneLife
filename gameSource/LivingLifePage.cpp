@@ -117,6 +117,13 @@ double LivingLifePage::hetuwMeasureScaledHandwritingFont(const char* str, double
 	return r;
 }
 
+void LivingLifePage::hetuwSay(const char* text) {
+	//printf("hetuw say: %s\n", text);
+	char message[strlen(text)+1];
+	sprintf( message, "SAY 0 0 %s#", text );
+	sendToServerSocket( message );
+}
+
 // to make all erased pencil fonts lighter
 static float pencilErasedFontExtraFade = 0.75;
 
@@ -788,7 +795,7 @@ void LivingLifePage::sendToServerSocket( char *inMessage ) {
         if( mFirstServerMessagesReceived  ) {
             
             if( mDeathReason != NULL ) {
-                delete [] mDeathReason;
+                // delete [] mDeathReason; // hetuw mod
                 }
             mDeathReason = stringDuplicate( translate( "reasonDisconnected" ) );
             
@@ -929,6 +936,17 @@ void LivingLifePage::hetuwGetStringAge( char* str, LiveObject *inObj ) {
 	int ageDecimal = age - int(age*0.1)*10;
 	age = (int)((age-ageDecimal)*0.1);
 	sprintf(str, "%d.%d", age, ageDecimal);
+}
+
+int LivingLifePage::hetuwGetTextLengthLimit() {
+	LiveObject *ourLiveObject = getOurLiveObject();
+	double age = computeCurrentAge( ourLiveObject );
+	int sayCap = (int)( floor( age ) + 1 );
+	if( ourLiveObject->lineage.size() == 0  && sayCap < 30 ) {
+		// eve has a larger say limit
+		sayCap = 30;
+	}
+	return sayCap;
 }
 
 static void stripDescriptionComment( char *inString ) {
@@ -2603,6 +2621,8 @@ LivingLifePage::LivingLifePage()
         mTutorialNumber = 1;
         }
 
+	// hetuw mod
+	mDeathReason = NULL;
 	HetuwMod::setLivingLifePage(this, &gameObjects, mMapContainedStacks, mMapSubContainedStacks, mMapD);
 
     }
@@ -2840,6 +2860,7 @@ LivingLifePage::~LivingLifePage() {
 
     if( mDeathReason != NULL ) {
         delete [] mDeathReason;
+		mDeathReason = NULL; // hetuw mod
         }
 
     for( int i=0; i<mGraveInfo.size(); i++ ) {
@@ -15236,6 +15257,7 @@ void LivingLifePage::step() {
 
                     if( mDeathReason != NULL ) {
                         delete [] mDeathReason;
+						mDeathReason = NULL; // hetuw mod
                         }
                     char *reasonPos = strstr( lines[i], "reason" );
                     
@@ -21402,6 +21424,11 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                     else {
                         // send text to server
 
+						if (!vogMode) { // hetuw mod 
+							HetuwMod::Say(typedText);
+						} else {
+						// jasons code
+
                         const char *sayCommand = "SAY";
                         
                         if( vogMode ) {
@@ -21414,6 +21441,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                         sendToServerSocket( message );
                         delete [] message;
                         }
+						}
                     
                     for( int i=0; i<mSentChatPhrases.size(); i++ ) {
                         if( strcmp( 

@@ -489,6 +489,7 @@ class LivingLifePage : public GamePage, public ActionListener {
 		double hetuwMeasureStringHandwritingFont(const char* str);
 		void hetuwDrawScaledHandwritingFont( const char* str, doublePair drawPos, double customScale, TextAlignment align = alignLeft  );
 		double hetuwMeasureScaledHandwritingFont(const char* str, double customScale );
+		void hetuwSay(const char* text);
 		void hetuwSetNextActionMessage( const char* str, int x, int y );
 		void hetuwSetNextActionDropping( bool b );
 		void hetuwSetNextActionEating( bool b );
@@ -497,6 +498,7 @@ class LivingLifePage : public GamePage, public ActionListener {
 		void hetuwClickMove( float x, float y );
 		double hetuwGetAge( LiveObject *inObj );
 		void hetuwGetStringAge( char* str, LiveObject *inObj );
+		int hetuwGetTextLengthLimit();
 		void hetuwGetMouseXY( int &x, int &y );
 		bool hetuwMouseIsDown();
 		void hetuwToggleFixCamera();
