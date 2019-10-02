@@ -57,6 +57,7 @@ unsigned char HetuwMod::charKey_ShowHostileTiles;
 unsigned char HetuwMod::charKey_xRay;
 unsigned char HetuwMod::charKey_Search;
 unsigned char HetuwMod::charKey_TeachLanguage;
+unsigned char HetuwMod::charKey_FindYum;
 
 unsigned char HetuwMod::charKey_CreateHome;
 unsigned char HetuwMod::charKey_FixCamera;
@@ -210,6 +211,7 @@ void HetuwMod::init() {
 	charKey_xRay = 'x';
 	charKey_Search = 'j';
 	charKey_TeachLanguage = 'l';
+	charKey_FindYum = 'y';
 
 	charKey_ShowMap = 'm';
 	charKey_MapZoomIn = 'u';
@@ -416,6 +418,7 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	if (strstr(name, "key_fixcamera")) return setCharKey( charKey_FixCamera, value );
 	if (strstr(name, "key_search")) return setCharKey( charKey_Search, value );
 	if (strstr(name, "key_teachlanguage")) return setCharKey( charKey_TeachLanguage, value );
+	if (strstr(name, "key_findyum")) return setCharKey( charKey_FindYum, value );
 
 	if (strstr(name, "init_show_names")) {
 		iDrawNames = (int)(value[0]-'0');
@@ -494,6 +497,7 @@ void HetuwMod::initSettings() {
 	writeCharKeyToStream( ofs, "key_xray", charKey_xRay );
 	writeCharKeyToStream( ofs, "key_search", charKey_Search );
 	writeCharKeyToStream( ofs, "key_teachlanguage", charKey_TeachLanguage );
+	writeCharKeyToStream( ofs, "key_findyum", charKey_FindYum );
 	ofs << endl;
 	writeCharKeyToStream( ofs, "key_remembercords", charKey_CreateHome );
 	writeCharKeyToStream( ofs, "key_fixcamera", charKey_FixCamera );
@@ -784,6 +788,16 @@ void HetuwMod::setYumObjectsColor() {
 			o->spriteColor->g = 1.0;
 			o->spriteColor->b = 1.0;
 		}
+	}
+}
+
+void HetuwMod::resetObjectsColor() {
+	for (int i=0; i<maxObjects; i++) {
+		ObjectRecord *o = getObject(i);
+		if (!o) continue;
+		o->spriteColor->r = 1.0;
+		o->spriteColor->g = 1.0;
+		o->spriteColor->b = 1.0;
 	}
 }
 
@@ -1953,6 +1967,14 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		if (!bTeachLanguage) teachLanguageCount = 0;
 		return true;
 	}
+	if (!commandKey && isCharKey(inASCII, charKey_FindYum)) {
+		bDrawYum = !bDrawYum;
+		if (!bDrawYum) {
+			resetObjectDrawScale();
+			resetObjectsColor();
+		}
+		return true;
+	}
 
 	if (commandKey) {
 		if (isCharKey(inASCII, charKey_TileStandingOn)) {
@@ -2927,7 +2949,10 @@ void HetuwMod::drawSearchList() {
 			setSearchArray();
 		}
 	}
-	if (searchWordList.size() == 0) return;
+	if (searchWordList.size() == 0) {
+		resetObjectDrawScale();
+		return;
+	}
 
 	float biggestTextWidth = 0;
 	for (unsigned i=0; i<searchWordList.size(); i++) {
@@ -3067,6 +3092,7 @@ void HetuwMod::drawHelp() {
 	drawPos.y -= lineHeight;
 
 	drawPos.y -= lineHeight;
+	drawPos.y -= lineHeight;
 	sprintf(str, "YOU CAN CHANGE KEYS AND SETTINGS BY MODIFYING THE HETUW.CFG FILE");
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
@@ -3204,6 +3230,12 @@ void HetuwMod::drawHelp() {
 	if (bTeachLanguage) setHelpColorSpecial();
 	else setHelpColorNormal();
 	sprintf(str, "%c - TEACH LANGUAGE", toupper(charKey_TeachLanguage));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+
+	if (bDrawYum) setHelpColorSpecial();
+	else setHelpColorNormal();
+	sprintf(str, "%c - FIND YUM", toupper(charKey_FindYum));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 }

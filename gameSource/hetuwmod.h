@@ -174,6 +174,7 @@ public:
 	static unsigned char charKey_xRay;
 	static unsigned char charKey_Search;
 	static unsigned char charKey_TeachLanguage;
+	static unsigned char charKey_FindYum;
 
 	static unsigned char charKey_ShowMap;
 	static unsigned char charKey_MapZoomIn;
@@ -315,6 +316,7 @@ public:
 	static bool isYummy(int objID);
 	static bool bDrawYum;
 	static void setYumObjectsColor();
+	static void resetObjectsColor();
 
 	static double *objectDrawScale;
 	static void resetObjectDrawScale();
