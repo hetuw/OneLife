@@ -3793,7 +3793,8 @@ void LivingLifePage::drawMapCell( int inMapI,
         int numPasses = 1;
         int startPass = 0;
         
-        if( highlight ) {
+		bool isYum = (HetuwMod::bDrawYum && HetuwMod::isYummy(oID));
+        if( highlight || isYum ) { // hetuw mod
             
             // first pass normal draw
             // then three stencil passes (second and third with a subtraction)
@@ -3812,7 +3813,7 @@ void LivingLifePage::drawMapCell( int inMapI,
             
             doublePair passPos = pos;
             
-            if( highlight ) {
+            if( highlight || isYum ) { // hetuw mod
                 
                 switch( i ) {
                     case 0:
@@ -3889,8 +3890,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             getEmptyClothingSet(), NULL );
             }
         
-
-        if( highlight ) {
+        if( highlight || isYum ) { // hetuw mod
             
             
             float mainFade = .35f;
@@ -3913,7 +3913,8 @@ void LivingLifePage::drawMapCell( int inMapI,
                     // opaque portion
                     startDrawingThroughStencil( false );
 
-                    setDrawColor( 1, 1, 1, highlightFade * mainFade );
+					if (isYum) setDrawColor( HetuwMod::colorRainbow->color[2], 0.2, HetuwMod::colorRainbow->color[0], 1.0);
+                    else setDrawColor( 1, 1, 1, highlightFade * mainFade );
                     
                     drawSquare( squarePos, squareRad );
                     
@@ -3927,7 +3928,8 @@ void LivingLifePage::drawMapCell( int inMapI,
                     // now first fringe is isolated in stencil
                     startDrawingThroughStencil( false );
 
-                    setDrawColor( 1, 1, 1, highlightFade * mainFade * .5 );
+					if (isYum) setDrawColor( HetuwMod::colorRainbow->color[2], 0.2, HetuwMod::colorRainbow->color[0], 1.0);
+                    else setDrawColor( 1, 1, 1, highlightFade * mainFade * .5 );
 
                     drawSquare( squarePos, squareRad );
 
@@ -3941,7 +3943,8 @@ void LivingLifePage::drawMapCell( int inMapI,
                     // now second fringe is isolated in stencil
                     startDrawingThroughStencil( false );
                     
-                    setDrawColor( 1, 1, 1, highlightFade * mainFade *.25 );
+					if (isYum) setDrawColor( HetuwMod::colorRainbow->color[2], 0.2, HetuwMod::colorRainbow->color[0], 1.0);
+                    else setDrawColor( 1, 1, 1, highlightFade * mainFade *.25 );
                     
                     drawSquare( squarePos, squareRad );
                     
@@ -9268,7 +9271,7 @@ static char isFood( int inID ) {
 
 
 
-static char getTransHintable( TransRecord *inTrans ) {
+char LivingLifePage::getTransHintable( TransRecord *inTrans ) {
 
     if( inTrans->lastUseActor ) {
         return false;
@@ -16863,6 +16866,9 @@ void LivingLifePage::step() {
                     }
                 
                 if( mYumMultiplier != oldYumMultiplier ) {
+                    if( mYumMultiplier == 0 ) { // hetuw mod
+                        HetuwMod::yummyFoodChain.deleteAll(); // hetuw mod
+                        } // hetuw mod
                     int oldSlipIndex = -1;
                     int newSlipIndex = 0;
                     
@@ -16984,7 +16990,12 @@ void LivingLifePage::step() {
                 
                     if( lastAteID != 0 ) {
                         ObjectRecord *lastAteObj = getObject( lastAteID );
-                        
+                        if( lastAteObj->isUseDummy ) { // hetuw mod
+                            HetuwMod::yummyFoodChain.push_back( lastAteObj->useDummyParent ); // hetuw mod
+                            } // hetuw mod
+                        else { // hetuw mod
+                            HetuwMod::yummyFoodChain.push_back( lastAteID ); // hetuw mod
+                            } // hetuw mod
                         char *strUpper = stringToUpperCase(
                             lastAteObj->description );
 
@@ -18634,7 +18645,8 @@ void LivingLifePage::makeActive( char inFresh ) {
         mYumSlipPosTargetOffset[i] = mYumSlipHideOffset[i];
         mYumSlipNumberToShow[i] = 0;
         }
-    
+
+    HetuwMod::yummyFoodChain.deleteAll(); // hetuw mod
 
     mCurrentArrowI = 0;
     mCurrentArrowHeat = -1;

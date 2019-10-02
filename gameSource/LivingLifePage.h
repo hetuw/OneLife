@@ -502,6 +502,7 @@ class LivingLifePage : public GamePage, public ActionListener {
 		void hetuwGetMouseXY( int &x, int &y );
 		bool hetuwMouseIsDown();
 		void hetuwToggleFixCamera();
+		char getTransHintable( TransRecord *inTrans ); // hetuw mod - changed from static and made visible to public
 		
         virtual void actionPerformed( GUIComponent *inTarget );
         

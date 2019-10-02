@@ -298,12 +298,19 @@ public:
 	static void objDescrToUpper(const char* arr, char* output, int maxSize);
 	
 	static bool *objIsBeingSearched;
-	static void SetSearchArray();
+	static void setSearchArray();
 
 	static bool cameraIsFixed;
 	static void SetFixCamera(bool b);
 
 	static void Say(const char *text);
+
+	static void initBecomesFood();
+	static int becomesFood( int objectID, int depth );
+	static int *becomesFoodID;
+	static SimpleVector<int> yummyFoodChain;
+	static bool isYummy(int objID);
+	static bool bDrawYum;
 
 private:
 

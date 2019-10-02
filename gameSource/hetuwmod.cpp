@@ -168,6 +168,10 @@ vector<char*> HetuwMod::sayBuffer;
 double HetuwMod::timeLastSay;
 bool HetuwMod::clearSayBuffer;
 
+int *HetuwMod::becomesFoodID;
+SimpleVector<int> HetuwMod::yummyFoodChain;
+bool HetuwMod::bDrawYum;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -225,6 +229,7 @@ void HetuwMod::init() {
 	clearSayBuffer = false;
 	selectedPlayerID = 0;
 	timeLastPlayerHover = 0;
+	bDrawYum = true;
 
 	initClosedDoorIDs();
 
@@ -593,10 +598,12 @@ void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<
 
 	if (objIsBeingSearched != NULL) delete[] objIsBeingSearched;
 	objIsBeingSearched = new bool[maxObjects];
-	SetSearchArray();
+	setSearchArray();
+
+	initBecomesFood();
 }
 
-void HetuwMod::SetSearchArray() {
+void HetuwMod::setSearchArray() {
 	for (int i=0; i<maxObjects; i++) {
 		objIsBeingSearched[i] = false;
 		ObjectRecord *o = getObject( i );
@@ -849,6 +856,96 @@ void HetuwMod::addHomeLocation( int x, int y, bool ancient, char c ) {
 	p->ancient = ancient;
 	p->c = c;
 	homePosStack.push_back(p);
+}
+
+// thanks to https://raw.githubusercontent.com/JustinLove/onelife-client-patches/master/yum-hover
+void HetuwMod::initBecomesFood() {
+    becomesFoodID = new int[maxObjects];
+    for (int i=0; i<maxObjects; i++) {
+      becomesFoodID[i] = becomesFood( i, 3 );
+    }
+}
+
+int HetuwMod::becomesFood( int objectID, int depth ) {
+    if( objectID < 0) return -1;
+
+    ObjectRecord* obj = getObject( objectID );
+    if( obj == NULL ) return -1;
+
+    if( obj->isUseDummy ) {
+        objectID = obj->useDummyParent;
+        obj = getObject( objectID );
+        }
+
+    if( obj->foodValue > 0 ) {
+        return objectID;
+        }
+
+    if( depth < 1) return -1;
+
+    SimpleVector<TransRecord*> *trans = getAllUses( objectID );
+    if( trans == NULL ) return -1;
+
+    if( trans->size() < 1 ) return -1;
+
+    if( trans->size() == 1) {
+        TransRecord* t = trans->getElementDirect( 0 );
+        if( ! livingLifePage->getTransHintable( t ) ) return -1;
+
+        int targetEdible = becomesFood( t->newTarget, depth - 1 );
+        if( targetEdible > 0 ) return targetEdible;
+
+        int actorEdible = becomesFood( t->newActor, depth - 1 );
+        if( actorEdible > 0 ) return actorEdible;
+        }
+    else { // trans > 1
+        int lastTarget = -1;
+        int targetCount = 0;
+        int lastActor = -1;
+        int actorCount = 0;
+        for( int i = 0; i<trans->size(); i++) {
+            TransRecord* t = trans->getElementDirect( i );
+            if( ! livingLifePage->getTransHintable( t ) ) continue;
+
+            if( t->newActor != lastActor ) {
+                actorCount += 1;
+                }
+            lastActor = t->newActor;
+
+            if( t->newTarget != lastTarget ) {
+                targetCount += 1;
+                }
+            lastTarget = t->newTarget;
+
+            //int actorEdible = becomesFood( t->newActor, 0 );
+            //if( actorEdible > 0 ) return actorEdible;
+            }
+
+        if( actorCount == 1) {
+            int actorEdible = becomesFood( lastActor, depth - 1 );
+            if( actorEdible > 0 ) return actorEdible;
+            }
+        if( targetCount == 1) {
+            int targetEdible = becomesFood( lastTarget, depth - 1 );
+            if( targetEdible > 0 ) return targetEdible;
+            }
+        }
+
+    return -1;
+}
+
+bool HetuwMod::isYummy(int objID) {
+	if( objID < 0 ) return false;
+	int objectID = becomesFoodID[objID];
+	if( objectID < 0 ) return false;
+
+	ObjectRecord *o = getObject( objectID );
+	if (!o) return false;
+
+	for( int i=0; i<yummyFoodChain.size(); i++ ) {
+		if( objectID == yummyFoodChain.getElementDirect(i) ) return false;
+	}
+	return true;
 }
 
 void HetuwMod::livingLifeDraw() {
@@ -1652,7 +1749,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 			searchWordStartPos.push_back(new doublePair());
 			searchWordEndPos.push_back(new doublePair());
 			searchWordListDelete.push_back(false);
-			SetSearchArray();
+			setSearchArray();
 			//printf("hetuw strSearch: %s\n", strSearch.c_str());
 		} else { // not enter
 			addToTempInputString( toupper(inASCII), false, 8);
@@ -2761,7 +2858,7 @@ void HetuwMod::drawSearchList() {
 			searchWordEndPos.erase(searchWordEndPos.begin()+i);
 			searchWordListDelete.erase(searchWordListDelete.begin()+i);
 			i--;
-			SetSearchArray();
+			setSearchArray();
 		}
 	}
 	if (searchWordList.size() == 0) return;
