@@ -23,7 +23,7 @@
 
 #include "animationBank.h"
 
-
+#include "hetuwmod.h"
 
 
 
@@ -3298,6 +3298,8 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
         inFlipH = false;
         }
 
+	if (HetuwMod::objectDrawScale) inScale = HetuwMod::objectDrawScale[inObject->id];
+
     HoldingPos returnHoldingPos = { false, {0, 0}, 0 };
     
     SimpleVector <int> frontArmIndices;
@@ -3804,13 +3806,14 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
 
                     subPos = add( subPos, pos );
                     
+					// draws object inside containers inside containers
                     drawObject( subContained, 2, subPos, subRot, 
                                 false, inFlipH,
                                 inAge, 0, false, false, emptyClothing );
                     }
                 }
                 
-            // in front of sub-contained
+            // in front of sub-contained - draws containers inside containers
             drawObject( contained, 1, pos, rot, false, inFlipH, inAge,
                         0,
                         false,
@@ -3820,7 +3823,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
             }
         else {
             // no sub-contained
-            // draw contained all at once
+            // draw contained all at once - draws objects inside containers
             drawObject( contained, 2, pos, rot, false, inFlipH, inAge,
                         0,
                         false,
@@ -3832,6 +3835,7 @@ HoldingPos drawObject( ObjectRecord *inObject, doublePair inPos, double inRot,
     
     setDrawnObjectContained( false );
 
+	// draws container containing objects and some clothes?
     return drawObject( inObject, 1, inPos, inRot, inWorn, inFlipH, inAge, 
                        inHideClosestArm,
                        inHideAllLimbs,

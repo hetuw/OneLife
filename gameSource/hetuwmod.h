@@ -305,12 +305,20 @@ public:
 
 	static void Say(const char *text);
 
+	static float colorRainbowFast[3];
+	static void stepColorRainbowFast();
+
 	static void initBecomesFood();
 	static int becomesFood( int objectID, int depth );
 	static int *becomesFoodID;
 	static SimpleVector<int> yummyFoodChain;
 	static bool isYummy(int objID);
 	static bool bDrawYum;
+	static void setYumObjectsColor();
+
+	static double *objectDrawScale;
+	static void resetObjectDrawScale();
+	static void objectDrawScaleStep();
 
 private:
 

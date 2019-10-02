@@ -3793,8 +3793,7 @@ void LivingLifePage::drawMapCell( int inMapI,
         int numPasses = 1;
         int startPass = 0;
         
-		bool isYum = (HetuwMod::bDrawYum && HetuwMod::isYummy(oID));
-        if( highlight || isYum ) { // hetuw mod
+        if( highlight ) {
             
             // first pass normal draw
             // then three stencil passes (second and third with a subtraction)
@@ -3813,7 +3812,7 @@ void LivingLifePage::drawMapCell( int inMapI,
             
             doublePair passPos = pos;
             
-            if( highlight || isYum ) { // hetuw mod
+            if( highlight ) {
                 
                 switch( i ) {
                     case 0:
@@ -3890,7 +3889,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                             getEmptyClothingSet(), NULL );
             }
         
-        if( highlight || isYum ) { // hetuw mod
+        if( highlight ) {
             
             
             float mainFade = .35f;
@@ -3913,8 +3912,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                     // opaque portion
                     startDrawingThroughStencil( false );
 
-					if (isYum) setDrawColor( HetuwMod::colorRainbow->color[2], 0.2, HetuwMod::colorRainbow->color[0], 1.0);
-                    else setDrawColor( 1, 1, 1, highlightFade * mainFade );
+                    setDrawColor( 1, 1, 1, highlightFade * mainFade );
                     
                     drawSquare( squarePos, squareRad );
                     
@@ -3928,8 +3926,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                     // now first fringe is isolated in stencil
                     startDrawingThroughStencil( false );
 
-					if (isYum) setDrawColor( HetuwMod::colorRainbow->color[2], 0.2, HetuwMod::colorRainbow->color[0], 1.0);
-                    else setDrawColor( 1, 1, 1, highlightFade * mainFade * .5 );
+                    setDrawColor( 1, 1, 1, highlightFade * mainFade * .5 );
 
                     drawSquare( squarePos, squareRad );
 
@@ -3943,8 +3940,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                     // now second fringe is isolated in stencil
                     startDrawingThroughStencil( false );
                     
-					if (isYum) setDrawColor( HetuwMod::colorRainbow->color[2], 0.2, HetuwMod::colorRainbow->color[0], 1.0);
-                    else setDrawColor( 1, 1, 1, highlightFade * mainFade *.25 );
+                    setDrawColor( 1, 1, 1, highlightFade * mainFade *.25 );
                     
                     drawSquare( squarePos, squareRad );
                     

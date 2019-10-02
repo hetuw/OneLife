@@ -172,6 +172,9 @@ int *HetuwMod::becomesFoodID;
 SimpleVector<int> HetuwMod::yummyFoodChain;
 bool HetuwMod::bDrawYum;
 
+double *HetuwMod::objectDrawScale = NULL;
+float HetuwMod::colorRainbowFast[3];
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -601,6 +604,9 @@ void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<
 	setSearchArray();
 
 	initBecomesFood();
+
+	objectDrawScale = new double[maxObjects];
+	for (int i=0; i<maxObjects; i++) objectDrawScale[i] = 1.0;
 }
 
 void HetuwMod::setSearchArray() {
@@ -758,6 +764,65 @@ void HetuwMod::livingLifeStep() {
 	}
 
 	if (bTeachLanguage) teachLanguage();
+
+	if (bDrawYum || searchWordList.size() > 0) objectDrawScaleStep();
+
+	if (bDrawYum) stepColorRainbowFast();
+	if (bDrawYum) setYumObjectsColor();
+}
+
+void HetuwMod::setYumObjectsColor() {
+	for (int i=0; i<maxObjects; i++) {
+		ObjectRecord *o = getObject(i);
+		if (!o) continue;
+		if (isYummy(i)) {
+			o->spriteColor->r = colorRainbowFast[0];
+			o->spriteColor->g = colorRainbowFast[1]+0.5;
+			o->spriteColor->b = colorRainbowFast[2];
+		} else {
+			o->spriteColor->r = 1.0;
+			o->spriteColor->g = 1.0;
+			o->spriteColor->b = 1.0;
+		}
+	}
+}
+
+void HetuwMod::stepColorRainbowFast() {
+	int speed = 30;
+	int speedDiv3 = speed/3;
+
+	float interv = stepCount % speed / (float)speed;
+	if (interv > 0.5) interv = 1 - interv;
+	colorRainbowFast[0] = interv;
+	interv = (stepCount+speedDiv3) % speed / (float)speed;
+	if (interv > 0.5) interv = 1 - interv;
+	colorRainbowFast[1] = interv;
+	interv = (stepCount+(speedDiv3*2)) % speed / (float)speed;
+	if (interv > 0.5) interv = 1 - interv;
+	colorRainbowFast[2] = interv;
+}
+
+void HetuwMod::resetObjectDrawScale() {
+	for (int i=0; i<maxObjects; i++) objectDrawScale[i] = 1.0;
+}
+
+void HetuwMod::objectDrawScaleStep() {
+	double scaleSearch = 1.0;
+	double scaleYum = 1.0;
+
+	float interv = stepCount % 60 / (float)60;
+	if (interv > 0.5) interv = 1 - interv;
+	scaleSearch += interv*1.5;
+
+	interv = (stepCount+20) % 60 / (float)60;
+	if (interv > 0.5) interv = 1 - interv;
+	scaleYum += interv*2.5;
+
+	for (int i=0; i<maxObjects; i++) {
+		if (objIsBeingSearched[i]) objectDrawScale[i] = scaleSearch;
+		else if (bDrawYum && isYummy(i)) objectDrawScale[i] = scaleYum;
+		else objectDrawScale[i] = 1.0;
+	}
 }
 
 void HetuwMod::SayStep() {
@@ -1770,6 +1835,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 			if (o && o->description) {
 				printf("hetuw description: %s\n", o->description);
 			}
+			printf("hetuw yum: %c, beingSearched: %c\n", isYummy(objId) ? '1' : '0', objIsBeingSearched[objId] ? '1' : '0');
 		}
 		int mapI = livingLifePage->hetuwGetMapI( x, y );
 		if (mapI < 0) return true;
