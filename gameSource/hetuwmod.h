@@ -322,6 +322,16 @@ public:
 	static void resetObjectDrawScale();
 	static void objectDrawScaleStep();
 
+	static bool bHoldDownTo_FixCamera;
+	static bool bHoldDownTo_XRay;
+	static bool bHoldDownTo_FindYum;
+
+	static bool b_drawYumColor;
+	static bool b_drawYumPulsate;
+	static bool b_drawSearchText;
+	static bool b_drawSearchTileRec;
+	static bool b_drawSearchPulsate;
+
 private:
 
  	static LiveObject *ourLiveObject;

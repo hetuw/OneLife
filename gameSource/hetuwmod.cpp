@@ -171,10 +171,20 @@ bool HetuwMod::clearSayBuffer;
 
 int *HetuwMod::becomesFoodID;
 SimpleVector<int> HetuwMod::yummyFoodChain;
-bool HetuwMod::bDrawYum;
+bool HetuwMod::bDrawYum = false;
 
 double *HetuwMod::objectDrawScale = NULL;
 float HetuwMod::colorRainbowFast[3];
+
+bool HetuwMod::bHoldDownTo_FixCamera = true;
+bool HetuwMod::bHoldDownTo_XRay = true;
+bool HetuwMod::bHoldDownTo_FindYum = true;
+
+bool HetuwMod::b_drawYumColor = false;
+bool HetuwMod::b_drawYumPulsate = true;
+bool HetuwMod::b_drawSearchText = true;
+bool HetuwMod::b_drawSearchTileRec = true;
+bool HetuwMod::b_drawSearchPulsate = true;
 
 void HetuwMod::init() {
 	zoomScale = 1.5f;
@@ -208,6 +218,7 @@ void HetuwMod::init() {
 	charKey_ShowDeathMessages = 't';
 	charKey_ShowHomeCords = 'g';
 	charKey_ShowHostileTiles = 'u';
+
 	charKey_xRay = 'x';
 	charKey_Search = 'j';
 	charKey_TeachLanguage = 'l';
@@ -234,7 +245,6 @@ void HetuwMod::init() {
 	clearSayBuffer = false;
 	selectedPlayerID = 0;
 	timeLastPlayerHover = 0;
-	bDrawYum = true;
 
 	initClosedDoorIDs();
 
@@ -445,6 +455,40 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 		return true;
 	}
 
+	if (strstr(name, "keep_button_pressed_to_fixcamera")) {
+		bHoldDownTo_FixCamera = bool(value[0]-48);
+		return true;
+	}
+	if (strstr(name, "keep_button_pressed_to_xray")) {
+		bHoldDownTo_XRay = bool(value[0]-48);
+		return true;
+	}
+	if (strstr(name, "keep_button_pressed_to_findyum")) {
+		bHoldDownTo_FindYum = bool(value[0]-48);
+		return true;
+	}
+
+	if (strstr(name, "draw_yumcolor")) {
+		b_drawYumColor = bool(value[0]-48);
+		return true;
+	}
+	if (strstr(name, "draw_yumpulsate")) {
+		b_drawYumPulsate = bool(value[0]-48);
+		return true;
+	}
+	if (strstr(name, "draw_searchtext")) {
+		b_drawSearchText = bool(value[0]-48);
+		return true;
+	}
+	if (strstr(name, "draw_searchrec")) {
+		b_drawSearchTileRec = bool(value[0]-48);
+		return true;
+	}
+	if (strstr(name, "draw_searchpulsate")) {
+		b_drawSearchPulsate = bool(value[0]-48);
+		return true;
+	}
+
 	return false;
 }
 
@@ -494,13 +538,13 @@ void HetuwMod::initSettings() {
 	writeCharKeyToStream( ofs, "key_show_deathmessages", charKey_ShowDeathMessages );
 	writeCharKeyToStream( ofs, "key_show_homecords", charKey_ShowHomeCords );
 	writeCharKeyToStream( ofs, "key_show_hostiletiles", charKey_ShowHostileTiles );
+	ofs << endl;
+	writeCharKeyToStream( ofs, "key_remembercords", charKey_CreateHome );
+	writeCharKeyToStream( ofs, "key_fixcamera", charKey_FixCamera );
 	writeCharKeyToStream( ofs, "key_xray", charKey_xRay );
 	writeCharKeyToStream( ofs, "key_search", charKey_Search );
 	writeCharKeyToStream( ofs, "key_teachlanguage", charKey_TeachLanguage );
 	writeCharKeyToStream( ofs, "key_findyum", charKey_FindYum );
-	ofs << endl;
-	writeCharKeyToStream( ofs, "key_remembercords", charKey_CreateHome );
-	writeCharKeyToStream( ofs, "key_fixcamera", charKey_FixCamera );
 	ofs << endl;
 	ofs << "init_show_names = " << (char)(iDrawNames+48) << endl;
 	ofs << "init_show_cords = " << (char)(bDrawCords+48) << endl;
@@ -508,6 +552,16 @@ void HetuwMod::initSettings() {
 	ofs << "init_show_deathmessages = " << (char)(bDrawDeathMessages+48) << endl;
 	ofs << "init_show_homecords = " << (char)(bDrawHomeCords+48) << endl;
 	ofs << "init_show_hostiletiles = " << (char)(bDrawHostileTiles+48) << endl;
+	ofs << endl;
+	ofs << "keep_button_pressed_to_fixcamera = " << (char)(bHoldDownTo_FixCamera+48) << endl;
+	ofs << "keep_button_pressed_to_xray = " << (char)(bHoldDownTo_XRay+48) << endl;
+	ofs << "keep_button_pressed_to_findyum = " << (char)(bHoldDownTo_FindYum+48) << endl;
+	ofs << endl;
+	ofs << "draw_yumcolor = " << (char)(b_drawYumColor+48) << endl;
+	ofs << "draw_yumpulsate = " << (char)(b_drawYumPulsate+48) << endl;
+	ofs << "draw_searchtext = " << (char)(b_drawSearchText+48) << endl;
+	ofs << "draw_searchrec = " << (char)(b_drawSearchTileRec+48) << endl;
+	ofs << "draw_searchpulsate = " << (char)(b_drawSearchPulsate+48) << endl;
 
 	ofs.close();
 }
@@ -770,9 +824,11 @@ void HetuwMod::livingLifeStep() {
 	if (bTeachLanguage) teachLanguage();
 
 	if (bDrawYum || searchWordList.size() > 0) objectDrawScaleStep();
-
-	if (bDrawYum) stepColorRainbowFast();
-	if (bDrawYum) setYumObjectsColor();
+	
+	if (b_drawYumColor && bDrawYum) {
+		stepColorRainbowFast();
+		setYumObjectsColor();
+	}
 }
 
 void HetuwMod::setYumObjectsColor() {
@@ -821,6 +877,8 @@ void HetuwMod::resetObjectDrawScale() {
 }
 
 void HetuwMod::objectDrawScaleStep() {
+	if (!b_drawSearchPulsate && !b_drawYumPulsate) return;
+
 	double scaleSearch = 1.0;
 	double scaleYum = 1.0;
 
@@ -833,8 +891,8 @@ void HetuwMod::objectDrawScaleStep() {
 	scaleYum += interv*2.5;
 
 	for (int i=0; i<maxObjects; i++) {
-		if (objIsBeingSearched[i]) objectDrawScale[i] = scaleSearch;
-		else if (bDrawYum && isYummy(i)) objectDrawScale[i] = scaleYum;
+		if (b_drawSearchPulsate && objIsBeingSearched[i]) objectDrawScale[i] = scaleSearch;
+		else if (b_drawYumPulsate && bDrawYum && isYummy(i)) objectDrawScale[i] = scaleYum;
 		else objectDrawScale[i] = 1.0;
 	}
 }
@@ -1253,10 +1311,14 @@ void HetuwMod::drawSearchTiles() {
 	if (interv > 0.5) interv = 1 - interv;
 	alpha += interv;
 
-	setDrawColor( 0.2, colorRainbow->color[1], colorRainbow->color[2], alpha );
-	drawSearchTilesLoop(false);
-	setDrawColor( colorRainbow->color[1]-0.5, colorRainbow->color[2]-0.5, 0.7, 1.3-alpha );
-	drawSearchTilesLoop(true);
+	if (b_drawSearchTileRec) {
+		setDrawColor( 0.2, colorRainbow->color[1], colorRainbow->color[2], alpha );
+		drawSearchTilesLoop(false);
+	}
+	if (b_drawSearchText) {
+		setDrawColor( colorRainbow->color[1]-0.5, colorRainbow->color[2]-0.5, 0.7, 1.3-alpha );
+		drawSearchTilesLoop(true);
+	}
 }
 
 void HetuwMod::drawInputString() {
@@ -1951,7 +2013,8 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		return true;
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_FixCamera)) {
-		livingLifePage->hetuwToggleFixCamera();
+		if (!bHoldDownTo_FixCamera) livingLifePage->hetuwToggleFixCamera();
+		else if (!cameraIsFixed) livingLifePage->hetuwToggleFixCamera();
 		return true;
 	}
 	if (!bDrawMap && !commandKey && isCharKey(inASCII, charKey_ShowHostileTiles)) {
@@ -1959,7 +2022,8 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		return true;
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_xRay)) {
-		bxRay = true;
+		if (bHoldDownTo_XRay) bxRay = true;
+		else bxRay = !bxRay;
 		return true;
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_TeachLanguage)) {
@@ -1968,7 +2032,8 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		return true;
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_FindYum)) {
-		bDrawYum = !bDrawYum;
+		if (bHoldDownTo_FindYum) bDrawYum = true;
+		else bDrawYum = !bDrawYum;
 		if (!bDrawYum) {
 			resetObjectDrawScale();
 			resetObjectsColor();
@@ -2121,9 +2186,25 @@ bool HetuwMod::livingLifeKeyUp(unsigned char inASCII) {
 		}
 	}
 
+	if (!commandKey && isCharKey(inASCII, charKey_FixCamera)) {
+		if (bHoldDownTo_FixCamera && cameraIsFixed) {
+			livingLifePage->hetuwToggleFixCamera();
+			r = true;
+		}
+	}
 	if (!commandKey && isCharKey(inASCII, charKey_xRay)) {
-		bxRay = false;
-		r = true;
+		if (bHoldDownTo_XRay) {
+			bxRay = false;
+			r = true;
+		}
+	}
+	if (!commandKey && isCharKey(inASCII, charKey_FindYum)) {
+		if (bHoldDownTo_FindYum) {
+			bDrawYum = false;
+			resetObjectDrawScale();
+			resetObjectsColor();
+			r = true;
+		}
 	}
 
 	if (inASCII == charKey_MapZoomIn || inASCII == toupper(charKey_MapZoomIn)) {
