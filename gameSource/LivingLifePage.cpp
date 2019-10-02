@@ -935,7 +935,7 @@ void LivingLifePage::hetuwGetStringAge( char* str, LiveObject *inObj ) {
 	int age = (int)(computeCurrentAge(inObj)*10);
 	int ageDecimal = age - int(age*0.1)*10;
 	age = (int)((age-ageDecimal)*0.1);
-	sprintf(str, "%d.%d", age, ageDecimal);
+	sprintf(str, "%i.%i", age, ageDecimal);
 }
 
 int LivingLifePage::hetuwGetTextLengthLimit() {
@@ -2623,7 +2623,7 @@ LivingLifePage::LivingLifePage()
 
 	// hetuw mod
 	mDeathReason = NULL;
-	HetuwMod::setLivingLifePage(this, &gameObjects, mMapContainedStacks, mMapSubContainedStacks, mMapD);
+	HetuwMod::setLivingLifePage(this, &gameObjects, mMapContainedStacks, mMapSubContainedStacks, mMapD, mCurMouseOverID);
 
     }
 
@@ -8570,7 +8570,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
             if( mCurMouseOverID == 0 ) {
                 idToDescribe = mLastMouseOverID;
                 }
-
             
             
             doublePair pos = { lastScreenViewCenter.x, 
@@ -19351,6 +19350,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             // store negative in place so that we can show their relation
             // string
             mCurMouseOverID = - p.hitOtherPersonID;
+			HetuwMod::OnPlayerHoverOver(p.hitOtherPersonID);
             }
         }
     

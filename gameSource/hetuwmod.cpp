@@ -107,6 +107,10 @@ SimpleVector<int> *HetuwMod::mMapContainedStacks;
 SimpleVector<SimpleVector<int>> *HetuwMod::mMapSubContainedStacks;
 int *HetuwMod::mMapD;
 
+int *HetuwMod::mCurMouseOverID;
+int HetuwMod::selectedPlayerID;
+double HetuwMod::timeLastPlayerHover;
+
 std::vector<HetuwMod::PlayerInMap*> HetuwMod::playersInMap;
 bool HetuwMod::bDrawMap;
 float HetuwMod::mapScale;
@@ -148,6 +152,7 @@ std::vector<bool> HetuwMod::searchWordListDelete;
 
 bool HetuwMod::takingPhoto;
 bool HetuwMod::bxRay;
+char HetuwMod::ourGender;
 
 bool HetuwMod::bFoundFamilyName;
 string HetuwMod::ourFamilyName;
@@ -218,6 +223,8 @@ void HetuwMod::init() {
 	bxRay = false;
 	objIsBeingSearched = NULL;
 	clearSayBuffer = false;
+	selectedPlayerID = 0;
+	timeLastPlayerHover = 0;
 
 	initClosedDoorIDs();
 
@@ -563,16 +570,22 @@ void HetuwMod::initOnServerJoin() { // will be called from LivingLifePage.cpp an
 
 	bFoundFamilyName = false;
 	ourFamilyName = hetuwDefaultOurFamilyName;
+
+ 	ourLiveObject = livingLifePage->getOurLiveObject();
+	if (ourLiveObject) {
+		ourGender = getObject(ourLiveObject->displayID)->male ? 'M' : 'F';
+	}
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject> *inGameObjects,
 							SimpleVector<int> *inmMapContainedStacks, SimpleVector<SimpleVector<int>> *inmMapSubContainedStacks,
-							int &inmMapD) {
+							int &inmMapD, int &inmCurMouseOverID) {
 	livingLifePage = inLivingLifePage;
 	gameObjects = inGameObjects;
 	mMapContainedStacks = inmMapContainedStacks;
 	mMapSubContainedStacks = inmMapSubContainedStacks;
 	mMapD = &inmMapD;
+	mCurMouseOverID = &inmCurMouseOverID;
 
 	maxObjects = getMaxObjectID() + 1;
 
@@ -666,6 +679,11 @@ void HetuwMod::guiScaleDecrease() {
 	guiScaleRaw *= 1.1f;
 	if (guiScaleRaw > 1.5) guiScaleRaw = 1.5;
 	guiScale = guiScaleRaw * zoomScale;
+}
+
+void HetuwMod::OnPlayerHoverOver(int id) {
+	selectedPlayerID = id;
+	timeLastPlayerHover = game_getCurrentTime();
 }
 
 void HetuwMod::gameStep() {
@@ -847,6 +865,7 @@ void HetuwMod::livingLifeDraw() {
 	if (bDrawHomeCords) drawHomeCords();
 	if (bDrawHostileTiles) drawHostileTiles();
 	if (searchWordList.size() > 0) drawSearchTiles();
+	drawHighlightedPlayer();
 	if (bDrawMap) drawMap();
 	if (bDrawInputString) drawInputString();
 	if (bDrawHelp) drawHelp();
@@ -1231,19 +1250,25 @@ void HetuwMod::drawPlayerNames( LiveObject* player ) {
 	if( player->hide || player->outOfRange ) return;
 	if( !player->allSpritesLoaded ) return;
 
+	bool playerIsSelected = selectedPlayerID == player->id;
+	if (playerIsSelected) {
+		playerIsSelected = (game_getCurrentTime() - timeLastPlayerHover < 4);
+		if (playerIsSelected) return;
+	}
+
 	playerNamePos.x = player->currentPos.x * CELL_D;
 	playerNamePos.y = player->currentPos.y * CELL_D;
-	playerNamePos.y += 44;
+	playerNamePos.y += 34;
 
 	getRelationNameColor( player->relationName, playerNameColor );
 
 	setDrawColor( 0.0, 0.0, 0.0, 0.8 );
-	if ( iDrawNames == 2) {
+	if ( iDrawNames == 2 ) {
 		float textWidth = livingLifePage->hetuwMeasureStringHandwritingFont( player->name );
 		drawRect( playerNamePos, textWidth/2 + 6, 16 );
 		setDrawColor( playerNameColor[0], playerNameColor[1], playerNameColor[2], 1 );
 		livingLifePage->hetuwDrawWithHandwritingFont( player->name, playerNamePos, alignCenter );
-	} else if ( iDrawNames == 1) {
+	} else if ( iDrawNames == 1 ) {
 		char playerName[48];
 		removeLastName( playerName, player->name );
 		float textWidth = livingLifePage->hetuwMeasureStringHandwritingFont( playerName );
@@ -1251,8 +1276,41 @@ void HetuwMod::drawPlayerNames( LiveObject* player ) {
 		setDrawColor( playerNameColor[0], playerNameColor[1], playerNameColor[2], 1 );
 		livingLifePage->hetuwDrawWithHandwritingFont( playerName, playerNamePos, alignCenter );
 	}
-	//playerNamePos.y += 40;
-	//if ( player->relationName ) livingLifePage->hetuwDrawWithHandwritingFont( player->relationName, playerNamePos );
+}
+
+void HetuwMod::drawHighlightedPlayer() {
+	if (game_getCurrentTime() - timeLastPlayerHover >= 4) return;
+
+	LiveObject *player = livingLifePage->getLiveObject(selectedPlayerID);
+	if (!player) return;
+	if ( player == ourLiveObject ) return;
+
+	playerNamePos.x = player->currentPos.x * CELL_D;
+	playerNamePos.y = player->currentPos.y * CELL_D;
+	playerNamePos.y += 34;
+
+	getRelationNameColor( player->relationName, playerNameColor );
+
+	setDrawColor( 0.0, 0.0, 0.0, 0.8 );
+
+	float textWidth;
+	if (player->name && strlen(player->name) > 1) {
+		textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( player->name, guiScale );
+		drawRect( playerNamePos, textWidth/2 + 6*guiScale, 16*guiScale );
+		setDrawColor( playerNameColor[0], playerNameColor[1], playerNameColor[2], 1 );
+		livingLifePage->hetuwDrawScaledHandwritingFont( player->name, playerNamePos, guiScale, alignCenter );
+		playerNamePos.y -= 32*guiScale;
+	}
+
+	char str[16]; char age[8];
+	livingLifePage->hetuwGetStringAge( age, player );
+	char gender = getObject(player->displayID)->male ? 'M' : 'F';
+	sprintf(str, "%c %s", gender, age);
+	setDrawColor( 0.0, 0.0, 0.0, 0.8 );
+	textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( str, guiScale );
+	drawRect( playerNamePos, textWidth/2 + 6*guiScale, 16*guiScale );
+	setDrawColor( playerNameColor[0], playerNameColor[1], playerNameColor[2], 1 );
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, playerNamePos, guiScale, alignCenter );
 }
 
 void HetuwMod::useTileRelativeToMe( int x, int y ) {
@@ -2760,9 +2818,9 @@ void HetuwMod::drawAge() {
 	int age = (int)(ourAge*10);
 	int ageDecimal = age - int(age*0.1)*10;
 	age = (int)((age-ageDecimal)*0.1);
-	sprintf(sBuf, "%d.%d", age, ageDecimal);
+	sprintf(sBuf, "%c  %i.%i", ourGender, age, ageDecimal);
 	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
-	drawPos.x += 310;
+	drawPos.x += 290;
 	drawPos.y -= viewHeight/2 - 25;
 	livingLifePage->hetuwDrawWithHandwritingFont( sBuf, drawPos );
 }

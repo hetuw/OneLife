@@ -205,6 +205,11 @@ public:
 	static SimpleVector<SimpleVector<int>> *mMapSubContainedStacks;
 	static int *mMapD;
 
+	static int *mCurMouseOverID;
+	static int selectedPlayerID; 
+	static void OnPlayerHoverOver(int id);
+	static double timeLastPlayerHover;
+
 	static void pickUpBaby( int x, int y );
 	static bool playerIsInCloseRange( LiveObject* o );
 	static void pickUpBabyInRange();
@@ -215,7 +220,7 @@ public:
 
 	static void setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject> *inGameObjects,
 							SimpleVector<int> *inmMapContainedStacks, SimpleVector<SimpleVector<int>> *inmMapSubContainedStacks,
-							int &inmMapD);
+							int &inmMapD, int &inmCurMouseOverID);
 
 	static void zoomIncrease(float value);
 	static void zoomDecrease(float value);
@@ -253,6 +258,7 @@ public:
 	static bool isRelated( LiveObject* player );
 	static void getRelationNameColor( const char* name, float* color );
 	static void drawPlayerNames( LiveObject* player );
+	static void drawHighlightedPlayer();
 
 	static void drawTextWithBckgr( doublePair pos, const char* text );
 
@@ -282,6 +288,7 @@ public:
 	static bool takingPhoto;
 
 	static bool bxRay;
+	static char ourGender;
 
 	static bool bFoundFamilyName;
 	static std::vector<FamilyInRange*> familiesInRange;
