@@ -1099,7 +1099,7 @@ void HetuwMod::livingLifeDraw() {
 	if (bDrawHomeCords) drawHomeCords();
 	if (bDrawHostileTiles) drawHostileTiles();
 	if (searchWordList.size() > 0) drawSearchTiles();
-	drawHighlightedPlayer();
+	if (iDrawNames > 0) drawHighlightedPlayer();
 	if (bDrawMap) drawMap();
 	if (bDrawInputString) drawInputString();
 	if (bDrawHelp) drawHelp();
@@ -1884,6 +1884,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 			string strSearch = tempInputString.substr(8, tempInputString.length());
 			bDrawInputString = false;
 			getSearchInput = 0;
+			if (strSearch.size() < 1) return true;
 			char *cstrSearchWord = new char[strSearch.size()+1];
 			strcpy(cstrSearchWord, strSearch.c_str());
 			searchWordList.push_back(cstrSearchWord);
@@ -2006,10 +2007,14 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		getCustomCords = 1;
 		return true;
 	}
-	if (!commandKey && isCharKey(inASCII, charKey_Search)) {
+	if (!commandKey && !shiftKey && isCharKey(inASCII, charKey_Search)) {
 		tempInputString = "SEARCH: ";
 		getSearchInput = 1;
 		bDrawInputString = true;
+		return true;
+	}
+	if (!commandKey && shiftKey && isCharKey(inASCII, charKey_Search)) {
+		if (searchWordList.size() > 0) searchWordListDelete[searchWordList.size()-1] = true;
 		return true;
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_FixCamera)) {
@@ -3174,6 +3179,7 @@ void HetuwMod::drawHelp() {
 
 	drawPos.y -= lineHeight;
 	drawPos.y -= lineHeight;
+	drawPos.y -= lineHeight;
 	sprintf(str, "YOU CAN CHANGE KEYS AND SETTINGS BY MODIFYING THE HETUW.CFG FILE");
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
@@ -3305,6 +3311,10 @@ void HetuwMod::drawHelp() {
 	if (searchWordList.size() > 0) setHelpColorSpecial();
 	else setHelpColorNormal();
 	sprintf(str, "%c - SEARCH FOR AN OBJECT", toupper(charKey_Search));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+	setHelpColorNormal();
+	sprintf(str, "SHIFT+%c - DELETE LAST SEARCH WORD", toupper(charKey_Search));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 
