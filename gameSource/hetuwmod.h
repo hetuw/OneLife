@@ -284,7 +284,7 @@ public:
 	static bool setCharKey( unsigned char &key, const char *value );
 
 	static bool strContainsDangerousAnimal(const char* str);
-	static bool isDangerousAnimal( int objId );
+	static bool *isDangerousAnimal;
 
 	static void setTakingPhoto( bool inTakingPhoto );
 	static bool takingPhoto;

@@ -80,6 +80,7 @@ time_t HetuwMod::lastSpecialEmote;
 
 int* HetuwMod::dangerousAnimals;
 int HetuwMod::dangerousAnimalsLength;
+bool *HetuwMod::isDangerousAnimal = NULL;
 
 int* HetuwMod::closedDoorIDs;
 int HetuwMod::closedDoorIDsLength;
@@ -345,6 +346,18 @@ void HetuwMod::initDangerousAnimals() {
 		int k = *(vecAnimalIds.getElement(i));
 		dangerousAnimals[i] = k;
 		//printf("hetuw %i. %s\n", k, getObject(k)->description);
+	}
+
+	if (isDangerousAnimal) delete[] isDangerousAnimal;
+	isDangerousAnimal = new bool[maxObjects];
+	for (int k=0; k<maxObjects; k++) {
+		isDangerousAnimal[k] = false;
+		for (int i = 0; i < dangerousAnimalsLength; i++) {
+			if (k == dangerousAnimals[i]) {
+				isDangerousAnimal[k] = true;
+				break;
+			}
+		}
 	}
 }
 
@@ -1157,10 +1170,8 @@ void HetuwMod::drawHostileTiles() {
 	for (int x = startX; x < endX; x++) {
 		for (int y = startY; y < endY; y++) {
 			int objId = livingLifePage->hetuwGetObjId( x, y );
-			if (objId > 0) {
-				bool drawTile = false;
-				drawTile = isDangerousAnimal( objId );
-				if (drawTile) drawTileRect( x, y );
+			if (objId >= 0 && objId < maxObjects) {
+				if (isDangerousAnimal[objId]) drawTileRect( x, y );
 			}
 		}
 	}
@@ -2313,14 +2324,6 @@ bool HetuwMod::livingLifePageMouseDown( float mX, float mY ) {
 	return false;
 }
 
-bool HetuwMod::isDangerousAnimal( int objId ) {
-	if (objId <= 0) return false;
-	for (int i = 0; i < dangerousAnimalsLength; i++) {
-		if (objId == dangerousAnimals[i]) return true;
-	}
-	return false;
-}
-
 bool HetuwMod::tileIsSafeToWalk(int x, int y) {
 	int objId = livingLifePage->hetuwGetObjId( x, y);
 	if (objId > 0) {
@@ -2350,7 +2353,7 @@ bool HetuwMod::tileHasNoDangerousAnimals(int x, int y) {
 		if (objId == 764) return false; // Rattle Snake	
 		if (objId == 1385) return false; // Attacking Rattle Snake
 	} else { // moving by walking / not riding
-		if (isDangerousAnimal(objId)) return false;
+		if (objId < maxObjects && isDangerousAnimal[objId]) return false;
 	}
 	return true;
 }
@@ -2748,7 +2751,7 @@ void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
 			strKillerId += sstr[i]; 
 		}
 		int killerObjId = stoi(strKillerId); // object id - like knife or grizzly bear
-		if (isDangerousAnimal(killerObjId)) {
+		if (killerObjId >= 0 && killerObjId < maxObjects && isDangerousAnimal[killerObjId]) {
 			deathMsg->deathReason = 1; // animal
 		}
 		ObjectRecord *ko = getObject( killerObjId );
