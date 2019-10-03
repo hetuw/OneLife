@@ -867,6 +867,7 @@ void HetuwMod::setYumObjectsColor() {
 }
 
 void HetuwMod::resetObjectsColor() {
+	if (!b_drawYumColor) return;
 	for (int i=0; i<maxObjects; i++) {
 		ObjectRecord *o = getObject(i);
 		if (!o) continue;
