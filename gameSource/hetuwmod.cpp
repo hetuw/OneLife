@@ -903,11 +903,11 @@ void HetuwMod::objectDrawScaleStep() {
 
 	float interv = stepCount % 60 / (float)60;
 	if (interv > 0.5) interv = 1 - interv;
-	scaleSearch += interv*1.5;
+	scaleSearch += interv*1.0*zoomScale;
 
 	interv = (stepCount+20) % 60 / (float)60;
 	if (interv > 0.5) interv = 1 - interv;
-	scaleYum += interv*2.5;
+	scaleYum += interv*1.0*zoomScale;
 
 	for (int i=0; i<maxObjects; i++) {
 		if (b_drawSearchPulsate && objIsBeingSearched[i]) objectDrawScale[i] = scaleSearch;
