@@ -192,6 +192,7 @@ public:
 	static bool activateAutoRoadRun;
 
 	static int iDrawNames;
+	static bool bDrawSelectedPlayerInfo;
 
 	static RainbowColor *colorRainbow;
 

@@ -93,6 +93,7 @@ time_t HetuwMod::stopAutoRoadRunTime;
 bool HetuwMod::activateAutoRoadRun;
 
 int HetuwMod::iDrawNames;
+bool HetuwMod::bDrawSelectedPlayerInfo = true;
 float HetuwMod::playerNameColor[3];
 doublePair HetuwMod::playerNamePos;
 
@@ -434,6 +435,10 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 		iDrawNames = (int)(value[0]-'0');
 		return true;
 	}
+	if (strstr(name, "init_show_selectedplayerinfo")) {
+		bDrawSelectedPlayerInfo = (int)(value[0]-'0');
+		return true;
+	}
 	if (strstr(name, "init_show_cords")) {
 		bDrawCords = bool(value[0]-'0');
 		return true;
@@ -547,6 +552,7 @@ void HetuwMod::initSettings() {
 	writeCharKeyToStream( ofs, "key_findyum", charKey_FindYum );
 	ofs << endl;
 	ofs << "init_show_names = " << (char)(iDrawNames+48) << endl;
+	ofs << "init_show_selectedplayerinfo = " << (char)(bDrawSelectedPlayerInfo+48) << endl;
 	ofs << "init_show_cords = " << (char)(bDrawCords+48) << endl;
 	ofs << "init_show_playersinrange = " << (char)(iDrawPlayersInRangePanel+48) << endl;
 	ofs << "init_show_deathmessages = " << (char)(bDrawDeathMessages+48) << endl;
@@ -1099,7 +1105,7 @@ void HetuwMod::livingLifeDraw() {
 	if (bDrawHomeCords) drawHomeCords();
 	if (bDrawHostileTiles) drawHostileTiles();
 	if (searchWordList.size() > 0) drawSearchTiles();
-	if (iDrawNames > 0) drawHighlightedPlayer();
+	if (bDrawSelectedPlayerInfo && iDrawNames > 0) drawHighlightedPlayer();
 	if (bDrawMap) drawMap();
 	if (bDrawInputString) drawInputString();
 	if (bDrawHelp) drawHelp();
@@ -1489,7 +1495,7 @@ void HetuwMod::drawPlayerNames( LiveObject* player ) {
 	if( !player->allSpritesLoaded ) return;
 
 	bool playerIsSelected = selectedPlayerID == player->id;
-	if (playerIsSelected) {
+	if (bDrawSelectedPlayerInfo && playerIsSelected) {
 		playerIsSelected = (game_getCurrentTime() - timeLastPlayerHover < 4);
 		if (playerIsSelected) return;
 	}
