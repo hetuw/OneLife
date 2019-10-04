@@ -119,9 +119,9 @@ double LivingLifePage::hetuwMeasureScaledHandwritingFont(const char* str, double
 
 void LivingLifePage::hetuwSay(const char* text) {
 	//printf("hetuw say: %s\n", text);
-	char message[strlen(text)+1];
-	sprintf( message, "SAY 0 0 %s#", text );
+	char *message = autoSprintf( "SAY 0 0 %s#", text );
 	sendToServerSocket( message );
+	delete[] message;
 }
 
 // to make all erased pencil fonts lighter
