@@ -323,6 +323,8 @@ public:
 	static void resetObjectDrawScale();
 	static void objectDrawScaleStep();
 
+	static float *objectDefaultColors;
+
 	static bool bHoldDownTo_FixCamera;
 	static bool bHoldDownTo_XRay;
 	static bool bHoldDownTo_FindYum;

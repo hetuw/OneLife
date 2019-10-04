@@ -178,6 +178,8 @@ bool HetuwMod::bDrawYum = false;
 double *HetuwMod::objectDrawScale = NULL;
 float HetuwMod::colorRainbowFast[3];
 
+float *HetuwMod::objectDefaultColors;
+
 bool HetuwMod::bHoldDownTo_FixCamera = true;
 bool HetuwMod::bHoldDownTo_XRay = true;
 bool HetuwMod::bHoldDownTo_FindYum = true;
@@ -684,6 +686,16 @@ void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<
 
 	objectDrawScale = new double[maxObjects];
 	for (int i=0; i<maxObjects; i++) objectDrawScale[i] = 1.0;
+
+	objectDefaultColors = new float[maxObjects*3];
+	for (int i=0, k=0; i<maxObjects; i++) {
+		ObjectRecord *o = getObject(i);
+		if (!o) continue;
+		k = i*3;
+		objectDefaultColors[k] = o->spriteColor->r;
+		objectDefaultColors[k+1] = o->spriteColor->g;
+		objectDefaultColors[k+2] = o->spriteColor->b;
+	}
 }
 
 void HetuwMod::setSearchArray() {
@@ -851,7 +863,7 @@ void HetuwMod::livingLifeStep() {
 }
 
 void HetuwMod::setYumObjectsColor() {
-	for (int i=0; i<maxObjects; i++) {
+	for (int i=0, k=0; i<maxObjects; i++) {
 		ObjectRecord *o = getObject(i);
 		if (!o) continue;
 		if (isYummy(i)) {
@@ -859,21 +871,23 @@ void HetuwMod::setYumObjectsColor() {
 			o->spriteColor->g = colorRainbowFast[1]+0.5;
 			o->spriteColor->b = colorRainbowFast[2];
 		} else {
-			o->spriteColor->r = 1.0;
-			o->spriteColor->g = 1.0;
-			o->spriteColor->b = 1.0;
+			k = i*3;
+			o->spriteColor->r = objectDefaultColors[k];
+			o->spriteColor->g = objectDefaultColors[k+1];
+			o->spriteColor->b = objectDefaultColors[k+2];
 		}
 	}
 }
 
 void HetuwMod::resetObjectsColor() {
 	if (!b_drawYumColor) return;
-	for (int i=0; i<maxObjects; i++) {
+	for (int i=0, k=0; i<maxObjects; i++) {
 		ObjectRecord *o = getObject(i);
 		if (!o) continue;
-		o->spriteColor->r = 1.0;
-		o->spriteColor->g = 1.0;
-		o->spriteColor->b = 1.0;
+		k = i*3;
+		o->spriteColor->r = objectDefaultColors[k];
+		o->spriteColor->g = objectDefaultColors[k+1];
+		o->spriteColor->b = objectDefaultColors[k+2];
 	}
 }
 
