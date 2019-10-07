@@ -16,6 +16,7 @@
 
 #include "ageControl.h"
 
+#include "hetuwmod.h"
 
 #include "folderCache.h"
 
@@ -2336,6 +2337,8 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
         }
     animLayerCutoff = -1;
     
+	double scale = 1.0; // hetuw mod
+	if (HetuwMod::objectDrawScale) scale = HetuwMod::objectDrawScale[obj->id];
 
     for( int i=0; i<limit; i++ ) {
         
@@ -2839,7 +2842,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             if( drawMouthShapes && spriteID == mouthAnchorID &&
                 mouthShapeFrame < numMouthShapeFrames ) {
                 drawSprite( mouthShapeFrameList[ mouthShapeFrame ], 
-                            pos, 1.0, rot, 
+                            pos, scale, rot, // hetuw mod added scale
                             logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
                 mouthShapeFrame ++;
                 
@@ -2858,7 +2861,7 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
                     }
                 }
             else {
-                drawSprite( getSprite( spriteID ), pos, 1.0, rot, 
+                drawSprite( getSprite( spriteID ), pos, scale, rot, // hetuw mod added scale
                             logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
                 }
             
