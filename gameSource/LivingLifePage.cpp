@@ -13881,6 +13881,7 @@ void LivingLifePage::step() {
                                 getObject( o.holdingID )->foodValue > 0 ) {
                                 // MEH
                                 slipIndexToShow = 3;
+								HetuwMod::foodIsMeh(o.holdingID);
                                 }
                             }
                         

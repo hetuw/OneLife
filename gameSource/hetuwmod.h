@@ -306,6 +306,7 @@ public:
 	static void SetFixCamera(bool b);
 
 	static void Say(const char *text);
+	static void causeDisconnect();
 
 	static float colorRainbowFast[3];
 	static void stepColorRainbowFast();
@@ -315,6 +316,7 @@ public:
 	static int *becomesFoodID;
 	static SimpleVector<int> yummyFoodChain;
 	static bool isYummy(int objID);
+	static void foodIsMeh(int objID);
 	static bool bDrawYum;
 	static void setYumObjectsColor();
 	static void resetObjectsColor();

@@ -1119,6 +1119,11 @@ bool HetuwMod::isYummy(int objID) {
 	return true;
 }
 
+void HetuwMod::foodIsMeh(int objID) {
+	if (!isYummy(objID)) return;
+	yummyFoodChain.push_back(objID);
+}
+
 void HetuwMod::livingLifeDraw() {
 	if (takingPhoto) return; // dont draw special mod stuff while taking a photo
 
@@ -1810,6 +1815,12 @@ void HetuwMod::setEmote(int id) {
 	currentEmote = id;
 }
 
+void HetuwMod::causeDisconnect() {
+	char message[64];
+	sprintf( message, "EMOT 0 0 \\][###");
+	livingLifePage->sendToServerSocket( message );
+}
+
 bool HetuwMod::isCharKey(unsigned char c, unsigned char key) {
 	return (c == key || c == toupper(key));
 }
@@ -1933,6 +1944,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 
 	// for debugging
 	if (false && inASCII == 'i') {
+		//causeDisconnect(); if (true) return true;
 		int mouseX, mouseY;
 		livingLifePage->hetuwGetMouseXY( mouseX, mouseY );
 		int x = round( mouseX / (float)CELL_D );
