@@ -18798,7 +18798,6 @@ void LivingLifePage::makeActive( char inFresh ) {
         mYumSlipNumberToShow[i] = 0;
         }
 
-    HetuwMod::yummyFoodChain.deleteAll(); // hetuw mod
 
     mCurrentArrowI = 0;
     mCurrentArrowHeat = -1;

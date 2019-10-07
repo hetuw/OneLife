@@ -623,6 +623,8 @@ void HetuwMod::initOnBirth() { // will be called from LivingLifePage.cpp and het
 	timeLastSay = 0;
 	sayBuffer.clear();
 	sayBuffer.shrink_to_fit();
+
+    yummyFoodChain.deleteAll();
 }
 
 void HetuwMod::initOnServerJoin() { // will be called from LivingLifePage.cpp and hetuwmod.cpp
