@@ -15,6 +15,11 @@
 
 using namespace std;
 
+constexpr int HetuwMod::OBJID_Fire;
+constexpr int HetuwMod::OBJID_HotCoals;
+constexpr int HetuwMod::OBJID_ClayBowl;
+constexpr int HetuwMod::OBJID_HotAdobeOven;
+
 int HetuwMod::maxObjects;
 
 int HetuwMod::viewWidth;
@@ -1035,10 +1040,15 @@ void HetuwMod::addHomeLocation( int x, int y, bool ancient, char c ) {
 void HetuwMod::initBecomesFood() {
     becomesFoodID = new int[maxObjects];
     for (int i=0; i<maxObjects; i++) {
-      becomesFoodID[i] = becomesFood( i, 3 );
+		becomesFoodID[i] = becomesFood( i, 3 );
     }
 }
 
+// TransRecord: (all of the following can be 0 or below if they dont exist)
+// transRecord->actor = objectID holding in your hand - is 0 or smaller when not holding anything
+// transRecord->target = objectID of obj on the ground that is being targeted
+// transRecord->newActor = objectID of new obj holding in your hand (after transition)
+// transRecord->newTarget = objectID of new item on the ground
 int HetuwMod::becomesFood( int objectID, int depth ) {
     if( objectID < 0) return -1;
 
@@ -1049,6 +1059,11 @@ int HetuwMod::becomesFood( int objectID, int depth ) {
         objectID = obj->useDummyParent;
         obj = getObject( objectID );
         }
+
+	if (objectID == OBJID_ClayBowl) return -1;
+	if (objectID == OBJID_HotAdobeOven) return -1;
+	if (objectID == OBJID_Fire) return -1;
+	if (objectID == OBJID_HotCoals) return -1;
 
     if( obj->foodValue > 0 ) {
         return objectID;
@@ -1092,6 +1107,14 @@ int HetuwMod::becomesFood( int objectID, int depth ) {
 
             //int actorEdible = becomesFood( t->newActor, 0 );
             //if( actorEdible > 0 ) return actorEdible;
+			if ((t->actor <= 0 || t->actor == OBJID_ClayBowl) && t->newActor > 0) { // becomes food when using empty hand or clay bowl on it
+				int returnID = becomesFood(t->newActor, depth - 1);
+				if (returnID > 0) return returnID;
+				}
+			if (t->target == OBJID_HotAdobeOven || t->target == OBJID_Fire || t->target == OBJID_HotCoals) { // becomes food when used on hot adobe oven or fire or hot coals
+				int returnID = becomesFood(t->newActor, depth - 1);
+				if (returnID > 0) return returnID;
+				}
             }
 
         if( actorCount == 1) {
