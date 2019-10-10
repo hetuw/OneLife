@@ -63,6 +63,7 @@ unsigned char HetuwMod::charKey_xRay;
 unsigned char HetuwMod::charKey_Search;
 unsigned char HetuwMod::charKey_TeachLanguage;
 unsigned char HetuwMod::charKey_FindYum;
+unsigned char HetuwMod::charKey_HidePlayers;
 
 unsigned char HetuwMod::charKey_CreateHome;
 unsigned char HetuwMod::charKey_FixCamera;
@@ -160,6 +161,7 @@ std::vector<bool> HetuwMod::searchWordListDelete;
 
 bool HetuwMod::takingPhoto;
 bool HetuwMod::bxRay;
+bool HetuwMod::bHidePlayers = false;
 char HetuwMod::ourGender;
 
 bool HetuwMod::bFoundFamilyName;
@@ -232,6 +234,7 @@ void HetuwMod::init() {
 	charKey_Search = 'j';
 	charKey_TeachLanguage = 'l';
 	charKey_FindYum = 'y';
+	charKey_HidePlayers = 254;
 
 	charKey_ShowMap = 'm';
 	charKey_MapZoomIn = 'u';
@@ -250,6 +253,7 @@ void HetuwMod::init() {
 
 	takingPhoto = false;
 	bxRay = false;
+	bHidePlayers = false;
 	objIsBeingSearched = NULL;
 	clearSayBuffer = false;
 	selectedPlayerID = 0;
@@ -450,6 +454,7 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	if (strstr(name, "key_search")) return setCharKey( charKey_Search, value );
 	if (strstr(name, "key_teachlanguage")) return setCharKey( charKey_TeachLanguage, value );
 	if (strstr(name, "key_findyum")) return setCharKey( charKey_FindYum, value );
+	if (strstr(name, "key_hideplayers")) return setCharKey( charKey_HidePlayers, value );
 
 	if (strstr(name, "init_show_names")) {
 		iDrawNames = (int)(value[0]-'0');
@@ -570,6 +575,7 @@ void HetuwMod::initSettings() {
 	writeCharKeyToStream( ofs, "key_search", charKey_Search );
 	writeCharKeyToStream( ofs, "key_teachlanguage", charKey_TeachLanguage );
 	writeCharKeyToStream( ofs, "key_findyum", charKey_FindYum );
+	writeCharKeyToStream( ofs, "key_hideplayers", charKey_HidePlayers );
 	ofs << endl;
 	ofs << "init_show_names = " << (char)(iDrawNames+48) << endl;
 	ofs << "init_show_selectedplayerinfo = " << (char)(bDrawSelectedPlayerInfo+48) << endl;
@@ -661,6 +667,7 @@ void HetuwMod::initOnServerJoin() { // will be called from LivingLifePage.cpp an
 
 	takingPhoto = false;
 	bxRay = false;
+	bHidePlayers = false;
 
 	bFoundFamilyName = false;
 	ourFamilyName = hetuwDefaultOurFamilyName;
@@ -1163,7 +1170,7 @@ void HetuwMod::livingLifeDraw() {
 	if (bDrawHomeCords) drawHomeCords();
 	if (bDrawHostileTiles) drawHostileTiles();
 	if (searchWordList.size() > 0) drawSearchTiles();
-	if (bDrawSelectedPlayerInfo && iDrawNames > 0) drawHighlightedPlayer();
+	if (bDrawSelectedPlayerInfo && iDrawNames > 0 && !bHidePlayers) drawHighlightedPlayer();
 	if (bDrawMap) drawMap();
 	if (bDrawInputString) drawInputString();
 	if (bDrawHelp) drawHelp();
@@ -1546,9 +1553,10 @@ void HetuwMod::getRelationNameColor( const char* name, float* color ) {
 }
 
 void HetuwMod::drawPlayerNames( LiveObject* player ) {
+	if ( bHidePlayers ) return;
 	if ( !player->name ) return;
-	if( player->hide || player->outOfRange ) return;
-	if( !player->allSpritesLoaded ) return;
+	if ( player->hide || player->outOfRange ) return;
+	if ( !player->allSpritesLoaded ) return;
 
 	bool playerIsSelected = selectedPlayerID == player->id;
 	if (bDrawSelectedPlayerInfo && playerIsSelected) {
@@ -1892,6 +1900,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		getSearchInput = 0;
 		bDrawInputString = false;
 		bxRay = false;
+		bHidePlayers = false;
 		bTeachLanguage = false;
 		clearSayBuffer = true;
 	}
@@ -2214,6 +2223,10 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		return true;
 	}
 
+	if (!commandKey && isCharKey(inASCII, charKey_HidePlayers)) {
+		bHidePlayers = !bHidePlayers;
+		return true;
+	}
 	//printf("hetuw unknown key %c, value: %i\n", inASCII, (int)inASCII);
 
 	return false;

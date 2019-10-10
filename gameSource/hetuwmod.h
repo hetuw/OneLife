@@ -180,6 +180,7 @@ public:
 	static unsigned char charKey_Search;
 	static unsigned char charKey_TeachLanguage;
 	static unsigned char charKey_FindYum;
+	static unsigned char charKey_HidePlayers;
 
 	static unsigned char charKey_ShowMap;
 	static unsigned char charKey_MapZoomIn;
@@ -295,6 +296,7 @@ public:
 	static bool takingPhoto;
 
 	static bool bxRay;
+	static bool bHidePlayers;
 	static char ourGender;
 
 	static bool bFoundFamilyName;

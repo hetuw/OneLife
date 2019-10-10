@@ -4026,10 +4026,10 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
     SimpleVector<LiveObject *> *inSpeakers,
     SimpleVector<doublePair> *inSpeakersPos ) {    
 
-
     ObjectAnimPack returnPack;
     returnPack.inObjectID = -1;
 
+	if (HetuwMod::bHidePlayers) return returnPack;
 
     if( inObj->hide || inObj->outOfRange ) {
         return returnPack;
