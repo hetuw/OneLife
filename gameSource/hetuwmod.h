@@ -257,9 +257,14 @@ public:
 
 	static void setEmote(int id);
 
+	static void setMoveDirection(int &x, int &y, int direction);
+	static int getMoveDirection();
+	static int getNextMoveDir(int direction, int add);
 	static bool tileIsSafeToWalk(int x, int y); 
 	static bool tileHasNoDangerousAnimals(int x, int y);
 	static bool tileHasClosedDoor(int x, int y);
+	static bool dirIsSafeToWalk(int x, int y, int dir);
+	static bool findNextMove(int &x, int &y, int dir);
 
 	static void setOurFamilyName(const char* lastName);
 	static void getOurFamilyName();
@@ -382,7 +387,10 @@ private:
 	static void initSettings();
 
 	static void move(); // called only once on frame - dont use
-	static bool cornerTileIsSafeToWalk( int sX, int sY, bool up, bool down, bool right, bool left);
+	static bool setMoveDirIfSafe(int &x, int &y, int dir);
+	static int magnetMoveDir;
+	static int magnetWrongMoveDir;
+	static int magnetMoveCount;
 
 	static bool waitForDoorToOpen;
 	static int lastDoorToOpenX;

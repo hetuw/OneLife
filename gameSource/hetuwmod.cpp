@@ -42,6 +42,9 @@ bool HetuwMod::bDrawHelp;
 
 float HetuwMod::lastPosX;
 float HetuwMod::lastPosY;
+int HetuwMod::magnetMoveDir = -1;
+int HetuwMod::magnetWrongMoveDir = -1;
+int HetuwMod::magnetMoveCount = 0;
 
 unsigned char HetuwMod::charKey_Up;
 unsigned char HetuwMod::charKey_Down;
@@ -653,6 +656,8 @@ void HetuwMod::initOnServerJoin() { // will be called from LivingLifePage.cpp an
 	stopAutoRoadRun = false;
 	activateAutoRoadRun = false;
 	stopAutoRoadRunTime = 0;
+	magnetMoveDir = -1;
+	magnetWrongMoveDir = -1;
 
 	waitForDoorToOpen = false;
 	lastDoorToOpenX = 9999;
@@ -2308,6 +2313,9 @@ bool HetuwMod::livingLifeKeyUp(unsigned char inASCII) {
 		lastPosY = 9999;
 		stopAutoRoadRunTime = time(NULL);
 		activateAutoRoadRun = true;
+		magnetMoveDir = -1;
+		magnetWrongMoveDir = -1;
+		magnetMoveCount = 0;
 	}
 
 	return r;
@@ -2364,7 +2372,6 @@ bool HetuwMod::livingLifeSpecialKeyDown(unsigned char inKeyCode) {
 }
 
 bool HetuwMod::livingLifePageMouseDown( float mX, float mY ) {
-
 	if (bDrawHomeCords) {
 		for (unsigned i=0; i<homePosStack.size(); i++) {
 			if (mX >= homePosStack[i]->drawStartPos.x && mX <= homePosStack[i]->drawEndPos.x) {
@@ -2376,7 +2383,6 @@ bool HetuwMod::livingLifePageMouseDown( float mX, float mY ) {
 			}
 		}
 	}
-
 	for (int k=0; (unsigned)k < searchWordList.size(); k++) {
 		if (mX >= searchWordStartPos[k]->x && mX <= searchWordEndPos[k]->x) {
 			if (mY >= searchWordStartPos[k]->y && mY <= searchWordEndPos[k]->y) {
@@ -2385,23 +2391,47 @@ bool HetuwMod::livingLifePageMouseDown( float mX, float mY ) {
 			}
 		}
 	}
-
 	return false;
 }
 
-bool HetuwMod::tileIsSafeToWalk(int x, int y) {
-	int objId = livingLifePage->hetuwGetObjId( x, y);
-	if (objId > 0) {
-		if (!tileHasNoDangerousAnimals(x, y)) return false;
+//	move direction
+//	---------------
+//	1	2	3
+//  8	0	4
+//	7	6	5
+//	---------------
 
-		ObjectRecord* obj = getObject(objId);
-		if (obj && obj->blocksWalking) {
-			if (ourLiveObject->xd == x || ourLiveObject->yd == y)
-				if (tileHasClosedDoor( x, y )) return true;
-			return false;
-		}
+void HetuwMod::setMoveDirection(int &x, int &y, int direction) {
+	switch (direction) {
+		case 1: x--; y++; break;
+		case 2: y++; break;
+		case 3: x++; y++; break;
+		case 4: x++; break;
+		case 5: x++; y--; break;
+		case 6: y--; break;
+		case 7: x--; y--; break;
+		case 8: x--; break;
 	}
-	return true;
+}
+
+int HetuwMod::getMoveDirection() {
+	if (!upKeyDown && !leftKeyDown && !downKeyDown && !rightKeyDown) return 0;
+	if (upKeyDown && leftKeyDown && !downKeyDown && !rightKeyDown) return 1;
+	if (upKeyDown && !leftKeyDown && !downKeyDown && !rightKeyDown) return 2;
+	if (upKeyDown && !leftKeyDown && !downKeyDown && rightKeyDown) return 3;
+	if (!upKeyDown && !leftKeyDown && !downKeyDown && rightKeyDown) return 4;
+	if (!upKeyDown && !leftKeyDown && downKeyDown && rightKeyDown) return 5;
+	if (!upKeyDown && !leftKeyDown && downKeyDown && !rightKeyDown) return 6;
+	if (!upKeyDown && leftKeyDown && downKeyDown && !rightKeyDown) return 7;
+	if (!upKeyDown && leftKeyDown && !downKeyDown && !rightKeyDown) return 8;
+	return 0;
+}
+
+int HetuwMod::getNextMoveDir(int direction, int add) {
+	direction += add;
+	while (direction < 1) direction += 8;
+	while (direction > 8) direction -= 8;
+	return direction;
 }
 
 bool HetuwMod::tileHasNoDangerousAnimals(int x, int y) {
@@ -2423,31 +2453,6 @@ bool HetuwMod::tileHasNoDangerousAnimals(int x, int y) {
 	return true;
 }
 
-bool HetuwMod::cornerTileIsSafeToWalk( int sX, int sY, bool up, bool down, bool right, bool left) {
-	bool tileNextIsSafe = true;
-	if (up && ( right || left )) {
-		tileNextIsSafe = tileHasNoDangerousAnimals( sX, sY+1 );
-		if (tileNextIsSafe) {
-			if (right) {
-				tileNextIsSafe = tileHasNoDangerousAnimals( sX+1, sY );
-			} else {
-				tileNextIsSafe = tileHasNoDangerousAnimals( sX-1, sY );
-			}
-		}	
-	}
-	else if (down && ( right || left )) {
-		tileNextIsSafe = tileHasNoDangerousAnimals( sX, sY-1 );
-		if (tileNextIsSafe) {
-			if (right) {
-				tileNextIsSafe = tileHasNoDangerousAnimals( sX+1, sY );
-			} else {
-				tileNextIsSafe = tileHasNoDangerousAnimals( sX-1, sY );
-			}
-		}
-	}
-	return tileNextIsSafe;
-}
-
 bool HetuwMod::tileHasClosedDoor(int x, int y) {
 	int objId = livingLifePage->hetuwGetObjId( x, y);
 	if (objId > 0) {
@@ -2458,119 +2463,106 @@ bool HetuwMod::tileHasClosedDoor(int x, int y) {
 	return false;
 }
 
-void HetuwMod::move() {
+bool HetuwMod::tileIsSafeToWalk(int x, int y) {
+	int objId = livingLifePage->hetuwGetObjId( x, y);
+	if (objId > 0) {
+		if (!tileHasNoDangerousAnimals(x, y)) return false;
+
+		ObjectRecord* obj = getObject(objId);
+		if (obj && obj->blocksWalking) {
+			if (ourLiveObject->xd == x || ourLiveObject->yd == y)
+				if (tileHasClosedDoor( x, y )) return true;
+			return false;
+		}
+	}
+	return true;
+}
+
+bool HetuwMod::dirIsSafeToWalk(int x, int y, int dir) {
+	int tX, tY;
+
+	tX = x; tY = y; setMoveDirection(tX, tY, dir);
+	if (!tileIsSafeToWalk(tX, tY)) return false;
+
+	if (dir % 2 == 0) return true; // is not a corner dir
+
+	int nextDir = getNextMoveDir(dir, 1);
+	tX = x; tY = y; setMoveDirection(tX, tY, nextDir);
+	if (!tileHasNoDangerousAnimals(tX, tY)) return false;
+
+	nextDir = getNextMoveDir(dir, -1);
+	tX = x; tY = y; setMoveDirection(tX, tY, nextDir);
+	if (!tileHasNoDangerousAnimals(tX, tY)) return false;
+
+	return true;
+}
+
+bool HetuwMod::setMoveDirIfSafe(int &x, int &y, int dir) {
+	if (!dirIsSafeToWalk(x, y, dir)) return false;
+	setMoveDirection(x, y, dir);
+	return true;
+}
+
+bool HetuwMod::findNextMove(int &x, int &y, int dir) {
+	if (dir <= 0) return false;
 	
-	if (!upKeyDown && !leftKeyDown && !downKeyDown && !rightKeyDown)
-		return;
+	if (magnetMoveDir > 0) {
+		if (magnetWrongMoveDir != dir || magnetMoveCount > 2) {
+			magnetWrongMoveDir = -1;
+			magnetMoveDir = -1;
+		} else {
+			if (setMoveDirIfSafe(x, y, magnetMoveDir)) {
+				magnetWrongMoveDir = -1;
+				magnetMoveDir = -1;
+				return true;
+			}
+		}
+	}
 
-	float x = round(ourLiveObject->currentPos.x);
-	float y = round(ourLiveObject->currentPos.y);
+	if (setMoveDirIfSafe(x, y, dir)) return true;
 
-	if (x == lastPosX && y == lastPosY && ourLiveObject->inMotion)
-		return;
+	int nextMoveDir = getNextMoveDir(dir, 1);
+	if (dirIsSafeToWalk(x, y, nextMoveDir)) {
+		setMoveDirection(x, y, nextMoveDir);
+		if (dir % 2 == 0) {
+			magnetWrongMoveDir = dir;
+			magnetMoveDir = getNextMoveDir(dir, -1);
+			magnetMoveCount = 0;
+		}
+		return true;
+	}
+	nextMoveDir = getNextMoveDir(dir, -1);
+	if (dirIsSafeToWalk(x, y, nextMoveDir)) {
+		setMoveDirection(x, y, nextMoveDir);
+		if (dir % 2 == 0) {
+			magnetWrongMoveDir = dir;
+			magnetMoveDir = getNextMoveDir(dir, 1);
+			magnetMoveCount = 0;
+		}
+		return true;
+	}
 
-	float sX = x;
-	float sY = y;
+	return false;
+}
+
+void HetuwMod::move() {
+	if (!upKeyDown && !leftKeyDown && !downKeyDown && !rightKeyDown) return;
+
+	int x = round(ourLiveObject->currentPos.x);
+	int y = round(ourLiveObject->currentPos.y);
+
+	if (x == lastPosX && y == lastPosY && ourLiveObject->inMotion) return;
+
+	int sX = x;
+	int sY = y;
+
+	int dir = getMoveDirection();
+	if (dir <= 0) return;
 
 	//debugRecPos2.x = x*CELL_D;
 	//debugRecPos2.y = y*CELL_D;
 
-	if (upKeyDown)
-		y += 1.0f;
-	else if (downKeyDown)
-		y -= 1.0f;
-
-	if (rightKeyDown)
-		x += 1.0f;
-	else if (leftKeyDown)
-		x -= 1.0f;
-
-	bool tileIsSafe = false;
-	bool tileNextIsSafe = true;
-
-	tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, upKeyDown, downKeyDown, rightKeyDown, leftKeyDown );
-
-	if (tileNextIsSafe)
-		tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
-
-	if (!tileIsSafe && upKeyDown && !downKeyDown) {
-		x = sX;
-		y = sY + 1;
-		tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
-		if (!tileIsSafe && !leftKeyDown) {
-			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, true, false, true, false );
-			if (tileNextIsSafe) {
-				x = sX + 1;
-				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
-			}
-		}
-		if (!tileIsSafe && !rightKeyDown) {
-			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, true, false, false, true );
-			if (tileNextIsSafe) {
-				x = sX - 1;
-				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
-			}
-		}
-	}
-	if (!tileIsSafe && downKeyDown && !upKeyDown) {
-		x = sX;
-		y = sY - 1;
-		tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
-		if (!tileIsSafe && !leftKeyDown) {
-			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, false, true, true, false );
-			if (tileNextIsSafe) {
-				x = sX + 1;
-				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
-			}
-		}
-		if (!tileIsSafe && !rightKeyDown) {
-			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, false, true, false, true );
-			if (tileNextIsSafe) {
-				x = sX - 1;
-				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
-			}
-		}
-	}
-	if (!tileIsSafe && rightKeyDown && !leftKeyDown) {
-		x = sX + 1;
-		y = sY;
-		tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
-		if (!tileIsSafe && !downKeyDown) {
-			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, true, false, true, false );
-			if (tileNextIsSafe) {
-				y = sY + 1;
-				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
-			}
-		}
-		if (!tileIsSafe && !upKeyDown) {
-			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, false, true, true, false );
-			if (tileNextIsSafe) {
-				y = sY - 1;
-				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
-			}
-		}
-	}
-	if (!tileIsSafe && leftKeyDown && !rightKeyDown) {
-		x = sX - 1;
-		y = sY;
-		tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
-		if (!tileIsSafe && !downKeyDown) {
-			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, true, false, false, true );
-			if (tileNextIsSafe) {
-				y = sY + 1;
-				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
-			}
-		}
-		if (!tileIsSafe && !upKeyDown) {
-			tileNextIsSafe = cornerTileIsSafeToWalk( sX, sY, false, true, false, true );
-			if (tileNextIsSafe) {
-				y = sY - 1;
-				tileIsSafe = tileIsSafeToWalk( round(x), round(y) );
-			}
-		}
-	}
-
-	if (!tileIsSafe || !tileNextIsSafe) return;
+	if (!findNextMove(x, y, dir)) return; // sets x and y
 
 	lastPosX = sX;
 	lastPosY = sY;
@@ -2595,6 +2587,7 @@ void HetuwMod::move() {
 	y *= CELL_D;
 
 	livingLifePage->hetuwClickMove(x, y);
+	magnetMoveCount++;
 
 	//debugRecPos.x = x;
 	//debugRecPos.y = y;
