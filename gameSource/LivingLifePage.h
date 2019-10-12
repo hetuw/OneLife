@@ -424,6 +424,13 @@ typedef struct ExtraMapObject {
         
 
 
+typedef struct OldHintArrow {
+        doublePair pos;
+        double bounce;
+        float fade;
+    } OldHintArrow;
+
+
 
 class LivingLifePage : public GamePage, public ActionListener {
         
@@ -732,10 +739,13 @@ class LivingLifePage : public GamePage, public ActionListener {
         int mNextHintObjectID;
         int mNextHintIndex;
 
-        int mCurrentHintTargetObject;
+        int mCurrentHintTargetObject[2];
 
-        double mCurrentHintTargetPointerBounce;
-        doublePair mLastHintTargetPos;
+        double mCurrentHintTargetPointerBounce[2];
+        float mCurrentHintTargetPointerFade[2];
+        doublePair mLastHintTargetPos[2];
+
+        SimpleVector<OldHintArrow> mOldHintArrows;
 
 
         SimpleVector<TransRecord *> mLastHintSortedList;
@@ -985,6 +995,9 @@ class LivingLifePage : public GamePage, public ActionListener {
         char mPlayerInFlight;
 
         Picker mObjectPicker;
+
+
+        void pushOldHintArrow( int inIndex );
 
     };
 
