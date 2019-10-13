@@ -349,6 +349,8 @@ public:
 	static bool b_drawSearchTileRec;
 	static bool b_drawSearchPulsate;
 
+	static bool bAutoDataUpdate;
+
 private:
 
  	static LiveObject *ourLiveObject;

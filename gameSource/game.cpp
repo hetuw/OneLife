@@ -1786,7 +1786,7 @@ void drawFrame( char inUpdate ) {
                     
                     if( versionNumber < requiredVersion ) {
 
-						if (true) { // we never want to update - cancel auto update - hetuw mod
+						if (!HetuwMod::bAutoDataUpdate) { // cancel auto update - hetuw mod
                				lastScreenViewCenter.x = 0;
                 			lastScreenViewCenter.y = 0;
                 			setViewCenterPosition( lastScreenViewCenter.x, lastScreenViewCenter.y );

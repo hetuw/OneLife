@@ -200,6 +200,8 @@ bool HetuwMod::b_drawSearchText = true;
 bool HetuwMod::b_drawSearchTileRec = true;
 bool HetuwMod::b_drawSearchPulsate = true;
 
+bool HetuwMod::bAutoDataUpdate = true;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -522,6 +524,11 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 		return true;
 	}
 
+	if (strstr(name, "automatic_data_update")) {
+		bAutoDataUpdate = bool(value[0]-48);
+		return true;
+	}
+
 	return false;
 }
 
@@ -597,6 +604,8 @@ void HetuwMod::initSettings() {
 	ofs << "draw_searchtext = " << (char)(b_drawSearchText+48) << endl;
 	ofs << "draw_searchrec = " << (char)(b_drawSearchTileRec+48) << endl;
 	ofs << "draw_searchpulsate = " << (char)(b_drawSearchPulsate+48) << endl;
+	ofs << endl;
+	ofs << "automatic_data_update = " << (char)(bAutoDataUpdate+48) << endl;
 
 	ofs.close();
 }
