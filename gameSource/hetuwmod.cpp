@@ -15,6 +15,7 @@
 
 using namespace std;
 
+constexpr int HetuwMod::OBJID_SharpStone;
 constexpr int HetuwMod::OBJID_Fire;
 constexpr int HetuwMod::OBJID_HotCoals;
 constexpr int HetuwMod::OBJID_ClayBowl;
@@ -1081,6 +1082,7 @@ int HetuwMod::becomesFood( int objectID, int depth ) {
         obj = getObject( objectID );
         }
 
+	if (objectID == OBJID_SharpStone) return -1;
 	if (objectID == OBJID_ClayBowl) return -1;
 	if (objectID == OBJID_HotAdobeOven) return -1;
 	if (objectID == OBJID_Fire) return -1;
@@ -1128,8 +1130,10 @@ int HetuwMod::becomesFood( int objectID, int depth ) {
 
             //int actorEdible = becomesFood( t->newActor, 0 );
             //if( actorEdible > 0 ) return actorEdible;
-			if ((t->actor <= 0 || t->actor == OBJID_ClayBowl) && t->newActor > 0) { // becomes food when using empty hand or clay bowl on it
+			if ((t->actor <= 0 || t->actor == OBJID_ClayBowl || t->actor == OBJID_SharpStone) && t->newActor > 0) { // becomes food when using empty hand, clay bowl or sharp stone on it
 				int returnID = becomesFood(t->newActor, depth - 1);
+				if (returnID > 0) return returnID;
+				returnID = becomesFood(t->newTarget, depth - 1);
 				if (returnID > 0) return returnID;
 				}
 			if (t->target == OBJID_HotAdobeOven || t->target == OBJID_Fire || t->target == OBJID_HotCoals) { // becomes food when used on hot adobe oven or fire or hot coals
