@@ -3726,7 +3726,10 @@ void LivingLifePage::drawMapCell( int inMapI,
         char flip = mMapTileFlips[ inMapI ];
         
         ObjectRecord *obj = getObject( oID );
-		if (!takingPhoto && HetuwMod::bxRay && obj->blocksWalking) return;
+		if (!takingPhoto && HetuwMod::bxRay && obj->blocksWalking) {
+			if (HetuwMod::xRayOpacity == 0.0f) return;
+			HetuwMod::drawColorAlpha = HetuwMod::xRayOpacity;
+		}
         if( obj->noFlip ||
             ( obj->permanent && 
               ( obj->blocksWalking || obj->drawBehindPlayer || 
@@ -3776,6 +3779,7 @@ void LivingLifePage::drawMapCell( int inMapI,
         
         if( ! mShowHighlights ) {
             if( inHighlightOnly ) {
+				HetuwMod::drawColorAlpha = 1.0f;
                 return;
                 }
             highlight = false;
@@ -3793,6 +3797,7 @@ void LivingLifePage::drawMapCell( int inMapI,
         
         if( highlight && obj->noHighlight ) {
             if( inHighlightOnly ) {
+				HetuwMod::drawColorAlpha = 1.0f;
                 return;
                 }
             highlight = false;
@@ -3976,6 +3981,7 @@ void LivingLifePage::drawMapCell( int inMapI,
         drawSquare( pos, 14 );
         }
 
+	HetuwMod::drawColorAlpha = 1.0f;
     }
 
 

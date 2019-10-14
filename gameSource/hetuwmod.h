@@ -301,6 +301,8 @@ public:
 	static void setTakingPhoto( bool inTakingPhoto );
 	static bool takingPhoto;
 
+	static float drawColorAlpha;
+	static float xRayOpacity;
 	static bool bxRay;
 	static bool bHidePlayers;
 	static char ourGender;

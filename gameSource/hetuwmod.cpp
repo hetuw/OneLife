@@ -164,6 +164,8 @@ std::vector<doublePair*> HetuwMod::searchWordEndPos;
 std::vector<bool> HetuwMod::searchWordListDelete;
 
 bool HetuwMod::takingPhoto;
+float HetuwMod::drawColorAlpha = 1.0f;
+float HetuwMod::xRayOpacity = 0.3f;
 bool HetuwMod::bxRay;
 bool HetuwMod::bHidePlayers = false;
 char HetuwMod::ourGender;
@@ -495,12 +497,17 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 		bHoldDownTo_FixCamera = bool(value[0]-48);
 		return true;
 	}
+	if (strstr(name, "keep_button_pressed_to_findyum")) {
+		bHoldDownTo_FindYum = bool(value[0]-48);
+		return true;
+	}
+
 	if (strstr(name, "keep_button_pressed_to_xray")) {
 		bHoldDownTo_XRay = bool(value[0]-48);
 		return true;
 	}
-	if (strstr(name, "keep_button_pressed_to_findyum")) {
-		bHoldDownTo_FindYum = bool(value[0]-48);
+	if (strstr(name, "xray_opacity")) {
+		xRayOpacity = ((int)(value[0]-48)/10.0f);
 		return true;
 	}
 
@@ -597,8 +604,10 @@ void HetuwMod::initSettings() {
 	ofs << "init_show_hostiletiles = " << (char)(bDrawHostileTiles+48) << endl;
 	ofs << endl;
 	ofs << "keep_button_pressed_to_fixcamera = " << (char)(bHoldDownTo_FixCamera+48) << endl;
-	ofs << "keep_button_pressed_to_xray = " << (char)(bHoldDownTo_XRay+48) << endl;
 	ofs << "keep_button_pressed_to_findyum = " << (char)(bHoldDownTo_FindYum+48) << endl;
+	ofs << endl;
+	ofs << "keep_button_pressed_to_xray = " << (char)(bHoldDownTo_XRay+48) << endl;
+	ofs << "xray_opacity = " << (char)(xRayOpacity*10+48) << " // how visible objects should be, can be 0 - 10" << endl;
 	ofs << endl;
 	ofs << "draw_yumcolor = " << (char)(b_drawYumColor+48) << endl;
 	ofs << "draw_yumpulsate = " << (char)(b_drawYumPulsate+48) << endl;
