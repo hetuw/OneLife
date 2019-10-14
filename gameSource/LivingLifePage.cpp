@@ -3726,7 +3726,7 @@ void LivingLifePage::drawMapCell( int inMapI,
         char flip = mMapTileFlips[ inMapI ];
         
         ObjectRecord *obj = getObject( oID );
-		if (!takingPhoto && HetuwMod::bxRay && obj->blocksWalking) {
+		if (!takingPhoto && HetuwMod::bxRay && obj->cachedHeight > CELL_D) {
 			if (HetuwMod::xRayOpacity == 0.0f) return;
 			HetuwMod::drawColorAlpha = HetuwMod::xRayOpacity;
 		}
