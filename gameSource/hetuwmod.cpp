@@ -595,7 +595,7 @@ void HetuwMod::initSettings() {
 	writeCharKeyToStream( ofs, "key_findyum", charKey_FindYum );
 	writeCharKeyToStream( ofs, "key_hideplayers", charKey_HidePlayers );
 	ofs << endl;
-	ofs << "init_show_names = " << (char)(iDrawNames+48) << endl;
+	ofs << "init_show_names = " << (char)(iDrawNames+48) << " // 0 = dont show names, 1 = show first name, 2 = show first and last name" << endl;
 	ofs << "init_show_selectedplayerinfo = " << (char)(bDrawSelectedPlayerInfo+48) << endl;
 	ofs << "init_show_cords = " << (char)(bDrawCords+48) << endl;
 	ofs << "init_show_playersinrange = " << (char)(iDrawPlayersInRangePanel+48) << endl;
