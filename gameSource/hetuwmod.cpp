@@ -110,7 +110,7 @@ doublePair HetuwMod::playerNamePos;
 
 bool HetuwMod::bDrawCords;
 
-bool HetuwMod::bDrawHostileTiles;
+bool HetuwMod::bDrawHostileTiles = true;
 
 int HetuwMod::stepCount;
 double HetuwMod::ourAge;
@@ -219,7 +219,6 @@ void HetuwMod::init() {
 	bDrawHomeCords = false;
 	iDrawNames = 1;
 	bDrawCords = true;
-	bDrawHostileTiles = false;
 
 	charKey_Up = 'w';
 	charKey_Down = 's';
