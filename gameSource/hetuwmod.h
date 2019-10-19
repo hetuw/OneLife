@@ -5,6 +5,8 @@
 
 #define hetuwWaitingText "press %c in game for help"
 #define hetuwSettingsFileName "hetuw.cfg"
+#define hetuwLogFileName "hetuwlog.txt"
+#define hetuwLogSeperator " | " // needs to be 3 char long
 
 #include "LivingLifePage.h"
 #include <vector>
@@ -223,6 +225,13 @@ public:
 	static bool playerIsInCloseRange( LiveObject* o );
 	static void pickUpBabyInRange();
 
+	static void splitLogLine(string* lineElements, string line);
+	static int getLastIdFromLogs();
+	static int lastLoggedId;
+	static bool bWriteLogs;
+	static void createNewLogFile();
+	static void writeLineToLogs(string name, string str);
+
 	static void init();
 	static void initOnBirth();
 	static void initOnServerJoin();
@@ -230,6 +239,8 @@ public:
 	static void setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject> *inGameObjects,
 							SimpleVector<int> *inmMapContainedStacks, SimpleVector<SimpleVector<int>> *inmMapSubContainedStacks,
 							int &inmMapD, int &inmCurMouseOverID);
+
+	static string getTimeStamp();
 
 	static void zoomIncrease(float value);
 	static void zoomDecrease(float value);

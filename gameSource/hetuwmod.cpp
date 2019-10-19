@@ -84,9 +84,9 @@ bool HetuwMod::rightKeyDown;
 doublePair HetuwMod::debugRecPos;
 doublePair HetuwMod::debugRecPos2;
 
-int HetuwMod::currentEmote;
+int HetuwMod::currentEmote = -1;
 time_t HetuwMod::lastEmoteTime;
-time_t HetuwMod::lastSpecialEmote;
+time_t HetuwMod::lastSpecialEmote = 0;
 
 int* HetuwMod::dangerousAnimals;
 int HetuwMod::dangerousAnimalsLength;
@@ -109,8 +109,10 @@ float HetuwMod::playerNameColor[3];
 doublePair HetuwMod::playerNamePos;
 
 bool HetuwMod::bDrawCords;
-
 bool HetuwMod::bDrawHostileTiles = true;
+
+bool HetuwMod::bWriteLogs = true;
+int HetuwMod::lastLoggedId = -1;
 
 int HetuwMod::stepCount;
 double HetuwMod::ourAge;
@@ -133,7 +135,7 @@ float HetuwMod::mapOffsetY;
 bool HetuwMod::mapZoomInKeyDown;
 bool HetuwMod::mapZoomOutKeyDown;
 
-int HetuwMod::playersInRangeNum;
+int HetuwMod::playersInRangeNum = 0;
 int HetuwMod::iDrawPlayersInRangePanel;
 std::vector<HetuwMod::FamilyInRange*> HetuwMod::familiesInRange;
 
@@ -176,12 +178,12 @@ string HetuwMod::ourFamilyName;
 bool HetuwMod::cameraIsFixed;
 
 constexpr char HetuwMod::languageArray[HetuwMod::languageArraySize1][HetuwMod::languageArraySize2];
-bool HetuwMod::bTeachLanguage;
-int HetuwMod::teachLanguageCount;
-double HetuwMod::timeLastLanguage;
+bool HetuwMod::bTeachLanguage = false;
+int HetuwMod::teachLanguageCount = 0;
+double HetuwMod::timeLastLanguage = 0;
 
 vector<char*> HetuwMod::sayBuffer;
-double HetuwMod::timeLastSay;
+double HetuwMod::timeLastSay = 0;
 bool HetuwMod::clearSayBuffer;
 
 int *HetuwMod::becomesFoodID;
@@ -266,11 +268,54 @@ void HetuwMod::init() {
 	selectedPlayerID = 0;
 	timeLastPlayerHover = 0;
 
+	familiesInRange.push_back(new FamilyInRange());
+	strcpy(familiesInRange[0]->name, hetuwDefaultOurFamilyName);
+
+	cordOffset = { 0, 0 };
+	addHomeLocation( 0, 0, false, 12 ); // add birth location
+
 	initClosedDoorIDs();
 
 	initSettings();
 
-	initOnBirth();
+	lastLoggedId = getLastIdFromLogs();
+}
+
+void HetuwMod::splitLogLine(string* lineElements, string line) { // lineElements should be a string array with size 16
+	int k = 0;
+	for (unsigned i=0; i<line.length(); i++) {
+		if (line[i] == hetuwLogSeperator[0] && i+1 < line.length()) {
+			if (line[i+1] == hetuwLogSeperator[1]) {
+				k++;
+				if (k >= 16) return;
+				i += 2;
+				continue;
+			}
+		}
+		lineElements[k] += line[i];
+	}
+}
+
+int HetuwMod::getLastIdFromLogs() {
+	if (!bWriteLogs) return -1;
+
+	ifstream ifs( hetuwLogFileName );
+	if (!ifs.good()) return -1; // file does not exist
+
+	string line;
+	while (getline(ifs, line)) {
+		string lineElements[16];
+		splitLogLine(lineElements, line);
+		if (lineElements[1].compare("my_id") == 0) {
+			try {
+				int r = stoi(lineElements[2]);
+				return r;
+			} catch (...) {
+				return -1;
+			}
+		}
+	}
+	return -1;
 }
 
 void HetuwMod::setTakingPhoto(bool inTakingPhoto) {
@@ -535,6 +580,10 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 		bAutoDataUpdate = bool(value[0]-48);
 		return true;
 	}
+	if (strstr(name, "hetuw_log")) {
+		bWriteLogs = bool(value[0]-48);
+		return true;
+	}
 
 	return false;
 }
@@ -550,7 +599,6 @@ void HetuwMod::writeCharKeyToStream( ofstream &ofs, const char* keyName, char ke
 
 void HetuwMod::initSettings() {
 	ifstream ifs( hetuwSettingsFileName );
-
 	if (ifs.good()) { // file exists
 		string line;
 		while (getline(ifs, line)) {
@@ -565,6 +613,7 @@ void HetuwMod::initSettings() {
 				printf("hetuw WARNING invalid %s line: %s\n", hetuwSettingsFileName, line.c_str());
 		}
 	}
+	ifs.close();
 
 	ofstream ofs( hetuwSettingsFileName, ofstream::out );
 
@@ -615,13 +664,14 @@ void HetuwMod::initSettings() {
 	ofs << "draw_searchpulsate = " << (char)(b_drawSearchPulsate+48) << endl;
 	ofs << endl;
 	ofs << "automatic_data_update = " << (char)(bAutoDataUpdate+48) << endl;
+	ofs << "hetuw_log = " << (char)(bWriteLogs+48) << " // will create a log file '" << hetuwLogFileName << "' which resets at the beginning of each life - logs different events" << endl;
 
 	ofs.close();
 }
 
-void HetuwMod::initOnBirth() { // will be called from LivingLifePage.cpp and hetuwmod.cpp
-
-	initOnServerJoin();
+void HetuwMod::initOnBirth() { // will be called from LivingLifePage.cpp
+	ourLiveObject = livingLifePage->getOurLiveObject();
+	if (ourLiveObject->id == lastLoggedId) return;
 
 	currentEmote = -1;
 	lastSpecialEmote = 0;
@@ -639,11 +689,11 @@ void HetuwMod::initOnBirth() { // will be called from LivingLifePage.cpp and het
 	deathMessages.clear();
 	deathMessages.shrink_to_fit();
 
-	homePosStack.clear();
-	homePosStack.shrink_to_fit();
-
 	// searchWordList.clear();
 	// searchWordList.shrink_to_fit();
+
+	homePosStack.clear();
+	homePosStack.shrink_to_fit();
 
 	cordOffset = { 0, 0 };
 	addHomeLocation( 0, 0, false, 12 ); // add birth location
@@ -657,6 +707,11 @@ void HetuwMod::initOnBirth() { // will be called from LivingLifePage.cpp and het
 	sayBuffer.shrink_to_fit();
 
     yummyFoodChain.deleteAll();
+
+	createNewLogFile();
+	writeLineToLogs("my_birth", getTimeStamp());
+	writeLineToLogs("my_id", to_string(ourLiveObject->id));
+	writeLineToLogs("my_age", to_string((int)livingLifePage->hetuwGetAge(ourLiveObject)));
 }
 
 void HetuwMod::initOnServerJoin() { // will be called from LivingLifePage.cpp and hetuwmod.cpp
@@ -748,6 +803,27 @@ void HetuwMod::setSearchArray() {
 			}
 		}
 	}
+}
+
+string HetuwMod::getTimeStamp() {
+	time_t t = time(NULL);
+	struct tm *timeinfo = localtime(&t);
+	char *str = asctime(timeinfo);
+	str[strlen(str)-1] = 0; // remove end of line char
+	return string(str);
+}
+
+void HetuwMod::createNewLogFile() {
+	if (!bWriteLogs) return;
+	ofstream ofs( hetuwLogFileName, ofstream::out );
+	ofs.close();
+}
+
+void HetuwMod::writeLineToLogs(string name, string data) {
+	if (!bWriteLogs) return;
+	ofstream ofs( hetuwLogFileName, ofstream::out | ofstream::app );
+	ofs << to_string((int)game_getCurrentTime()) << hetuwLogSeperator << name << hetuwLogSeperator << data << endl;
+	ofs.close();
 }
 
 HetuwMod::RainbowColor::RainbowColor() {
@@ -2808,12 +2884,6 @@ void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
 		}
 	}
 	if ( o == NULL ) return;
-	if ( !o->name ) return;
-	
-	int diffX = o->xd - ourLiveObject->xd;
-	int diffY = o->yd - ourLiveObject->yd;
-	if ( diffX > hetuwDeathMessageRange || diffX < -hetuwDeathMessageRange) return;
-	if ( diffY > hetuwDeathMessageRange || diffY < -hetuwDeathMessageRange) return;
 
 	DeathMsg* deathMsg = new DeathMsg();
 	deathMsg->description = new char[128];
@@ -2857,14 +2927,29 @@ void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
 		deathMsg->description = NULL;
 	}
 
-	deathMsg->timeReci = time(NULL);
+	deathMsg->age = (int)livingLifePage->hetuwGetAge( o );
+	if ( getObject( o->displayID ) )
+		deathMsg->male = getObject( o->displayID )->male;
+
+	string victimName = to_string(o->id);
+	if (o->name) victimName = victimName + " " + o->name;
+	string victimGender = deathMsg->male ? "M" : "F";
+	writeLineToLogs("death", victimName + hetuwLogSeperator +  victimGender + hetuwLogSeperator + "age:"+to_string(deathMsg->age) + hetuwLogSeperator + deathMsg->description);
+
+	if ( !o->name ) {
+		delete deathMsg;
+		return;
+	}
+	
+	int diffX = o->xd - ourLiveObject->xd;
+	int diffY = o->yd - ourLiveObject->yd;
+	if ( diffX > hetuwDeathMessageRange || diffX < -hetuwDeathMessageRange) { delete deathMsg; return; }
+	if ( diffY > hetuwDeathMessageRange || diffY < -hetuwDeathMessageRange) { delete deathMsg; return; }
 
 	deathMsg->name = new char[64];
 	sprintf( deathMsg->name, "%s", o->name); 
 
-	deathMsg->age = (int)livingLifePage->hetuwGetAge( o );
-	if ( getObject( o->displayID ) )
-		deathMsg->male = getObject( o->displayID )->male;
+	deathMsg->timeReci = time(NULL);
 
 	getRelationNameColor( o->relationName, deathMsg->nameColor );
 

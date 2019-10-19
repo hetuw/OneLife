@@ -51,6 +51,7 @@
 #include "ObjectPickable.h"
 
 #include "hetuwmod.h"
+#include <string>
 
 static ObjectPickable objectPickable;
 
@@ -11818,7 +11819,8 @@ void LivingLifePage::step() {
                 // display this message
                 
                 char messageFromServer[200];
-                sscanf( message, "MS\n%199s", messageFromServer );            
+                sscanf( message, "MS\n%199s", messageFromServer );
+				HetuwMod::writeLineToLogs("globalMessage", string(messageFromServer));           
                 
                 char *upper = stringToUpperCase( messageFromServer );
                 
@@ -12088,6 +12090,7 @@ void LivingLifePage::step() {
             apocalypseInProgress = true;
             }
         else if( type == APOCALYPSE_DONE ) {
+			HetuwMod::writeLineToLogs("apocalypse", "");
             apocalypseDisplayProgress = 0;
             apocalypseInProgress = false;
             homePosStack.deleteAll();
@@ -12966,8 +12969,6 @@ void LivingLifePage::step() {
                 
                 if( !( mFirstServerMessagesReceived & 1 ) ) {
                     // first map chunk just recieved
-
-					HetuwMod::initOnServerJoin();
                     
                     char found = false;
                     int closestX = 0;
@@ -15640,6 +15641,7 @@ void LivingLifePage::step() {
                                            o.currentPos.x,
                                            o.currentPos.y ) );
                             }
+						HetuwMod::writeLineToLogs("player", to_string(o.id) + hetuwLogSeperator + "age:"+to_string((int)hetuwGetAge(&o)));
                         
                         // insert in age order, youngest last
                         double newAge = computeCurrentAge( &o );
@@ -15695,6 +15697,7 @@ void LivingLifePage::step() {
                         reasonString[0] = '\0';
                         
                         sscanf( reasonPos, "reason_%99s", reasonString );
+						HetuwMod::writeLineToLogs("my_death", HetuwMod::getTimeStamp());
                         
                         if( apocalypseInProgress ) {
                             mDeathReason = stringDuplicate( 
@@ -15994,6 +15997,7 @@ void LivingLifePage::step() {
                 
                 ourID = ourObject->id;
 
+				HetuwMod::initOnServerJoin();
                 if( ourID != lastPlayerID ) {
                     homePosStack.deleteAll();
 					HetuwMod::initOnBirth();
@@ -16674,6 +16678,9 @@ void LivingLifePage::step() {
                             if( firstSpace != NULL ) {
                                 existing->currentSpeech = 
                                     stringDuplicate( &( firstSpace[1] ) );
+								string name = to_string(existing->id); // hetuw mod
+								if (existing->name) name = name + " " + string(existing->name); // hetuw mod
+								HetuwMod::writeLineToLogs("say", name + hetuwLogSeperator + string(&firstSpace[1])); // hetuw mod
                                 
                                 existing->speechFade = 1.0;
                                 
@@ -17088,6 +17095,9 @@ void LivingLifePage::step() {
                                 char *nameStart = &( firstSpace[1] );
                                 
                                 existing->name = stringDuplicate( nameStart );
+								if (existing->name) {
+									HetuwMod::writeLineToLogs("name", to_string(existing->id) + hetuwLogSeperator + string(existing->name));
+									}
                                 }
                             
                             break;
