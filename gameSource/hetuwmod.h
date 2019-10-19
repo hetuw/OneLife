@@ -7,6 +7,7 @@
 #define hetuwSettingsFileName "hetuw.cfg"
 #define hetuwLogFileName "hetuwlog.txt"
 #define hetuwLogSeperator " | " // needs to be 3 char long
+#define hetuwFakeCoord 1977
 
 #include "LivingLifePage.h"
 #include <vector>
@@ -34,7 +35,9 @@ class HetuwMod
 		int y;
 		char* name;
 		char* lastName;
+		char gender;
 		time_t lastTime;
+		int age;
 		bool finalAgeSet;
 		PlayerInMap() {
 			name = NULL;
@@ -290,6 +293,7 @@ public:
 	static void hDrawRect( doublePair startPos, doublePair endPos );
 	static void drawTileRect( int x, int y );
 
+	static void onOurDeath();
 	static void onPlayerUpdate( LiveObject* o, const char* line );
 	static void removeLastName(char *newName, const char* name );
 	static void getLastName( char* lastName, const char* name );
@@ -421,6 +425,7 @@ private:
 	static float playerNameColor[3];
 	static doublePair playerNamePos;
 
+	static void updatePlayerToMap(LiveObject *o, bool deathMsg = false);
 	static void updateMap();
 
 	static int iDrawPlayersInRangePanel;

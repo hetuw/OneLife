@@ -2748,51 +2748,50 @@ void HetuwMod::setLastNameColor( const char* lastName, float alpha ) {
 		alpha );
 }
 
-void HetuwMod::updateMap() {
-	//printf("hetuw printing %d gameObjects -------------------------------------- \n", gameObjects->size());
+void HetuwMod::updatePlayerToMap(LiveObject *o, bool deathMsg) {
+	if (!o) return;
+	int p = -1;
+	for(unsigned k=0; k<playersInMap.size(); k++) {
+		if (playersInMap[k]->id == o->id) {
+			p = (int)k;
+			break;
+		}
+	}
 	time_t timeNow = time(NULL);
+	if (p < 0 && deathMsg) return;
+	if (p < 0) {
+		p = playersInMap.size();
+		PlayerInMap *pInMap = new PlayerInMap();
+		pInMap->id = o->id;
+		pInMap->lastTime = timeNow;
+		pInMap->gender = getObject(o->displayID)->male ? 'M' : 'F';
+		playersInMap.push_back(pInMap);	
+	}
+	if (!playersInMap[p]->name && o->name) {
+		playersInMap[p]->name = new char[64];
+		strcpy(playersInMap[p]->name, o->name);
+		playersInMap[p]->lastName = new char[32];
+		getLastName( playersInMap[p]->lastName, playersInMap[p]->name );
+		if (playersInMap[p]->lastName[0] == 0) {
+			delete[] playersInMap[p]->lastName;
+			playersInMap[p]->lastName = NULL;
+		}
+		playersInMap[p]->lastTime = timeNow;
+	}
+	if (o->xd != hetuwFakeCoord || o->yd != hetuwFakeCoord) {
+		playersInMap[p]->x = o->xd;
+		playersInMap[p]->y = o->yd;
+		playersInMap[p]->lastTime = timeNow;
+	}
+	playersInMap[p]->age = (int)livingLifePage->hetuwGetAge(o);
+	playersInMap[p]->finalAgeSet = deathMsg ? true : o->finalAgeSet;
+}
+
+void HetuwMod::updateMap() {
 	for(int i=0; i<gameObjects->size(); i++) {
 		LiveObject *o = gameObjects->getElement( i );
-		int p = -1;
-		for(unsigned k=0; k<playersInMap.size(); k++) {
-			if (playersInMap[k]->id == o->id) {
-				p = (int)k;
-				break;
-			}
-		}
-		if (p < 0) {
-			p = playersInMap.size();
-			PlayerInMap *pInMap = new PlayerInMap();
-			pInMap->id = o->id;
-			pInMap->lastTime = timeNow;
-			playersInMap.push_back(pInMap);	
-		}
-		if (!playersInMap[p]->name && o->name) {
-			playersInMap[p]->name = new char[64];
-			strcpy(playersInMap[p]->name, o->name);
-			playersInMap[p]->lastName = new char[32];
-			getLastName( playersInMap[p]->lastName, playersInMap[p]->name );
-			//printf("hetuw name: %s lastName: %s\n", playersInMap[p]->name, playersInMap[p]->lastName);
-			if (playersInMap[p]->lastName[0] == 0) {
-				delete[] playersInMap[p]->lastName;
-				playersInMap[p]->lastName = NULL;
-			}
-			playersInMap[p]->lastTime = timeNow;
-		}
-		if (o->xd != 1977) {
-			playersInMap[p]->x = o->xd;
-			playersInMap[p]->lastTime = timeNow;
-		}
-		if (o->yd != 1977) {
-			playersInMap[p]->y = o->yd;
-			playersInMap[p]->lastTime = timeNow;
-		}
-		playersInMap[p]->finalAgeSet = o->finalAgeSet;
+		updatePlayerToMap(o);
 	}
-
-	//for(unsigned k=0; k<playersInMap.size(); k++) {
-		//printf("hetuw %d.pim x:%d y:%d %s\n", (int)k, playersInMap[k]->x, playersInMap[k]->y, playersInMap[k]->lastName);
-	//}
 }
 
 #define hetuwPlayersInRangeDistance 50
@@ -2868,6 +2867,29 @@ void HetuwMod::updatePlayersInRangePanel() {
 	}
 }
 
+void HetuwMod::onOurDeath() {
+	
+	if (!bWriteLogs) return;
+
+	for(unsigned k=0; k<playersInMap.size(); k++) {
+		if (playersInMap[k]->x == 999999) continue;
+
+		string name = playersInMap[k]->name ? string(playersInMap[k]->name) : "unknownName";
+		string data = to_string(playersInMap[k]->id) + hetuwLogSeperator + name + hetuwLogSeperator;
+		LiveObject *p = livingLifePage->getLiveObject(playersInMap[k]->id);
+		string age = "age:";
+		if (p) age = age + to_string((int)livingLifePage->hetuwGetAge(p));
+		else age = age + to_string(playersInMap[k]->age);
+		data = data + playersInMap[k]->gender + hetuwLogSeperator + age + hetuwLogSeperator;
+		data = data + "X:"+to_string(playersInMap[k]->x) + hetuwLogSeperator + "Y:"+to_string(playersInMap[k]->y) + hetuwLogSeperator;
+		if (p) data = data + (p->finalAgeSet ? "DEAD" : "ALIVE");
+		else data = data + (playersInMap[k]->finalAgeSet ? "DEAD" : "ALIVE");
+		writeLineToLogs("player_map", data);
+	}
+
+	writeLineToLogs("my_death", HetuwMod::getTimeStamp());
+}
+
 #define hetuwDeathMessageRange 200
 // 1341060 2464 0 0 0 0 798 0 0 0 -1 0.24 0 0 X X 50.67 60.00 2.81 2885;202;0;0;200;198,560,3101 0 0 -1 0 reason_killed_152
 void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
@@ -2887,6 +2909,10 @@ void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
 		}
 	}
 	if ( o == NULL ) return;
+	
+	updatePlayerToMap(o, true);
+
+	if (o == ourLiveObject) onOurDeath();
 
 	DeathMsg* deathMsg = new DeathMsg();
 	deathMsg->description = new char[128];

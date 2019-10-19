@@ -15697,7 +15697,6 @@ void LivingLifePage::step() {
                         reasonString[0] = '\0';
                         
                         sscanf( reasonPos, "reason_%99s", reasonString );
-						HetuwMod::writeLineToLogs("my_death", HetuwMod::getTimeStamp());
                         
                         if( apocalypseInProgress ) {
                             mDeathReason = stringDuplicate( 
