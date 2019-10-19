@@ -143,6 +143,7 @@ bool HetuwMod::bDrawDeathMessages;
 std::vector<HetuwMod::DeathMsg*> HetuwMod::deathMessages;
 
 bool HetuwMod::bDrawHomeCords;
+float HetuwMod::longestCordsTextWidth = 0;
 std::vector<HetuwMod::HomePos*> HetuwMod::homePosStack;
 bool HetuwMod::bNextCharForHome;
 
@@ -272,7 +273,7 @@ void HetuwMod::init() {
 	strcpy(familiesInRange[0]->name, hetuwDefaultOurFamilyName);
 
 	cordOffset = { 0, 0 };
-	addHomeLocation( 0, 0, false, 12 ); // add birth location
+	addHomeLocation( 0, 0, hpt_birth ); // add birth location
 
 	initClosedDoorIDs();
 
@@ -696,7 +697,7 @@ void HetuwMod::initOnBirth() { // will be called from LivingLifePage.cpp
 	homePosStack.shrink_to_fit();
 
 	cordOffset = { 0, 0 };
-	addHomeLocation( 0, 0, false, 12 ); // add birth location
+	addHomeLocation( 0, 0, hpt_birth ); // add birth location
 
 	bTeachLanguage = false;
 	teachLanguageCount = 0;
@@ -1106,9 +1107,9 @@ void HetuwMod::teachLanguage() {
 	sayBuffer.push_back(msg);
 }
 
-void HetuwMod::addHomeLocation( int x, int y, bool ancient, char c ) {
+void HetuwMod::addHomeLocation( int x, int y, homePosType type, char c ) {
 	int id = -1;
-	if (c != 0) {
+	if (type == hpt_custom) {
 		bool cordsAlreadyExist = false;
 		for (unsigned i=0; i<homePosStack.size(); i++) {
 			if (c == homePosStack[i]->c) {
@@ -1119,10 +1120,9 @@ void HetuwMod::addHomeLocation( int x, int y, bool ancient, char c ) {
 			}
 		}
 		if (cordsAlreadyExist) return;
-		if (id >= 0) {
+		if (id >= 0) { // overwrite existing
 			homePosStack[id]->x = x;
 			homePosStack[id]->y = y;
-			homePosStack[id]->ancient = ancient;
 			return;
 		}
 	}
@@ -1137,7 +1137,7 @@ void HetuwMod::addHomeLocation( int x, int y, bool ancient, char c ) {
 	HomePos *p = new HomePos();
 	p->x = x;
 	p->y = y;
-	p->ancient = ancient;
+	p->type = type;
 	p->c = c;
 	homePosStack.push_back(p);
 }
@@ -1502,39 +1502,65 @@ void HetuwMod::drawInputString() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( sBufA, drawPosA, guiScale, alignCenter );
 }
 
+void HetuwMod::createCordsDrawStr() {
+	float biggestTextWidth = 0;
+	char sBufA[64];
+	int homeCount = 0;
+	int bellCount = 0;
+	int apocCount = 0;
+	int tarrCount = 0;
+	int mapCount = 0;
+	for (unsigned i=0; i<homePosStack.size(); i++) {
+		switch (homePosStack[i]->type) {
+			case hpt_custom:
+				sprintf( sBufA, "%c %d %d", homePosStack[i]->c, homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				break;
+			case hpt_birth:
+				sprintf( sBufA, "BIRTH %d %d", homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				break;
+			case hpt_home:
+				sprintf( sBufA, "HOME %c %d %d", (char)(homeCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				homeCount++;
+				break;
+			case hpt_bell:
+				sprintf( sBufA, "BELL %c %d %d", (char)(bellCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				bellCount++;
+				break;
+			case hpt_apoc:
+				sprintf( sBufA, "APOC %c %d %d", (char)(apocCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				apocCount++;
+				break;
+			case hpt_tarr:
+				sprintf( sBufA, "TARR %c %d %d", (char)(tarrCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				tarrCount++;
+				break;
+			case hpt_map:
+				sprintf( sBufA, "MAP %c %d %d", (char)(mapCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				mapCount++;
+				break;
+		}
+		homePosStack[i]->drawStr = string(sBufA);
+
+		float textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( sBufA, guiScale );
+		if (textWidth > biggestTextWidth) biggestTextWidth = textWidth;
+	}
+	longestCordsTextWidth = biggestTextWidth;
+}
+
 void HetuwMod::drawHomeCords() {
 	if (homePosStack.size() <= 0) return;
 
 	int mouseX, mouseY;
 	livingLifePage->hetuwGetMouseXY( mouseX, mouseY );
+	
+	createCordsDrawStr();
 
 	doublePair drawPosA = livingLifePage->hetuwGetLastScreenViewCenter();
 	drawPosA.x -= HetuwMod::viewWidth/2 - (20*guiScale);
 	drawPosA.y += HetuwMod::viewHeight/2 - (40*guiScale);
 	drawPosA.y -= (40*guiScale);
 
-	float biggestTextWidth = 0;
-	char sBufA[64];
-	int bellCount = 0;
-	int markerCount = 0;
-	for (unsigned i=0; i<homePosStack.size(); i++) {
-		if (homePosStack[i]->c != 0) {
-			if (homePosStack[i]->c == 12)
-				sprintf( sBufA, "BIRTH %d %d", homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
-			else 
-				sprintf( sBufA, "%c %d %d", homePosStack[i]->c, homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
-		} else if (homePosStack[i]->ancient) {
-			sprintf( sBufA, "BELL %c %d %d", (char)(bellCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
-			bellCount++;
-		} else {
-			sprintf( sBufA, "HOME %c %d %d", (char)(markerCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
-			markerCount++;
-		}
-		float textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( sBufA, guiScale );
-		if (textWidth > biggestTextWidth) biggestTextWidth = textWidth;
-	}
-
-	float recWidth = biggestTextWidth/2;
+	float recWidth = longestCordsTextWidth/2;
 	float recHeight = homePosStack.size()*24*guiScale/2-12*guiScale;
 	doublePair drawPosB = drawPosA;
 	drawPosB.x += recWidth;
@@ -1542,27 +1568,31 @@ void HetuwMod::drawHomeCords() {
 	setDrawColor( 0, 0, 0, 0.8 );
 	drawRect( drawPosB, recWidth + 6*guiScale, recHeight + 14*guiScale );
 
-	bellCount = 0;
-	markerCount = 0;
 	for (unsigned i=0; i<homePosStack.size(); i++) {
-		if (homePosStack[i]->c != 0) {
-			if (homePosStack[i]->c == 12) {
-				sprintf( sBufA, "BIRTH %d %d", homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
-				setDrawColor( 0.7, 0.6, 1.0, 1.0 );
-			} else {
-				sprintf( sBufA, "%c %d %d", homePosStack[i]->c, homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+		switch (homePosStack[i]->type) {
+			case hpt_custom:
 				setDrawColor( 1.0, 1.0, 1.0, 1.0 );
-			}
-		} else if (homePosStack[i]->ancient) {
-			sprintf( sBufA, "BELL %c %d %d", (char)(bellCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
-			bellCount++;
-			setDrawColor( 1.0, 1.0, 0.2, 1.0 );
-		} else {
-			sprintf( sBufA, "HOME %c %d %d", (char)(markerCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
-			markerCount++;
-			setDrawColor( 0.2, 0.8, 1.0, 1.0 );
+				break;
+			case hpt_birth:
+				setDrawColor( 0.7, 0.6, 1.0, 1.0 );
+				break;
+			case hpt_home:
+				setDrawColor( 0.2, 0.8, 1.0, 1.0 );
+				break;
+			case hpt_bell:
+				setDrawColor( 1.0, 1.0, 0.2, 1.0 );
+				break;
+			case hpt_apoc:
+				setDrawColor( 1.0, 0.2, 0.0, 1.0 );
+				break;
+			case hpt_tarr:
+				setDrawColor( 0.3, 1.0, 0.3, 1.0 );
+				break;
+			case hpt_map:
+				setDrawColor( 0.7, 0.0, 1.0, 1.0 );
+				break;
 		}
-		livingLifePage->hetuwDrawScaledHandwritingFont( sBufA, drawPosA, guiScale );
+		livingLifePage->hetuwDrawScaledHandwritingFont( homePosStack[i]->drawStr.c_str(), drawPosA, guiScale );
 		homePosStack[i]->drawStartPos.x = drawPosB.x-recWidth-6*guiScale;
 		homePosStack[i]->drawEndPos.x = drawPosB.x+recWidth+6*guiScale;
 		homePosStack[i]->drawEndPos.y = drawPosA.y+14*guiScale;
@@ -1574,7 +1604,6 @@ void HetuwMod::drawHomeCords() {
 				hDrawRect( homePosStack[i]->drawStartPos, homePosStack[i]->drawEndPos );
 			}
 		}
-
 	}
 }
 
@@ -2011,7 +2040,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		bNextCharForHome = false;
 		char c = toupper(inASCII);
 		if (c >= 65 && c <= 90) {
-			addHomeLocation( ourLiveObject->xd, ourLiveObject->yd, false, c );
+			addHomeLocation( ourLiveObject->xd, ourLiveObject->yd, hpt_custom, c );
 			bDrawHomeCords = true;
 			return true;
 		}
@@ -2035,7 +2064,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 						bDrawInputString = false;
 						return true;
 					}
-					addHomeLocation( tempCordX-cordOffset.x, tempCordY-cordOffset.y, false, tempCordChar );
+					addHomeLocation( tempCordX-cordOffset.x, tempCordY-cordOffset.y, hpt_custom, tempCordChar );
 					getCustomCords = 0;
 					bDrawInputString = false;
 					bDrawHomeCords = true;

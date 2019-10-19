@@ -121,11 +121,16 @@ class HetuwMod
 
 public:
 
+	enum homePosType {
+		hpt_custom, hpt_birth, hpt_home, hpt_bell, hpt_apoc, hpt_tarr, hpt_map
+	};
+
 	typedef struct {
 		int x;
 		int y;
-		bool ancient;
 		char c;
+		homePosType type;
+		string drawStr;
 		doublePair drawStartPos;
 		doublePair drawEndPos;
 	} HomePos;
@@ -139,6 +144,9 @@ public:
 	static constexpr int OBJID_HotCoals = 85;
 	static constexpr int OBJID_ClayBowl = 235;
 	static constexpr int OBJID_HotAdobeOven = 250;
+
+	static constexpr int OBJID_BellTowerSound = 839;
+	static constexpr int OBJID_EndTowerSound = 2481;
 
 	static int maxObjects;
 
@@ -302,7 +310,7 @@ public:
 	static int playersInRangeNum;
 
 	static std::vector<HomePos*> homePosStack;
-	static void addHomeLocation( int x, int y, bool ancient = false, char c = 0 );
+	static void addHomeLocation( int x, int y, homePosType type, char c = 0 );
 
 	static GridPos cordOffset;
 
@@ -447,6 +455,8 @@ private:
 	static bool bDrawHomeCords;
 	static void drawHomeCords();
 	static bool bNextCharForHome;
+	static void createCordsDrawStr();
+	static float longestCordsTextWidth;
 
 	static void writeCharKeyToStream( ofstream &ofs, const char* keyName, char key );
 

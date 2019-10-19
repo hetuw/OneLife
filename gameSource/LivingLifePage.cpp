@@ -319,7 +319,7 @@ static void removeHomeLocation( int inX, int inY ) {
 
 
 static void addHomeLocation( int inX, int inY ) {
-	HetuwMod::addHomeLocation( inX, inY );
+	HetuwMod::addHomeLocation( inX, inY, HetuwMod::hpt_home );
     removeHomeLocation( inX, inY );
     GridPos newPos = { inX, inY };
     HomePos p;
@@ -331,7 +331,6 @@ static void addHomeLocation( int inX, int inY ) {
 
 
 static void addAncientHomeLocation( int inX, int inY ) {
-	HetuwMod::addHomeLocation( inX, inY, true );
     removeHomeLocation( inX, inY );
 
     // remove all ancient pos
@@ -12114,6 +12113,7 @@ void LivingLifePage::step() {
                     
                     if( d > 32 ) {
                         addAncientHomeLocation( posX, posY );
+						HetuwMod::addHomeLocation( posX, posY, (monumentID == HetuwMod::OBJID_EndTowerSound) ? HetuwMod::hpt_apoc : HetuwMod::hpt_bell );
                         
                         // play sound in distance
                         ObjectRecord *monObj = getObject( monumentID );
