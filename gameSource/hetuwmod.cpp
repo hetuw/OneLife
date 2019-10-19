@@ -2650,6 +2650,9 @@ void HetuwMod::move() {
 
 	if (x == lastPosX && y == lastPosY && ourLiveObject->inMotion) return;
 
+	int objId = livingLifePage->hetuwGetObjId(x, y);
+	if (objId > 0 && getObject(objId)->blocksWalking && ourLiveObject->inMotion) return;
+
 	int sX = x;
 	int sY = y;
 
