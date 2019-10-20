@@ -791,13 +791,41 @@ void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<
 	}
 }
 
+bool HetuwMod::charArrEqualsCharArr(const char *a, const char *b) {
+	if (!a || !b) return false;
+	for (int i=0; i<512; i++) {
+		if (a[i] == 0 && b[i] == 0) return true;
+		if (a[i] == 0 || b[i] == 0) return false;
+		if (toupper(a[i]) != toupper(b[i])) return false;
+	}
+	return false;
+}
+
 void HetuwMod::setSearchArray() {
 	for (int i=0; i<maxObjects; i++) {
 		objIsBeingSearched[i] = false;
 		ObjectRecord *o = getObject( i );
 		if (!o) continue;
+		bool exactSearch = false;
+		char exactSearchArr[64];
 		for (unsigned k=0; k<searchWordList.size(); k++) {
-			if (charArrContainsCharArr(o->description, searchWordList[k])) {
+			exactSearch = false;
+			for (int m=0; m < 64; m++) {
+				if (searchWordList[k][m] == 0) {
+					if (m > 0 && searchWordList[k][m-1] == '.') {
+						exactSearch = true;
+						strcpy(exactSearchArr, searchWordList[k]);
+						exactSearchArr[m-1] = 0;
+					}
+					break;
+				}
+			}
+			if (exactSearch) {
+				if (charArrEqualsCharArr(o->description, exactSearchArr)) {
+					objIsBeingSearched[i] = true;
+					break;
+				}
+			} else if (charArrContainsCharArr(o->description, searchWordList[k])) {
 				//printf("hetuw search for id: %i, desc: %s\n", i, o->description);
 				objIsBeingSearched[i] = true;
 				break;

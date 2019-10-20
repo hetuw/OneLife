@@ -301,6 +301,7 @@ public:
 	static void drawPlayerNames( LiveObject* player );
 	static void drawHighlightedPlayer();
 
+	static bool charArrEqualsCharArr(const char *a, const char *b);
 	static void drawTextWithBckgr( doublePair pos, const char* text );
 
 	static void hDrawRect( doublePair startPos, doublePair endPos );
