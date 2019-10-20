@@ -149,6 +149,8 @@ public:
 	static constexpr int OBJID_BellTowerSound = 839;
 	static constexpr int OBJID_EndTowerSound = 2481;
 
+	static constexpr int OBJID_TarrMonument = 3112;
+
 	static int maxObjects;
 
 	static const int defaultViewWidth = 1280;
@@ -269,6 +271,8 @@ public:
 
 	static void useBackpack( bool replace=false);
 	static void useOnSelf();
+
+	static void stepLoopTroughObjectsInRange();
 
 	static void gameStep();
 

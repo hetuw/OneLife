@@ -902,6 +902,22 @@ void HetuwMod::OnPlayerHoverOver(int id) {
 	timeLastPlayerHover = game_getCurrentTime();
 }
 
+void HetuwMod::stepLoopTroughObjectsInRange() {
+	int radius = 32;
+	int startX = ourLiveObject->xd - radius;
+	int endX = ourLiveObject->xd + radius;
+	int startY = ourLiveObject->yd - radius;
+	int endY = ourLiveObject->yd + radius;
+	for (int x = startX; x < endX; x++) {
+		for (int y = startY; y < endY; y++) {
+			int objId = livingLifePage->hetuwGetObjId( x, y );
+			if (objId == OBJID_TarrMonument) {
+				addHomeLocation(x, y, hpt_tarr);
+			}
+		}
+	}
+}
+
 void HetuwMod::gameStep() {
 	HetuwMouseActionBuffer* mouseBuffer = hetuwGetMouseActionBuffer();
 	for (int i = 0; i < mouseBuffer->bufferPos; i++) {
@@ -974,6 +990,8 @@ void HetuwMod::livingLifeStep() {
 		stepColorRainbowFast();
 		setYumObjectsColor();
 	}
+
+	if (stepCount % 78 == 0) stepLoopTroughObjectsInRange();
 }
 
 void HetuwMod::setYumObjectsColor() {
