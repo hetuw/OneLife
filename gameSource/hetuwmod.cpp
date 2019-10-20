@@ -1583,13 +1583,13 @@ void HetuwMod::drawHomeCords() {
 				setDrawColor( 1.0, 1.0, 0.2, 1.0 );
 				break;
 			case hpt_apoc:
-				setDrawColor( 1.0, 0.2, 0.0, 1.0 );
+				setDrawColor( 1.0, 0.5, 0.2, 1.0 );
 				break;
 			case hpt_tarr:
-				setDrawColor( 0.3, 1.0, 0.3, 1.0 );
+				setDrawColor( 0.4, 1.0, 0.4, 1.0 );
 				break;
 			case hpt_map:
-				setDrawColor( 0.7, 0.0, 1.0, 1.0 );
+				setDrawColor( 0.7, 0.3, 1.0, 1.0 );
 				break;
 		}
 		livingLifePage->hetuwDrawScaledHandwritingFont( homePosStack[i]->drawStr.c_str(), drawPosA, guiScale );
