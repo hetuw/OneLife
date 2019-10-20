@@ -129,6 +129,7 @@ public:
 		int x;
 		int y;
 		char c;
+		string text;
 		homePosType type;
 		string drawStr;
 		doublePair drawStartPos;
@@ -311,6 +312,8 @@ public:
 
 	static std::vector<HomePos*> homePosStack;
 	static void addHomeLocation( int x, int y, homePosType type, char c = 0 );
+	static void setHomeLocationText(int x, int y, homePosType type, char *text);
+	static void setMapText(char *message);
 
 	static GridPos cordOffset;
 

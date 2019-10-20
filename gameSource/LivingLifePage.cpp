@@ -16906,6 +16906,7 @@ void LivingLifePage::step() {
                                                               &mapX, &mapY );
                                         if( numRead == 2 ) {
                                             addTempHomeLocation( mapX, mapY );
+											HetuwMod::setMapText(existing->currentSpeech);
                                             }
 
                                         // trim it off

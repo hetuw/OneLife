@@ -1142,6 +1142,26 @@ void HetuwMod::addHomeLocation( int x, int y, homePosType type, char c ) {
 	homePosStack.push_back(p);
 }
 
+void HetuwMod::setHomeLocationText(int x, int y, homePosType type, char *text) {
+	for (unsigned i=0; i<homePosStack.size(); i++) {
+		if (homePosStack[i]->type != type) continue;
+		if (homePosStack[i]->x != x) continue;
+		if (homePosStack[i]->y != y) continue;
+		homePosStack[i]->text = string(text);
+		break;
+	}
+}
+
+void HetuwMod::setMapText(char *message) {
+	char *starPos = strstr( message, " *map" );
+	if( starPos == NULL ) return;
+
+	char mapName[64]; int mapX; int mapY;
+	int numRead = sscanf( message, ":%[^\t\n*] *map %d %d", mapName, &mapX, &mapY );
+	if (numRead < 3) return;
+	setHomeLocationText(mapX, mapY, hpt_map, mapName);
+}
+
 // thanks to https://raw.githubusercontent.com/JustinLove/onelife-client-patches/master/yum-hover
 void HetuwMod::initBecomesFood() {
     becomesFoodID = new int[maxObjects];
@@ -1535,7 +1555,13 @@ void HetuwMod::createCordsDrawStr() {
 				tarrCount++;
 				break;
 			case hpt_map:
-				sprintf( sBufA, "MAP %c %d %d", (char)(mapCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				string mapName = "MAP "+(char)(mapCount+65);
+				if (homePosStack[i]->text.length() > 0) {
+					if (homePosStack[i]->text.length() > 12) {
+						mapName = homePosStack[i]->text.substr(0, 12);
+					} else mapName = homePosStack[i]->text;
+				}
+				sprintf( sBufA, "%s %d %d", mapName.c_str(), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
 				mapCount++;
 				break;
 		}
