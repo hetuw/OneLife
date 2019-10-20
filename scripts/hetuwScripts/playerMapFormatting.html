@@ -1,0 +1,36 @@
+
+<html>
+
+<body>
+
+<br>
+At the end of a life the mod will write the coords of all players you saw into the hetuwlog.txt file.<br>
+This script lets you format the hetuwlog.txt into simple coords sperated by comma.<br>
+Just copy and paste the log into the text field and click the button.<br>
+<br>
+
+<textarea id="data" rows="8" cols=100"></textarea>
+<button onclick="formatData()">Click me</button>
+<br>
+<span id="output"></span>
+
+<script>
+
+var regexp = /player_map.*X:(.+)...Y:(.+).\|/gm
+
+function formatData() {
+	console.log("formatData");
+	var output = document.getElementById("output");
+	var input =  document.getElementById("data").value;
+	var m;
+	output.innerHTML = "";
+	while ((m = regexp.exec(input)) !== null) {
+		output.innerHTML += m[1]+", "+m[2]+"<br>";
+	}
+}
+
+</script>
+
+</body>
+
+</html>
