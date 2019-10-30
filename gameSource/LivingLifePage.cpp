@@ -17760,9 +17760,7 @@ void LivingLifePage::step() {
                                 char *nameStart = &( firstSpace[1] );
                                 
                                 existing->name = stringDuplicate( nameStart );
-								if (existing->name) {
-									HetuwMod::writeLineToLogs("name", to_string(existing->id) + hetuwLogSeperator + string(existing->name));
-									}
+								HetuwMod::onNameUpdate(existing);
                                 }
                             
                             break;

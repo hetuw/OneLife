@@ -2046,9 +2046,29 @@ void HetuwMod::pickUpBabyInRange() {
 	pickUpBaby( babyX, babyY );
 }
 
+char* HetuwMod::stringToChar(string str) { // dont forget to delete[] cstr
+	char *cstr = new char[str.length() + 1];
+	strcpy(cstr, str.c_str());
+	return cstr;
+}
+
 void HetuwMod::setEmote(int id) {
 	lastEmoteTime = time(NULL);
 	currentEmote = id;
+}
+
+void HetuwMod::sendEmote(string emoteName) {
+	char* cstr = stringToChar(emoteName);
+	int emoteIndex = getEmotionIndex( cstr );
+	sendEmote(emoteIndex);
+	delete[] cstr;
+}
+
+void HetuwMod::sendEmote(int emoteId) {
+	string message = "EMOT 0 0 "+to_string(emoteId)+"#";
+	char* cstr = stringToChar(message);
+	livingLifePage->sendToServerSocket( cstr );
+	delete[] cstr;
 }
 
 void HetuwMod::causeDisconnect() {
@@ -3084,6 +3104,24 @@ void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
 	getRelationNameColor( o->relationName, deathMsg->nameColor );
 
 	deathMessages.push_back(deathMsg);
+}
+
+void HetuwMod::onNameUpdate(LiveObject* o) {
+	if (!o || !o->name) return;
+	HetuwMod::writeLineToLogs("name", to_string(o->id) + hetuwLogSeperator + string(o->name));
+
+	if (ourLiveObject->id == o->id) {
+		if (strstr(o->name, "EVE SLINKER") != NULL) sendEmote("/BLUSH");
+		if (strstr(o->name, "EVE SLINKMAN") != NULL) sendEmote("/BLUSH");
+		if (strstr(o->name, "EVE SLINKY") != NULL) sendEmote("/BLUSH");
+		if (strstr(o->name, "EVE GAYLORD") != NULL) sendEmote("/HMPH");
+		if (strstr(o->name, "EVE YIKE") != NULL) sendEmote("/HMPH");
+		if (strstr(o->name, "EVE ZIV") != NULL) sendEmote("/DEVIOUS");
+		if (strstr(o->name, "EVE KILL") != NULL) sendEmote("/DEVIOUS");
+		if (strstr(o->name, "EVE TARR") != NULL) sendEmote("/JOY");
+		if (strstr(o->name, "EVE BOOB") != NULL) sendEmote("/SHOCKED");
+		if (strstr(o->name, "EVE GAY") != NULL) sendEmote("/HAPPY");
+	}
 }
 
 void HetuwMod::drawDeathMessages() {

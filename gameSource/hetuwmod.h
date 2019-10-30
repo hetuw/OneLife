@@ -283,7 +283,10 @@ public:
 	static bool livingLifeSpecialKeyDown(unsigned char inKeyCode);
 	static bool livingLifePageMouseDown( float mX, float mY );
 
+	static char* stringToChar(string str); // dont forget to delete[] cstr
 	static void setEmote(int id);
+	static void sendEmote(string emoteName);
+	static void sendEmote(int emoteId);
 
 	static void setMoveDirection(int &x, int &y, int direction);
 	static int getMoveDirection();
@@ -309,6 +312,7 @@ public:
 
 	static void onOurDeath();
 	static void onPlayerUpdate( LiveObject* o, const char* line );
+	static void onNameUpdate(LiveObject* o);
 	static void removeLastName(char *newName, const char* name );
 	static void getLastName( char* lastName, const char* name );
 	static void setLastNameColor( const char* lastName, float alpha );
