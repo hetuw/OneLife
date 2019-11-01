@@ -3155,15 +3155,15 @@ void HetuwMod::onNameUpdate(LiveObject* o) {
 
 	if (ourLiveObject && ourLiveObject->id == o->id) {
 		if (strstr(o->name, "EVE SLINKER") != NULL) sendEmote("/BLUSH");
-		if (strstr(o->name, "EVE SLINKMAN") != NULL) sendEmote("/BLUSH");
-		if (strstr(o->name, "EVE SLINKY") != NULL) sendEmote("/BLUSH");
-		if (strstr(o->name, "EVE GAYLORD") != NULL) sendEmote("/HMPH");
-		if (strstr(o->name, "EVE YIKE") != NULL) sendEmote("/HMPH");
-		if (strstr(o->name, "EVE ZIV") != NULL) sendEmote("/DEVIOUS");
-		if (strstr(o->name, "EVE KILL") != NULL) sendEmote("/DEVIOUS");
-		if (strstr(o->name, "EVE TARR") != NULL) sendEmote("/JOY");
-		if (strstr(o->name, "EVE BOOB") != NULL) sendEmote("/SHOCKED");
-		if (strstr(o->name, "EVE GAY") != NULL) sendEmote("/HAPPY");
+		else if (strstr(o->name, "EVE SLINKMAN") != NULL) sendEmote("/BLUSH");
+		else if (strstr(o->name, "EVE SLINKY") != NULL) sendEmote("/BLUSH");
+		else if (strstr(o->name, "EVE GAYLORD") != NULL) sendEmote("/HMPH");
+		else if (strstr(o->name, "EVE YIKE") != NULL) sendEmote("/HMPH");
+		else if (strstr(o->name, "EVE ZIV") != NULL) sendEmote("/DEVIOUS");
+		else if (strstr(o->name, "EVE KILL") != NULL) sendEmote("/DEVIOUS");
+		else if (strstr(o->name, "EVE TARR") != NULL) sendEmote("/JOY");
+		else if (strstr(o->name, "EVE BOOB") != NULL) sendEmote("/SHOCKED");
+		else if (strstr(o->name, "EVE GAY") != NULL) sendEmote("/HAPPY");
 	}
 }
 
