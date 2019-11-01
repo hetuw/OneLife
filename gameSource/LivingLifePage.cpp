@@ -3206,14 +3206,14 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     
     double firstLineY =  inPos.y + ( lines->size() - 1 ) * lineSpacing;
     
-    if( firstLineY > lastScreenViewCenter.y + 330 + HetuwMod::panelOffsetX) {
+    if( firstLineY > lastScreenViewCenter.y + 330 + HetuwMod::panelOffsetY) {
         // off top of screen
-        firstLineY = lastScreenViewCenter.y + 330 + HetuwMod::panelOffsetX;
+        firstLineY = lastScreenViewCenter.y + 330 + HetuwMod::panelOffsetY;
         }
     
-    if( inPos.y < lastScreenViewCenter.y - 280 ) {
+    if( inPos.y < lastScreenViewCenter.y - 280 - HetuwMod::panelOffsetY) {
         // off bottom of screen
-        double lastLineY = lastScreenViewCenter.y - 280;
+        double lastLineY = lastScreenViewCenter.y - 280 - HetuwMod::panelOffsetY;
         
         firstLineY = lastLineY + ( lines->size() - 1 ) * lineSpacing;
         }
@@ -3229,11 +3229,11 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
             }
         }
     
-    if( inPos.x < lastScreenViewCenter.x - 615 ) {
-        inPos.x = lastScreenViewCenter.x - 615;
+    if( inPos.x < lastScreenViewCenter.x - 615 - HetuwMod::panelOffsetX) {
+        inPos.x = lastScreenViewCenter.x - 615 - HetuwMod::panelOffsetX;
         }
-    if( inPos.x + widestLine > lastScreenViewCenter.x + 610 ) {
-        inPos.x = lastScreenViewCenter.x + 610 - widestLine;
+    if( inPos.x + widestLine > lastScreenViewCenter.x + 610 + HetuwMod::panelOffsetX) {
+        inPos.x = lastScreenViewCenter.x + 610 - widestLine + HetuwMod::panelOffsetX;
         }
     
     
