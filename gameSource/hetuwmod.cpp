@@ -111,7 +111,7 @@ doublePair HetuwMod::playerNamePos;
 bool HetuwMod::bDrawCords;
 bool HetuwMod::bDrawHostileTiles = true;
 
-bool HetuwMod::bWriteLogs = true;
+bool HetuwMod::bWriteLogs = false;
 int HetuwMod::lastLoggedId = -1;
 
 int HetuwMod::stepCount;
