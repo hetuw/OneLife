@@ -1153,6 +1153,46 @@ void HetuwMod::teachLanguage() {
 	sayBuffer.push_back(msg);
 }
 
+void HetuwMod::logHomeLocation(HomePos* hp) {
+	if (!bWriteLogs) return;
+
+	string typeName = "";
+	switch (hp->type) {
+		case hpt_custom:
+			typeName = "custom";
+			break;
+		case hpt_birth:
+			typeName = "birth";
+			break;
+		case hpt_home:
+			typeName = "homemarker";
+			break;
+		case hpt_bell:
+			typeName = "bell";
+			break;
+		case hpt_apoc:
+			typeName = "apoc";
+			break;
+		case hpt_tarr:
+			typeName = "tarr";
+			break;
+		case hpt_map:
+			typeName = "map";
+			break;
+		default:
+			typeName = "unknowntype";
+	}
+
+	string data = "";
+	data = data + typeName + hetuwLogSeperator;
+	data = data + "X: " + to_string(hp->x) + hetuwLogSeperator;
+	data = data + "Y: " + to_string(hp->y);
+	if (hp->type == hpt_custom) data = data + hetuwLogSeperator + hp->c;
+	if (hp->text.length() > 0) data = data + hetuwLogSeperator + hp->text;
+
+	writeLineToLogs("coord", data);
+}
+
 void HetuwMod::addHomeLocation( int x, int y, homePosType type, char c ) {
 	int id = -1;
 	if (type == hpt_custom) {
@@ -1169,6 +1209,7 @@ void HetuwMod::addHomeLocation( int x, int y, homePosType type, char c ) {
 		if (id >= 0) { // overwrite existing
 			homePosStack[id]->x = x;
 			homePosStack[id]->y = y;
+			logHomeLocation(homePosStack[id]);
 			return;
 		}
 	}
@@ -1186,6 +1227,7 @@ void HetuwMod::addHomeLocation( int x, int y, homePosType type, char c ) {
 	p->type = type;
 	p->c = c;
 	homePosStack.push_back(p);
+	logHomeLocation(p);
 }
 
 void HetuwMod::setHomeLocationText(int x, int y, homePosType type, char *text) {
@@ -1194,6 +1236,7 @@ void HetuwMod::setHomeLocationText(int x, int y, homePosType type, char *text) {
 		if (homePosStack[i]->x != x) continue;
 		if (homePosStack[i]->y != y) continue;
 		homePosStack[i]->text = string(text);
+		logHomeLocation(homePosStack[i]);
 		break;
 	}
 }
@@ -3110,7 +3153,7 @@ void HetuwMod::onNameUpdate(LiveObject* o) {
 	if (!o || !o->name) return;
 	HetuwMod::writeLineToLogs("name", to_string(o->id) + hetuwLogSeperator + string(o->name));
 
-	if (ourLiveObject->id == o->id) {
+	if (ourLiveObject && ourLiveObject->id == o->id) {
 		if (strstr(o->name, "EVE SLINKER") != NULL) sendEmote("/BLUSH");
 		if (strstr(o->name, "EVE SLINKMAN") != NULL) sendEmote("/BLUSH");
 		if (strstr(o->name, "EVE SLINKY") != NULL) sendEmote("/BLUSH");

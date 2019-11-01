@@ -323,6 +323,7 @@ public:
 	static void addHomeLocation( int x, int y, homePosType type, char c = 0 );
 	static void setHomeLocationText(int x, int y, homePosType type, char *text);
 	static void setMapText(char *message);
+	static void logHomeLocation(HomePos* hp);
 
 	static GridPos cordOffset;
 
