@@ -931,6 +931,8 @@ void HetuwMod::OnPlayerHoverOver(int id) {
 }
 
 void HetuwMod::stepLoopTroughObjectsInRange() {
+	if (true) return; // disable it - because it is bugged, it can happen that several tarr monuments will be added to the coord list
+
 	int radius = 32;
 	int startX = ourLiveObject->xd - radius;
 	int endX = ourLiveObject->xd + radius;
@@ -1640,6 +1642,7 @@ void HetuwMod::createCordsDrawStr() {
 				apocCount++;
 				break;
 			case hpt_tarr:
+				if (tarrCount > 0) break; // make sure it doesnt add more than 1 tarr monument to the list - saftey feature because of bug - idk what causes the bug
 				sprintf( sBufA, "TARR %c %d %d", (char)(tarrCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
 				tarrCount++;
 				break;
