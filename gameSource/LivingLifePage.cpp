@@ -2309,7 +2309,7 @@ int LivingLifePage::hetuwGetObjId( int tileX, int tileY ) {
 	int mapX = tileX - mMapOffsetX + mMapD / 2;
 	int mapY = tileY - mMapOffsetY + mMapD / 2;
 	int i = mapY * mMapD + mapX;
-	if (i < 0 || i > mMapD*mMapD) return 0;
+	if (i < 0 || i >= mMapD*mMapD) return 0;
 	return mMap[i];
 }
 
