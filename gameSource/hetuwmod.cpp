@@ -3159,6 +3159,7 @@ void HetuwMod::onNameUpdate(LiveObject* o) {
 	if (ourLiveObject && ourLiveObject->id == o->id) {
 		if (strstr(o->name, "EVE SLINKER") != NULL) sendEmote("/BLUSH");
 		else if (strstr(o->name, "EVE SLINKMAN") != NULL) sendEmote("/BLUSH");
+		else if (strstr(o->name, "EVE SLINKEY") != NULL) sendEmote("/BLUSH");
 		else if (strstr(o->name, "EVE SLINKY") != NULL) sendEmote("/BLUSH");
 		else if (strstr(o->name, "EVE GAYLORD") != NULL) sendEmote("/HMPH");
 		else if (strstr(o->name, "EVE YIKE") != NULL) sendEmote("/HMPH");
