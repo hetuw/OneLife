@@ -572,6 +572,12 @@ static void setupWall( ObjectRecord *inR ) {
 static void setupTapout( ObjectRecord *inR ) {
     inR->isTapOutTrigger = false;
     
+    if( inR->isUseDummy || inR->isVariableDummy ) {
+        // only parent object counts tapouts
+        return;
+        }
+    
+
     char *triggerPos = strstr( inR->description, "+tapoutTrigger" );
                 
     if( triggerPos != NULL ) {
@@ -965,8 +971,6 @@ float initObjectBankStep() {
 
                 setupWall( r );
 
-                setupTapout( r );
-                
                             
                 sscanf( lines[next], "foodValue=%d", 
                         &( r->foodValue ) );
@@ -1909,6 +1913,14 @@ void initObjectBankFinish() {
         }
     
 
+    // setup tapout triggers
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            ObjectRecord *o = idMap[i];
+            setupTapout( o );
+            }
+        }
+    
 
     for( int i=0; i<=MAX_BIOME; i++ ) {
         biomeHeatMap[ i ] = 0;
@@ -3309,8 +3321,6 @@ int addObject( const char *inDescription,
     setupMaxPickupAge( r );
 
     setupWall( r );
-
-    setupTapout( r );
     
     r->toolSetIndex = -1;
     

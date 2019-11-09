@@ -141,6 +141,8 @@ int monumentCallID = 0;
 
 static double minFoodDecrementSeconds = 5.0;
 static double maxFoodDecrementSeconds = 20;
+static double indoorFoodDecrementSecondsBonus = 20.0;
+
 static int babyBirthFoodDecrement = 10;
 
 // bonus applied to all foods
@@ -488,6 +490,8 @@ typedef struct FreshConnection {
         char ticketServerAccepted;
         char lifeTokenSpent;
 
+        float fitnessScore;
+
         double ticketServerRequestStartTime;
         
         char error;
@@ -795,6 +799,8 @@ typedef struct LiveObject {
         // true if heat map features player surrounded by walls
         char isIndoors;
         
+        double foodDrainTime;
+        double indoorBonusTime;
 
 
         int foodStore;
@@ -872,6 +878,8 @@ typedef struct LiveObject {
         int vogJumpIndex;
         char postVogMode;
         
+        char forceSpawn;
+        
 
         // list of positions owned by this player
         SimpleVector<GridPos> ownedPositions;
@@ -879,6 +887,9 @@ typedef struct LiveObject {
         // list of owned positions that this player has heard about
         SimpleVector<GridPos> knownOwnedPositions;
 
+        GridPos forceFlightDest;
+        double forceFlightDestSetTime;
+        
     } LiveObject;
 
 
@@ -2612,7 +2623,6 @@ static void restockPostWindowFamilies() {
         if( ! o->error &&
             ! o->isTutorial &&
             o->curseStatus.curseLevel == 0 &&
-            o->familyName != NULL &&
             familyLineageEveIDsAfterEveWindow.getElementIndex( 
                 o->lineageEveID ) == -1 ) {
             // haven't seen this family before
@@ -2630,15 +2640,26 @@ static void restockPostWindowFamilies() {
 
             familyLineageEveIDsAfterEveWindow.push_back( 
                 o->lineageEveID );
-            familyNamesAfterEveWindow.push_back(
-                stringDuplicate( o->familyName ) );
+
+            char *nameCopy = NULL;
+
+            if( o->familyName != NULL ) {
+                nameCopy = stringDuplicate( o->familyName );
+                }
+            else {
+                // don't skip tracking families that have no names
+                nameCopy = autoSprintf( "UNNAMED_%d", o->lineageEveID );
+                }
+            
+            familyNamesAfterEveWindow.push_back( nameCopy );
+        
 
             // start with estimate of one person per family
             familyCountsAfterEveWindow.push_back( 1 );
             
             
             if( postWindowFamilyLogFile != NULL ) {
-                fprintf( postWindowFamilyLogFile, "\"%s\" ", o->familyName );
+                fprintf( postWindowFamilyLogFile, "\"%s\" ", nameCopy );
                 }
             }
         }
@@ -2758,6 +2779,7 @@ void forcePlayerAge( const char *inEmail, double inAge ) {
 
 
 
+double computeAge( LiveObject *inPlayer );
 
 
 double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
@@ -2773,6 +2795,18 @@ double computeFoodDecrementTimeSeconds( LiveObject *inPlayer ) {
     
     // all player temp effects push us up above min
     value += minFoodDecrementSeconds;
+
+    inPlayer->indoorBonusTime = 0;
+    
+    if( inPlayer->isIndoors &&
+        computeAge( inPlayer ) > defaultActionAge ) {
+        
+        // non-babies get a bonus for being indoors
+        value += indoorFoodDecrementSecondsBonus;
+        inPlayer->indoorBonusTime = indoorFoodDecrementSecondsBonus;
+        }
+    
+    inPlayer->foodDrainTime = value;
 
     return value;
     }
@@ -2943,6 +2977,17 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
 
     return ceil( returnVal * inPlayer->foodCapModifier );
     }
+
+
+
+int computeOverflowFoodCapacity( int inBaseCapacity ) {
+    // even littlest baby has +1 overflow, to get everyone used to the
+    // concept.
+    // by adulthood (when base cap is 20), overflow cap is 90.6
+    return 1 + pow( inBaseCapacity, 8 ) * 0.0000000035;
+    }
+
+
 
 
 
@@ -6499,18 +6544,104 @@ static int countFamilies() {
 
 
 
+// make sure same family isn't picked too often to get a baby
+// don't hammer Eve even though her fam is currently the weakest
+typedef struct FamilyPickedRecord {
+        int lineageEveID;
+        double lastPickTime;
+    } FamilyPickedRecord;
+
+
+static SimpleVector<FamilyPickedRecord> familiesRecentlyPicked;
+
+
+static char isFamilyTooRecent( int inLineageEveID, int inMomCount ) {
+    double curTime = Time::getCurrentTime();
+    
+    // let one mom wait 1.5 minutes between BB
+    double waitTime = 1.5 * 60.0 / inMomCount;
+    
+
+    for( int i=0; i<familiesRecentlyPicked.size(); i++ ) {
+        FamilyPickedRecord *r = familiesRecentlyPicked.getElement( i );
+        if( r->lineageEveID == inLineageEveID ) {
+            if( curTime - r->lastPickTime < waitTime ) {
+                // fam got BB too recently
+                return true;
+                }
+            else {
+                return false;
+                }
+            }
+        }
+    
+    return false;
+    }
+
+
+
+static void markFamilyGotBabyNow( int inLineageEveID ) {
+    double curTime = Time::getCurrentTime();
+    
+    for( int i=0; i<familiesRecentlyPicked.size(); i++ ) {
+        FamilyPickedRecord *r = familiesRecentlyPicked.getElement( i );
+        if( r->lineageEveID == inLineageEveID ) {
+            r->lastPickTime = curTime;
+            return;
+            }
+        }
+    
+    // not found
+    FamilyPickedRecord r = { inLineageEveID, curTime };
+    familiesRecentlyPicked.push_back( r );
+    }
+
+
+
 
 static int getNextBabyFamilyLineageEveIDFewestFemales() {
-    SimpleVector<int> femaleCountPerFam;
+    SimpleVector<int> uniqueFams;
     
     int minFemales = 999999;
     int minFemalesLineageEveID = -1;
 
-    for( int i=0; i<familyLineageEveIDsAfterEveWindow.size(); i++ ) {
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+
+        if( ! isPlayerCountable( p ) ) {
+            continue;
+            }
+        if( uniqueFams.getElementIndex( p->lineageEveID ) == -1 ) {
+            uniqueFams.push_back( p->lineageEveID );
+            }
+        }
+    
+
+
+    // clear stale family records
+    for( int i=0; i<familiesRecentlyPicked.size(); i++ ) {
+        FamilyPickedRecord *r = familiesRecentlyPicked.getElement( i );
+        
+        if( uniqueFams.getElementIndex( r->lineageEveID ) == -1 ) {
+            // stale
+            familiesRecentlyPicked.deleteElement( i );
+            i--;
+            }
+        }
+    
+
+
+    for( int i=0; i<uniqueFams.size(); i++ ) {
         int lineageEveID = 
-            familyLineageEveIDsAfterEveWindow.getElementDirect( i );
+            uniqueFams.getElementDirect( i );
 
         int famMothers = countFertileMothers( lineageEveID );
+
+        if( isFamilyTooRecent( lineageEveID, famMothers ) ) {
+            continue;
+            }
+
+
         int famGirls = countGirls( lineageEveID );
         
         int famFemales = famMothers + famGirls;
@@ -6524,6 +6655,10 @@ static int getNextBabyFamilyLineageEveIDFewestFemales() {
                 minFemalesLineageEveID = lineageEveID;
                 }
             }
+        }
+
+    if( minFemalesLineageEveID != -1 ) {
+        markFamilyGotBabyNow( minFemalesLineageEveID );
         }
     
     return minFemalesLineageEveID;
@@ -6621,10 +6756,11 @@ static void setupToolSlots( LiveObject *inPlayer ) {
             }
         
         char *message = autoSprintf( "YOUR GENETIC FITNESS SCORE IS %.1lf**"
-                                     "YOU GET %d BONUS TOOL %s.",
+                                     "YOU GET %d BONUS TOOL %s, "
+                                     "FOR A TOTAL OF %d SLOTS.",
                                      inPlayer->fitnessScore,
                                      slots - min,
-                                     slotWord );
+                                     slotWord, slots );
         
         sendGlobalMessage( message, inPlayer );
         
@@ -6730,6 +6866,90 @@ char getForceSpawn( char *inEmail, ForceSpawnRecord *outRecordToFill ) {
 
 
 
+static char shouldBeEveInjection( float inFitnessScore ) {
+
+    // if we exceed our baby ratio, we're in an emergency situation and
+    // need a new eve NOW
+
+    // so this player is the lucky winner, even if their fitness score
+    // isn't high enough
+    int cMom = countFertileMothers();
+    
+    int cBaby = countHelplessBabies();
+
+    // this player would be a new baby if not Eve
+    cBaby ++;
+
+
+    float maxBabyRatio = 
+        SettingsManager::getFloatSetting( "eveInjectionBabyRatio", 3.0f );
+
+    float babyRatio = cBaby / (float)cMom;
+
+    if( babyRatio > maxBabyRatio ) {
+        AppLog::infoF( "Injecting Eve:  "
+                       "%d babies, %d moms, ratio %f, max ratio %f",
+                       cBaby, cMom, babyRatio, maxBabyRatio );
+        return true;
+        }
+
+    
+
+    // for other case (not enough families) the situation isn't dire
+    // we can wait for someone to come along with a high fitness score
+    
+
+    // how many recent players do we look at?
+    int eveFitnessWindow =
+        SettingsManager::getIntSetting( "eveInjectionFitnessWindow", 10 );
+
+    int numPlayers = players.size();
+    float maxFitnessSeen = 0;
+    
+    for( int i = numPlayers - 1; 
+         i >= numPlayers - eveFitnessWindow && i >= 0;
+         i -- ) {
+        
+        LiveObject *o = players.getElement( i );
+        if( o->fitnessScore > maxFitnessSeen ) {
+            maxFitnessSeen = o->fitnessScore;
+            }
+        }
+
+    if( inFitnessScore < maxFitnessSeen ) {
+        // this player not fit enough to be Eve
+        return false;
+        }
+    
+    int lp = countLivingPlayers();
+    
+    int cFam = countFamilies();
+
+    // this player would add to the player count if not Eve
+    lp ++;
+
+    float maxFamRatio = 
+        SettingsManager::getFloatSetting( "eveInjectionFamilyRatio", 9.0f );
+    
+    float famRatio = lp / (float)cFam;
+    
+    if( famRatio > maxFamRatio ) {
+        // not enough fams
+        AppLog::infoF( "Injecting Eve:  "
+                       "%d players, %d families, ratio %f, max ratio %f",
+                       lp, cFam, famRatio, maxFamRatio );
+        return true;
+        }
+    
+
+    return false;
+    }
+
+
+
+
+
+
 // for placement of tutorials out of the way 
 static int maxPlacementX = 5000000;
 
@@ -6758,6 +6978,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                            int inTutorialNumber,
                            CurseStatus inCurseStatus,
                            PastLifeStats inLifeStats,
+                           float inFitnessScore,
                            // set to -2 to force Eve
                            int inForceParentID = -1,
                            int inForceDisplayID = -1,
@@ -6885,6 +7106,10 @@ int processLoggedInPlayer( char inAllowReconnect,
     char eveWindow = isEveWindow();
     char forceGirl = false;
     
+
+    char eveInjectionOn = SettingsManager::getIntSetting( "eveInjectionOn", 0 );
+    
+
     int familyLimitAfterEveWindow = SettingsManager::getIntSetting( 
             "familyLimitAfterEveWindow", 15 );
 
@@ -6895,7 +7120,7 @@ int processLoggedInPlayer( char inAllowReconnect,
     int cB = countHelplessBabies();
     int cFam = countFamilies();
 
-    if( ! eveWindow ) {
+    if( ! eveWindow && ! eveInjectionOn ) {
         
         float babyMotherRatio = SettingsManager::getFloatSetting( 
             "babyMotherApocalypseRatio", 6.0 );
@@ -6998,6 +7223,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
 
+    indoorFoodDecrementSecondsBonus = SettingsManager::getFloatSetting( 
+        "indoorFoodDecrementSecondsBonus", 20 );
+
 
     eatBonus = 
         SettingsManager::getIntSetting( "eatBonus", 0 );
@@ -7087,15 +7315,8 @@ int processLoggedInPlayer( char inAllowReconnect,
 
 
     
-    newObject.fitnessScore = -1;
+    newObject.fitnessScore = inFitnessScore;
     
-    int fitResult = getFitnessScore( inEmail, &newObject.fitnessScore );
-
-    if( fitResult == -1 ) {
-        // failed right away
-        // stop asking now
-        newObject.fitnessScore = 0;
-        }
 
 
 
@@ -7133,6 +7354,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     
 
     int numOfAge = 0;
+
+    int numBirthLocationsCurseChecked = 0;
+    int numBirthLocationsCurseBlocked = 0;
                             
     int numPlayers = players.size();
                             
@@ -7185,10 +7409,13 @@ int processLoggedInPlayer( char inAllowReconnect,
                 // this line forbidden for new player
                 continue;
                 }
-
+            
+            numBirthLocationsCurseChecked ++;
+            
             if( usePersonalCurses &&
                 isBirthLocationCurseBlocked( newObject.email, motherPos ) ) {
                 // this spot forbidden because someone nearby cursed new player
+                numBirthLocationsCurseBlocked++;
                 continue;
                 }
             
@@ -7207,6 +7434,9 @@ int processLoggedInPlayer( char inAllowReconnect,
                     isBirthLocationCurseBlockedNoCache( 
                         tempTwinEmails.getElementDirect( s ), motherPos ) ) {
                     twinBanned = true;
+                    
+                    numBirthLocationsCurseBlocked++;
+                    
                     break;
                     }
                 }
@@ -7321,6 +7551,22 @@ int processLoggedInPlayer( char inAllowReconnect,
         forceSpawn = getForceSpawn( inEmail, &forceSpawnInfo );
     
         if( forceSpawn ) {
+            parentChoices.deleteAll();
+            forceParentChoices = true;
+            }
+        }
+    
+
+
+
+    if( ! eveWindow && eveInjectionOn &&
+        ! forceParentChoices &&
+        // this player not curse blocked by all possible mothers
+        ( numBirthLocationsCurseBlocked == 0 ||
+          numBirthLocationsCurseBlocked < numBirthLocationsCurseChecked ) ) {
+        
+        // should we spawn a new "special" eve outside of Eve window?
+        if( shouldBeEveInjection( newObject.fitnessScore ) ) {
             parentChoices.deleteAll();
             forceParentChoices = true;
             }
@@ -7633,6 +7879,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.lastHeatUpdate = Time::getCurrentTime();
     newObject.isIndoors = false;
     
+    newObject.foodDrainTime = 0;
+    newObject.indoorBonusTime = 0;
+
 
     newObject.foodDecrementETASeconds =
         Time::getCurrentTime() + 
@@ -7991,7 +8240,7 @@ int processLoggedInPlayer( char inAllowReconnect,
         if( numOfAge >= 4 ) {
             // there are at least 4 fertile females on the server
             // why is this player spawning as Eve?
-            // they must be on lineage ban everywhere
+            // they must be on lineage ban everywhere OR a forced Eve injection
             // (and they are NOT a solo player on an empty server)
             // don't allow them to spawn back at their last old-age Eve death
             // location.
@@ -8263,6 +8512,9 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.postVogMode = false;
     newObject.vogJumpIndex = 0;
     
+    newObject.forceSpawn = false;
+
+    newObject.forceFlightDestSetTime = 0;
                 
     for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
         newObject.heatMap[i] = 0;
@@ -8336,6 +8588,7 @@ int processLoggedInPlayer( char inAllowReconnect,
         }
 
     if( forceSpawn ) {
+        newObject.forceSpawn = true;
         newObject.xs = forceSpawnInfo.pos.x;
         newObject.ys = forceSpawnInfo.pos.y;
         newObject.xd = forceSpawnInfo.pos.x;
@@ -8550,8 +8803,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     // can resize the vector
     parent = NULL;
 
-    setupToolSlots( &newObject );
-
+    newObject.numToolSlots = 0;
+    
 
     if( newObject.isTutorial ) {
         AppLog::infoF( "New player %s pending tutorial load (tutorial=%d)",
@@ -8668,7 +8921,8 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                            inConnection.email,
                                            inConnection.tutorialNumber,
                                            anyTwinCurseLevel,
-                                           inConnection.lifeStats );
+                                           inConnection.lifeStats,
+                                           inConnection.fitnessScore );
         tempTwinEmails.deleteAll();
         
         if( newID == -1 ) {
@@ -8750,6 +9004,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                    0,
                                    anyTwinCurseLevel,
                                    nextConnection->lifeStats,
+                                   nextConnection->fitnessScore,
                                    parent,
                                    displayID,
                                    forcedEvePos );
@@ -11242,6 +11497,24 @@ static void removeAnyKillState( LiveObject *inKiller ) {
         }
     }
 
+
+
+static char isAlreadyInKillState( LiveObject *inKiller ) {
+    for( int i=0; i<activeKillStates.size(); i++ ) {
+        KillState *s = activeKillStates.getElement( i );
+    
+        if( s->killerID == inKiller->id ) {
+            
+            LiveObject *target = getLiveObject( s->targetID );
+            
+            if( target != NULL ) {
+                return true;
+                }
+            }
+        }
+    return false;
+    }
+
             
 
 
@@ -11630,7 +11903,7 @@ void executeKillAction( int inKillerIndex,
                                             
                             if( e.foodModifierSet && 
                                 e.foodCapModifier != 1 ) {
-                                                
+                                hitPlayer->yummyBonusStore = 0;
                                 hitPlayer->
                                     foodCapModifier = 
                                     e.foodCapModifier;
@@ -12240,6 +12513,9 @@ int main() {
 
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
+
+    indoorFoodDecrementSecondsBonus = SettingsManager::getFloatSetting( 
+        "indoorFoodDecrementSecondsBonus", 20 );
 
 
     eatBonus = 
@@ -13041,6 +13317,8 @@ int main() {
                 newConnection.ticketServerAccepted = false;
                 newConnection.lifeTokenSpent = false;
                 
+                newConnection.fitnessScore = -1;
+
                 newConnection.error = false;
                 newConnection.errorCauseString = "";
                 newConnection.rejectedSendTime = 0;
@@ -13132,6 +13410,19 @@ int main() {
                         nextConnection->lifeStats.lifeCount,
                         nextConnection->lifeStats.lifeTotalSeconds,
                         nextConnection->lifeStats.lifeTotalSeconds / 3600.0 );
+                    }
+                }
+            else if( nextConnection->email != NULL &&
+                     nextConnection->fitnessScore == -1 ) {
+                // still waiting for fitness score
+                int fitResult = 
+                    getFitnessScore( nextConnection->email, 
+                                     &nextConnection->fitnessScore );
+                
+                if( fitResult == -1 ) {
+                    // failed
+                    // stop asking now
+                    nextConnection->fitnessScore = 0;
                     }
                 }
             else if( nextConnection->ticketServerRequest != NULL &&
@@ -13285,7 +13576,8 @@ int main() {
                             nextConnection->email,
                             nextConnection->tutorialNumber,
                             nextConnection->curseStatus,
-                            nextConnection->lifeStats );
+                            nextConnection->lifeStats,
+                            nextConnection->fitnessScore );
                         }
                                                         
                     newConnections.deleteElement( i );
@@ -13519,7 +13811,8 @@ int main() {
                                             nextConnection->email,
                                             nextConnection->tutorialNumber,
                                             nextConnection->curseStatus,
-                                            nextConnection->lifeStats );
+                                            nextConnection->lifeStats,
+                                            nextConnection->fitnessScore );
                                         }
                                                                         
                                     newConnections.deleteElement( i );
@@ -13767,26 +14060,13 @@ int main() {
 
             if( nextPlayer->error ) {
                 continue;
-                }            
-
-            
-            if( nextPlayer->fitnessScore == -1 ) {
-                // see if result ready yet    
-                int fitResult = 
-                    getFitnessScore( nextPlayer->email, 
-                                     &nextPlayer->fitnessScore );
-
-                if( fitResult == -1 ) {
-                    // failed
-                    // stop asking now
-                    nextPlayer->fitnessScore = 0;
-                    }
-
-                if( nextPlayer->fitnessScore != -1 ) {
-                    setupToolSlots( nextPlayer );
-                    }
                 }
             
+            if( nextPlayer->numToolSlots == 0 ) {
+                
+                setupToolSlots( nextPlayer );
+                }
+
 
             double curCrossTime = Time::getCurrentTime();
 
@@ -13949,7 +14229,7 @@ int main() {
                                     }
                                 if( e.foodModifierSet && 
                                     e.foodCapModifier != 1 ) {
-                                
+                                    nextPlayer->yummyBonusStore = 0;
                                     nextPlayer->foodCapModifier = 
                                         e.foodCapModifier;
                                     nextPlayer->foodUpdate = true;
@@ -15507,8 +15787,11 @@ int main() {
                                     closestDist = d;
                                     }
                                 }
-                            if( closestState != NULL ) {
-                                // they are joining
+
+                            if( closestState != NULL &&
+                                ! isAlreadyInKillState( nextPlayer ) ) {
+                                // they are joining, and they aren't already
+                                // in one.
                                 // infinite range
                                 removeAnyKillState( nextPlayer );
                                 
@@ -15542,6 +15825,11 @@ int main() {
                                     name,
                                     &( m.saidText ),
                                     nextPlayer, true );
+                                
+                                if( ! isEveWindow() ) {
+                                    // new family name created
+                                    restockPostWindowFamilies();
+                                    }        
 
                                 if( strstr( m.saidText, "EVE EVE" ) != NULL ) {
                                     // their naming phrase was I AM EVE SMITH
@@ -15611,6 +15899,11 @@ int main() {
                                                 name,
                                                 &( m.saidText ),
                                                 closestOther, true );
+                                            
+                                            if( ! isEveWindow() ) {
+                                                // new family name created
+                                                restockPostWindowFamilies();
+                                                }
                                             }
                                         }
                                     else {
@@ -15744,7 +16037,10 @@ int main() {
                                             }
                                         }
                                     
-                                    if( ! weaponBlocked ) {
+                                    if( ! weaponBlocked  &&
+                                        ! isAlreadyInKillState( nextPlayer ) ) {
+                                        // they aren't already in one
+                                        
                                         removeAnyKillState( nextPlayer );
                                         
                                         char enteredState =
@@ -16435,7 +16731,18 @@ int main() {
                                         computeFoodCapacity( nextPlayer );
                                     
                                     if( nextPlayer->foodStore > cap ) {
+    
+                                        int over = nextPlayer->foodStore - cap;
+                                        
                                         nextPlayer->foodStore = cap;
+
+                                        int overflowCap = 
+                                            computeOverflowFoodCapacity( cap );
+
+                                        if( over > overflowCap ) {
+                                            over = overflowCap;
+                                            }
+                                        nextPlayer->yummyBonusStore += over;
                                         }
 
                                     
@@ -17095,6 +17402,7 @@ int main() {
                                                 targetPlayer->id, e.ttlSec );
                                             }
                                         if( e.foodCapModifier != 1 ) {
+                                            targetPlayer->yummyBonusStore = 0;
                                             targetPlayer->foodCapModifier = 
                                                 e.foodCapModifier;
                                             targetPlayer->foodUpdate = true;
@@ -17232,7 +17540,18 @@ int main() {
 
                                     
                                     if( targetPlayer->foodStore > cap ) {
+                                        int over = 
+                                            targetPlayer->foodStore - cap;
+                                        
                                         targetPlayer->foodStore = cap;
+
+                                        int overflowCap = 
+                                            computeOverflowFoodCapacity( cap );
+
+                                        if( over > overflowCap ) {
+                                            over = overflowCap;
+                                            }
+                                        targetPlayer->yummyBonusStore += over;
                                         }
                                     targetPlayer->foodDecrementETASeconds =
                                         Time::getCurrentTime() +
@@ -19394,20 +19713,50 @@ int main() {
                                     radiusLimit = barrierRadius;
                                     }
 
-                                GridPos destPos = 
-                                    getNextFlightLandingPos(
+                                GridPos destPos = { -1, -1 };
+                                
+                                char foundMap = false;
+                                if( Time::getCurrentTime() - 
+                                    nextPlayer->forceFlightDestSetTime
+                                    < 30 ) {
+                                    // map fresh in memory
+
+                                    
+                                    destPos = getClosestLandingPos( 
+                                        nextPlayer->forceFlightDest,
+                                        &foundMap );
+                                    
+                                    // find strip closest to last
+                                    // read map position
+                                    AppLog::infoF( 
+                                    "Player %d flight taking off from (%d,%d), "
+                                    "map dest (%d,%d), found=%d, found (%d,%d)",
+                                    nextPlayer->id,
+                                    nextPlayer->xs, nextPlayer->ys,
+                                    nextPlayer->forceFlightDest.x,
+                                    nextPlayer->forceFlightDest.y,
+                                    foundMap,
+                                    destPos.x, destPos.y );
+                                    }                                
+                                if( ! foundMap ) {
+                                    // find strip in flight direction
+                                    
+                                    destPos = getNextFlightLandingPos(
                                         nextPlayer->xs,
                                         nextPlayer->ys,
                                         takeOffDir,
                                         radiusLimit );
-                            
-                                AppLog::infoF( 
-                                    "Player %d flight taking off from (%d,%d), "
+                                    
+                                    AppLog::infoF( 
+                                    "Player %d non-map flight taking off "
+                                    "from (%d,%d), "
                                     "flightDir (%f,%f), dest (%d,%d)",
                                     nextPlayer->id,
                                     nextPlayer->xs, nextPlayer->ys,
                                     xDir, yDir,
                                     destPos.x, destPos.y );
+                                    }
+                                
                                 
                                 
                             
@@ -21706,6 +22055,16 @@ int main() {
                                             
                                             delete [] trimmedPhrase;
                                             trimmedPhrase = newTrimmed;
+
+                                            if( speakerObj != NULL ) {
+                                                speakerObj->forceFlightDest.x
+                                                    = mapX;
+                                                speakerObj->forceFlightDest.y
+                                                    = mapY;
+                                                speakerObj->
+                                                    forceFlightDestSetTime
+                                                    = Time::getCurrentTime();
+                                                }
                                             }
                                         }
                                     }
@@ -21715,14 +22074,18 @@ int main() {
                                 
                                 // skip language filtering in some cases
                                 // VOG can talk to anyone
+                                // so can force spawns
                                 // also, skip in on very low pop servers
                                 // (just let everyone talk together)
                                 // also in case where speach is server-forced
                                 // sound representations (like [GASP])
                                 // but NOT for reading written words
                                 if( nextPlayer->vogMode || 
+                                    nextPlayer->forceSpawn || 
                                     ( speakerObj != NULL &&
                                       speakerObj->vogMode ) ||
+                                    ( speakerObj != NULL &&
+                                      speakerObj->forceSpawn ) ||
                                     players.size() < 
                                     minActivePlayersForLanguages ||
                                     strlen( trimmedPhrase ) == 0 ||
@@ -22086,10 +22449,16 @@ int main() {
                 if( nextPlayer->heatUpdate && nextPlayer->connected ) {
                     // send this player a heat status change
                     
+                    // recompute now to update their decrement time
+                    // and indoor bonus for this message
+                    computeFoodDecrementTimeSeconds( nextPlayer );
+                    
                     char *heatMessage = autoSprintf( 
                         "HX\n"
-                        "%.2f#",
-                        nextPlayer->heat );
+                        "%.2f %.2f %.2f#",
+                        nextPlayer->heat,
+                        nextPlayer->foodDrainTime,
+                        nextPlayer->indoorBonusTime );
                      
                     int messageLength = strlen( heatMessage );
                     

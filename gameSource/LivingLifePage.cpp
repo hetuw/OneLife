@@ -9383,8 +9383,24 @@ void LivingLifePage::draw( doublePair inViewCenter,
             toggleMultiplicativeBlend( false );
             }
 
+
+        doublePair tipPos = { lastScreenViewCenter.x, 
+                           lastScreenViewCenter.y - 313 - HetuwMod::panelOffsetY};
+
+        char overTempMeter = false;
         
-        if( mCurMouseOverID != 0 || mLastMouseOverID != 0 ) {
+        doublePair mousePos = { lastMouseX, lastMouseY };
+        
+        if( mousePos.y < tipPos.y + 13 &&
+            mousePos.x > tipPos.x + 480 &&
+            mousePos.x < tipPos.x + 607 ) {
+            overTempMeter = true;
+            }
+
+        
+        if( ( overTempMeter && ourLiveObject->foodDrainTime > 0 ) 
+            || mCurMouseOverID != 0 || mLastMouseOverID != 0 ) {
+            
             int idToDescribe = mCurMouseOverID;
             
             if( mCurMouseOverID == 0 ) {
@@ -9392,13 +9408,50 @@ void LivingLifePage::draw( doublePair inViewCenter,
                 }
             
             
-            doublePair pos = { lastScreenViewCenter.x, 
-                               lastScreenViewCenter.y - 313 - HetuwMod::panelOffsetY };
 
             char *des = NULL;
             char *desToDelete = NULL;
             
-            if( idToDescribe == -99 ) {
+
+            
+            if( overTempMeter && ourLiveObject->foodDrainTime > 0 ) {
+                // don't replace old until next mouse over
+                // otherwise, it gets redrawn constantly as value
+                // changes
+                if( mCurrentDes == NULL ||
+                    strstr( mCurrentDes,
+                            translate( "foodTimeString" ) ) == NULL ) {
+                    
+                    
+                    char *indoorBonusString;
+                    double mainSeconds = ourLiveObject->foodDrainTime;
+                    
+                    if( ourLiveObject->indoorBonusTime > 0 ) {
+                        indoorBonusString = 
+                            autoSprintf( 
+                                translate( "indoorBonusFormatString" ),
+                                ourLiveObject->indoorBonusTime );
+                        mainSeconds -= ourLiveObject->indoorBonusTime;
+                        }
+                    else {
+                        indoorBonusString = stringDuplicate( "" );
+                        }
+                    
+                    
+                    des = autoSprintf( translate( "foodTimeFormatString" ),
+                                       translate( "foodTimeString" ),
+                                       ourLiveObject->foodDrainTime,
+                                       indoorBonusString );
+                    delete [] indoorBonusString;
+                    
+                    desToDelete = des;
+                    }
+                else {
+                    des = stringDuplicate( mCurrentDes );
+                    desToDelete = des;
+                    }
+                }
+            else if( idToDescribe == -99 ) {
                 if( ourLiveObject->holdingID > 0 &&
                     getObject( ourLiveObject->holdingID )->foodValue > 0 ) {
                     
@@ -9798,7 +9851,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             
             setDrawColor( 0, 0, 0, 1 );
-            pencilFont->drawString( stringUpper, pos, alignCenter );
+            pencilFont->drawString( stringUpper, tipPos, alignCenter );
             
             delete [] stringUpper;
             }
@@ -16359,6 +16412,8 @@ void LivingLifePage::step() {
                         o.futureHeldAnimStack = 
                             new SimpleVector<AnimType>();
                         
+                        o.foodDrainTime = -1;
+                        o.indoorBonusTime = 0;
                         
                         ObjectRecord *obj = getObject( o.displayID );
                         
@@ -18356,8 +18411,10 @@ void LivingLifePage::step() {
             LiveObject *ourLiveObject = getOurLiveObject();
             
             if( ourLiveObject != NULL ) {
-                sscanf( message, "HX\n%f", 
-                        &( ourLiveObject->heat ) );
+                sscanf( message, "HX\n%f %f %f", 
+                        &( ourLiveObject->heat ),
+                        &( ourLiveObject->foodDrainTime ),
+                        &( ourLiveObject->indoorBonusTime ) );
                 
                 }
             }
@@ -20810,6 +20867,74 @@ bool LivingLifePage::hetuwMouseIsDown() {
 	return mouseDown;
 }
 
+
+static int savedXD = 0;
+static int savedYD = 0;
+static char savedInMotion = false;
+static GridPos *savedPathToDest = NULL;
+static int savedPathLength = 0;
+static int savedCurrentPathStep = 0;
+static char savedOnFinalPathStep = false;
+static int savedNumFramesOnCurrentStep = 0;
+static char savedDestTruncated = false;
+static doublePair savedCurrentMoveDirection = { 0, 0 };
+
+
+// saves path
+// restore or free calls must be used to free memory
+static void savePlayerPath( LiveObject *inObject ) {
+    
+    if( inObject->pathToDest != NULL ) {
+        savedXD = inObject->xd;
+        savedYD = inObject->yd;
+        savedInMotion = inObject->inMotion;
+        
+        savedPathLength = inObject->pathLength;
+        savedPathToDest = new GridPos[ savedPathLength ];
+
+        memcpy( savedPathToDest, inObject->pathToDest,
+                sizeof( GridPos ) * inObject->pathLength );
+        savedCurrentPathStep = inObject->currentPathStep;
+        savedOnFinalPathStep = inObject->onFinalPathStep;
+        savedNumFramesOnCurrentStep = inObject->numFramesOnCurrentStep;
+        savedDestTruncated = inObject->destTruncated;
+        savedCurrentMoveDirection = inObject->currentMoveDirection;
+        }
+    }
+
+
+static void restoreSavedPath( LiveObject *inObject ) {
+
+    if( inObject->pathToDest != NULL ) {
+        delete [] inObject->pathToDest;
+        }
+    
+    inObject->xd = savedXD;
+    inObject->yd = savedYD;
+    inObject->inMotion = savedInMotion;
+    inObject->pathToDest = savedPathToDest;
+    inObject->pathLength = savedPathLength;
+    inObject->currentPathStep = savedCurrentPathStep;
+    inObject->onFinalPathStep = savedOnFinalPathStep;
+    inObject->numFramesOnCurrentStep = savedNumFramesOnCurrentStep;
+    inObject->destTruncated = savedDestTruncated;
+    inObject->currentMoveDirection = savedCurrentMoveDirection;
+    }
+
+
+static void freeSavedPath() {
+    if( savedPathToDest != NULL ) {
+        delete [] savedPathToDest;
+        savedPathToDest = NULL;
+        }
+    }
+
+
+
+
+
+
+
 void LivingLifePage::pointerDown( float inX, float inY ) {
 	if (HetuwMod::livingLifePageMouseDown( inX, inY ))
 		return;
@@ -21754,6 +21879,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             int closestDist = 9999999;
 
             char oldPathExists = ( ourLiveObject->pathToDest != NULL );
+
+            if( oldPathExists ) {
+                savePlayerPath( ourLiveObject );
+                }
             
             // don't consider dest spot itself generally
             int nStart = 1;
@@ -21889,8 +22018,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             
             
             if( oldPathExists ) {
-                // restore it
-                computePathToDest( ourLiveObject );
+                restoreSavedPath( ourLiveObject );
                 }
 
             if( foundEmpty ) {
@@ -22114,7 +22242,15 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     
     if( mustMove ) {
+
+        char oldPathExists = ( ourLiveObject->pathToDest != NULL );
         
+        if( oldPathExists ) {
+            savePlayerPath( ourLiveObject );
+            }
+
+
+
         int oldXD = ourLiveObject->xd;
         int oldYD = ourLiveObject->yd;
         
@@ -22122,21 +22258,11 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         ourLiveObject->yd = moveDestY;
         ourLiveObject->destTruncated = false;
 
+
+
+        
         ourLiveObject->inMotion = true;
 
-
-        GridPos *oldPathToDest = NULL;
-        int oldPathLength = 0;
-        int oldCurrentPathStep = 0;
-        
-        if( ourLiveObject->pathToDest != NULL ) {
-            oldPathLength = ourLiveObject->pathLength;
-            oldPathToDest = new GridPos[ oldPathLength ];
-
-            memcpy( oldPathToDest, ourLiveObject->pathToDest,
-                    sizeof( GridPos ) * ourLiveObject->pathLength );
-            oldCurrentPathStep = ourLiveObject->currentPathStep;
-            }
         
 
         computePathToDest( ourLiveObject );
@@ -22151,14 +22277,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             if( ourLiveObject->xd == oldXD && ourLiveObject->yd == oldYD ) {
                 // completely blocked in, no path at all toward dest
                 
-                if( oldPathToDest != NULL ) {
-                    // restore it
-                    ourLiveObject->pathToDest = oldPathToDest;
-                    ourLiveObject->pathLength = oldPathLength;
-                    ourLiveObject->currentPathStep = oldCurrentPathStep;
-                    oldPathToDest = NULL;
+                if( oldPathExists ) {
+                    restoreSavedPath( ourLiveObject );
                     }
-                
                     
 
                 // ignore click
@@ -22167,13 +22288,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                     delete [] nextActionMessageToSend;
                     nextActionMessageToSend = NULL;
                     }
-                ourLiveObject->inMotion = false;
+                
                 return;
                 }
 
-            if( oldPathToDest != NULL ) {
-                delete [] oldPathToDest;
-                oldPathToDest = NULL;
+            if( oldPathExists ) {
+                freeSavedPath();
+                oldPathExists = false;
                 }
             
 
@@ -22263,9 +22384,8 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             }
         
         
-        if( oldPathToDest != NULL ) {
-            delete [] oldPathToDest;
-            oldPathToDest = NULL;
+        if( oldPathExists ) {
+            freeSavedPath();
             }
             
 
