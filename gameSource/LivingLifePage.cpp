@@ -17734,29 +17734,6 @@ void LivingLifePage::step() {
                         if( gameObjects.getElement(j)->id == pid ) {
                                 
                             LiveObject *existing = gameObjects.getElement(j);
-<<<<<<< HEAD
-            				LiveObject *ourObject = getOurLiveObject();
-                            
-                            Emotion *oldEmot = existing->currentEmot;
-                            
-                            existing->currentEmot = getEmotion( emotIndex );
-
-							if (ourObject != existing && distance(existing->currentPos, ourObject->currentPos) < 5) {
-								if (oldEmot != NULL && existing->currentEmot && existing->currentEmot->triggerWord && oldEmot->triggerWord && strstr(existing->currentEmot->triggerWord, "/HAPPY") && strstr(oldEmot->triggerWord, "/YOOHOO")) {
-									if (HetuwMod::lastSpecialEmote+120 < time(NULL)) {
-										HetuwMod::lastSpecialEmote = time(NULL);
-										int emotId = getEmotionIndex(oldEmot->triggerWord);
-										char message[64];
-										sprintf( message, "EMOT 0 0 %i#", emotId);
-       									sendToServerSocket( message );
-									}
-								}
-							}
-                            
-                            if( numRead == 3 && ttlSec > 0 ) {
-                                existing->emotClearETATime = 
-                                    game_getCurrentTime() + ttlSec;
-=======
                             Emotion *newEmotPlaySound = NULL;
                             
                             if( ttlSec < 0 ) {
@@ -17774,7 +17751,6 @@ void LivingLifePage::step() {
                                     // skip sound
                                     newEmotPlaySound = NULL;
                                     }
->>>>>>> d3f30c6d9e3c5379b1d665ffb2e2b10ae44d2edd
                                 }
                             else {
                                 
@@ -20907,11 +20883,8 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             // store negative in place so that we can show their relation
             // string
             mCurMouseOverID = - p.hitOtherPersonID;
-<<<<<<< HEAD
 			HetuwMod::OnPlayerHoverOver(p.hitOtherPersonID);
-=======
             mCurMouseOverBiome = -1;
->>>>>>> d3f30c6d9e3c5379b1d665ffb2e2b10ae44d2edd
             }
         }
     
