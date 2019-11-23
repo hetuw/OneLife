@@ -442,7 +442,8 @@ static void setupObjectWritingStatus( ObjectRecord *inR ) {
             }
         if( strstr( inR->description, "&writable" ) != NULL ) {
             inR->writable = true;
-            inR->mayHaveMetadata = true;
+            // writable objects don't have metadata yet
+            // inR->mayHaveMetadata = true;
             }
         }
     }
@@ -675,6 +676,27 @@ static void setupDefaultObject( ObjectRecord *inR ) {
 
 
 
+static void setupAutoDefaultTrans( ObjectRecord *inR ) {
+    inR->autoDefaultTrans = false;
+
+    char *pos = strstr( inR->description, "+autoDefaultTrans" );
+    if( pos != NULL ) {
+        inR->autoDefaultTrans = true;
+        }
+    }
+
+
+static void setupNoBackAccess( ObjectRecord *inR ) {
+    inR->noBackAccess = false;
+
+    char *pos = strstr( inR->description, "+noBackAccess" );
+    if( pos != NULL ) {
+        inR->noBackAccess = true;
+        }
+    }
+
+
+
 
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
@@ -738,6 +760,10 @@ float initObjectBankStep() {
                 
                 setupMaxPickupAge( r );
                 
+                setupAutoDefaultTrans( r );
+                
+                setupNoBackAccess( r );                
+
                 // do this later, after we parse floorHugging
                 // setupWall( r );
                 
@@ -2057,13 +2083,19 @@ void initObjectBankFinish() {
                 char *cornerKey = autoSprintf( "+corner%s", label );
                 
                 for( int j=0; j<mapSize; j++ ) {
-                    if( j != i && idMap[j] != NULL ) {
+                    // consider self too, because horizontal and vertical
+                    // might be the same
+                    if( idMap[j] != NULL ) {
                         ObjectRecord *oOther = idMap[j];
                         
                         if( strstr( oOther->description, vertKey ) ) {
                             o->verticalVersionID = oOther->id;
                             }
-                        else if( strstr( oOther->description, cornerKey ) ) {
+                        // not else if
+                        // vert and corner might be the same
+                        // (in case of door, which doesn't have a corner
+                        //  version)
+                        if( strstr( oOther->description, cornerKey ) ) {
                             o->cornerVersionID = oOther->id;
                             }
                         }
@@ -2090,6 +2122,12 @@ void initObjectBankFinish() {
                     cornerO->cornerVersionID = cornerO->id;
                     cornerO->isAutoOrienting = true;
                     }
+                }
+            else if( strstr( o->description, "+causeAutoOrient" ) ) {
+                // an object that participates in auto-orienting
+                // but doesn't have orientation versions defined
+                // (example:  horizontal wall with shelf installed)
+                o->isAutoOrienting = true;
                 }
             }
         }
@@ -3467,6 +3505,10 @@ int addObject( const char *inDescription,
     setupNoHighlight( r );
                 
     setupMaxPickupAge( r );
+
+    setupAutoDefaultTrans( r );
+
+    setupNoBackAccess( r );            
 
     setupWall( r );
     
