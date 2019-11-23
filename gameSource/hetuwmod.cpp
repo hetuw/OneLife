@@ -3117,8 +3117,7 @@ void HetuwMod::onPlayerUpdate( LiveObject* inO, const char* line ) {
 	} else if ( strLine.find("reason_age") != string::npos ) {
 		sprintf( deathMsg->description, "KILLED BY OLD AGE" );
 	} else {
-		delete[] deathMsg->description;
-		deathMsg->description = NULL;
+		sprintf( deathMsg->description, "KILLED BY OLD UNKNOWN" );
 	}
 
 	deathMsg->age = (int)livingLifePage->hetuwGetAge( o );
