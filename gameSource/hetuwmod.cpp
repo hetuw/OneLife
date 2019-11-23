@@ -3551,6 +3551,8 @@ void HetuwMod::drawHelp() {
 		int id = i;
 		if (i > 6) id -= 2;
 
+		if (strstr(emotions.getElement(i)->triggerWord, "/") == NULL) continue;
+
 		if (id < 10) sprintf(str, " %i: %s", id, emotions.getElement(i)->triggerWord);
 		else sprintf(str, "F%i: %s", id-9, emotions.getElement(i)->triggerWord);
 
