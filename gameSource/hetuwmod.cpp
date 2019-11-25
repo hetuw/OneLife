@@ -2374,7 +2374,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	if (!commandKey && isCharKey(inASCII, charKey_xRay)) {
 		if (bHoldDownTo_XRay) bxRay = true;
 		else bxRay = !bxRay;
-		return false; // so it doesnt block the twin abort screen or the vanilla click through feature
+		return true; 
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_TeachLanguage)) {
 		bTeachLanguage = !bTeachLanguage;

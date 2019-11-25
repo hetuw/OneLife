@@ -23022,6 +23022,17 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         return;
         }
 
+	if (inASCII == 'x' || inASCII == 'X') { // hetuw mod - copied and pasted from below in order to allow the cancel of twinning waiting screen
+		if( userTwinCode != NULL &&
+			! mStartedLoadingFirstObjectSet ) {
+
+			closeSocket( mServerSocket );
+			mServerSocket = -1;
+
+			setWaiting( false );
+			setSignal( "twinCancel" );
+		}
+	}
 	if (HetuwMod::livingLifeKeyDown(inASCII))
 		return;
 
@@ -23120,7 +23131,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 setSignal( "twinCancel" );
                 }
             else if( ! mSayField.isFocused() ) {
-                mXKeyDown = true;
+                mXKeyDown = false; // hetuw mod disable click through player function - confuses people
                 }
             break;
         /*
