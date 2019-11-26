@@ -2665,7 +2665,7 @@ bool HetuwMod::livingLifePageMouseDown( float mX, float mY ) {
 			}
 		}
 	}
-	if (isCommandKeyDown() || isShiftKeyDown()) {
+	if (isCommandKeyDown()) {
 		int tileX = round(mX/CELL_D);
 		int tileY = round(mY/CELL_D);
 		moveToAndClickTile(tileX, tileY, !isLastMouseButtonRight());
