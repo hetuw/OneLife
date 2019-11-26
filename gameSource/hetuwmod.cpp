@@ -178,6 +178,11 @@ string HetuwMod::ourFamilyName;
 
 bool HetuwMod::cameraIsFixed;
 
+bool HetuwMod::bMoveClick = false;
+bool HetuwMod::bMoveClickAlpha;
+int HetuwMod::bMoveClickX;
+int HetuwMod::bMoveClickY;
+
 constexpr char HetuwMod::languageArray[HetuwMod::languageArraySize1][HetuwMod::languageArraySize2];
 bool HetuwMod::bTeachLanguage = false;
 int HetuwMod::teachLanguageCount = 0;
@@ -1020,6 +1025,14 @@ void HetuwMod::livingLifeStep() {
 	}
 
 	if (stepCount % 78 == 0) stepLoopTroughObjectsInRange();
+
+	if (bMoveClick && !ourLiveObject->inMotion) {
+		bMoveClick = false;
+		int tileRX = bMoveClickX - ourLiveObject->xd;
+		int tileRY = bMoveClickY - ourLiveObject->yd;
+		if (bMoveClickAlpha) actionAlphaRelativeToMe(tileRX, tileRY);
+		else actionBetaRelativeToMe(tileRX, tileRY);
+	}
 }
 
 void HetuwMod::setYumObjectsColor() {
@@ -2634,6 +2647,7 @@ bool HetuwMod::livingLifeSpecialKeyDown(unsigned char inKeyCode) {
 }
 
 bool HetuwMod::livingLifePageMouseDown( float mX, float mY ) {
+	//printf("hetuw mouse down %f, %f\n", mX, mY);
 	if (bDrawHomeCords) {
 		for (unsigned i=0; i<homePosStack.size(); i++) {
 			if (mX >= homePosStack[i]->drawStartPos.x && mX <= homePosStack[i]->drawEndPos.x) {
@@ -2653,7 +2667,38 @@ bool HetuwMod::livingLifePageMouseDown( float mX, float mY ) {
 			}
 		}
 	}
+	if (isCommandKeyDown() || isShiftKeyDown()) {
+		int tileX = round(mX/CELL_D);
+		int tileY = round(mY/CELL_D);
+		moveToAndClickTile(tileX, tileY, !isLastMouseButtonRight());
+		return true;
+	}
+	bMoveClick = false;
 	return false;
+}
+
+void HetuwMod::moveToAndClickTile(int tileX, int tileY, bool alpha) {
+	int tileRX = tileX - ourLiveObject->xd;
+	int tileRY = tileY - ourLiveObject->yd;
+	if (tileRX <= 1 && tileRX >= -1) {
+		if (tileRY <= 1 && tileRY >= -1) {
+			if (tileRY == 0 || tileRX == 0) {
+				if (alpha) {
+					actionAlphaRelativeToMe(tileRX, tileRY);
+				} else {
+					actionBetaRelativeToMe(tileRX, tileRY);
+				}
+			return;
+			}
+		}
+	}
+	bMoveClickX = tileX;
+	bMoveClickY = tileY;
+	bMoveClickAlpha = alpha;
+	bMoveClick = true;
+	float clickX = tileX*CELL_D;
+	float clickY = tileY*CELL_D;
+	livingLifePage->hetuwClickMove(clickX, clickY);
 }
 
 //	move direction
@@ -2851,6 +2896,7 @@ void HetuwMod::move() {
 	x *= CELL_D;
 	y *= CELL_D;
 
+	bMoveClick = false;
 	livingLifePage->hetuwClickMove(x, y);
 	magnetMoveCount++;
 
@@ -3714,6 +3760,10 @@ void HetuwMod::drawHelp() {
 	if (bDrawYum) setHelpColorSpecial();
 	else setHelpColorNormal();
 	sprintf(str, "%c - FIND YUM", toupper(charKey_FindYum));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+
+	sprintf(str, "CTRL+MOUSECLICK - TILE BASED CLICK");
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 }

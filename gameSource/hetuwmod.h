@@ -282,6 +282,7 @@ public:
 	static bool livingLifeKeyUp(unsigned char inASCII);
 	static bool livingLifeSpecialKeyDown(unsigned char inKeyCode);
 	static bool livingLifePageMouseDown( float mX, float mY );
+	static void moveToAndClickTile(int tileX, int tileY, bool alpha);
 
 	static char* stringToChar(string str); // dont forget to delete[] cstr
 	static void setEmote(int id);
@@ -502,6 +503,11 @@ private:
 	static vector<char*> sayBuffer;
 	static double timeLastSay;
 	static bool clearSayBuffer;
+
+	static bool bMoveClick;
+	static bool bMoveClickAlpha;
+	static int bMoveClickX;
+	static int bMoveClickY;
 };
 
 

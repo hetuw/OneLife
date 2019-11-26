@@ -21419,7 +21419,7 @@ static void freeSavedPath() {
 
 
 void LivingLifePage::pointerDown( float inX, float inY ) {
-	if (HetuwMod::livingLifePageMouseDown( inX, inY ))
+	if (!mForceGroundClick && HetuwMod::livingLifePageMouseDown( inX, inY ))
 		return;
 
     lastMouseX = inX;
