@@ -183,7 +183,7 @@ bool HetuwMod::bMoveClickAlpha;
 int HetuwMod::bMoveClickX;
 int HetuwMod::bMoveClickY;
 
-constexpr char HetuwMod::languageArray[HetuwMod::languageArraySize1][HetuwMod::languageArraySize2];
+//constexpr char HetuwMod::languageArray[HetuwMod::languageArraySize1][HetuwMod::languageArraySize2];
 bool HetuwMod::bTeachLanguage = false;
 int HetuwMod::teachLanguageCount = 0;
 double HetuwMod::timeLastLanguage = 0;
@@ -1140,22 +1140,20 @@ void HetuwMod::teachLanguage() {
 	
 	int maxTextLength = livingLifePage->hetuwGetTextLengthLimit();
 	char text[maxTextLength+1];
-	//int size2 = sizeof(languageArray[0]);
-	//int size1 = sizeof(languageArray)/size2;
 	int size1 = languageArraySize1;
-	int size2 = languageArraySize2;
+	//int size2 = languageArraySize2;
 
 	for (int i=0; i<maxTextLength; i++) {
 		for (int k=0; ; k++, i++) {
-			if (k >= size2 || languageArray[teachLanguageCount][k] == 0) {
+			//if (k >= size2 || languageArray[teachLanguageCount][k] == 0) {
 				teachLanguageCount++;
 				if (teachLanguageCount >= size1) {
 					teachLanguageCount = 0;
 				}
 				break;
-			}
+			//}
 			if (i >= maxTextLength) break;
-			text[i] = languageArray[teachLanguageCount][k];
+			//text[i] = languageArray[teachLanguageCount][k];
 		}
 		if (i < maxTextLength) text[i] = ' ';
 	}
@@ -2390,9 +2388,9 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		return true; 
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_TeachLanguage)) {
-		bTeachLanguage = !bTeachLanguage;
-		if (!bTeachLanguage) teachLanguageCount = 0;
-		return true;
+		//bTeachLanguage = !bTeachLanguage;
+		//if (!bTeachLanguage) teachLanguageCount = 0;
+		//return true;
 	}
 	if (!commandKey && isCharKey(inASCII, charKey_FindYum)) {
 		if (bHoldDownTo_FindYum) bDrawYum = true;
@@ -3751,11 +3749,11 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 
-	if (bTeachLanguage) setHelpColorSpecial();
-	else setHelpColorNormal();
-	sprintf(str, "%c - TEACH LANGUAGE", toupper(charKey_TeachLanguage));
-	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
-	drawPos.y -= lineHeight;
+	//if (bTeachLanguage) setHelpColorSpecial();
+	//else setHelpColorNormal();
+	//sprintf(str, "%c - TEACH LANGUAGE", toupper(charKey_TeachLanguage));
+	//livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	//drawPos.y -= lineHeight;
 
 	if (bDrawYum) setHelpColorSpecial();
 	else setHelpColorNormal();
