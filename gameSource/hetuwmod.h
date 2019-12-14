@@ -8,6 +8,7 @@
 #define hetuwLogFileName "hetuwlog.txt"
 #define hetuwLogSeperator " | " // needs to be 3 char long
 #define hetuwFakeCoord 1977
+#define hetuwBitcoinWallet "bc1q66jzg06xxd8uup0svwhhwum23d3mqlrnsccf2j" // donate something :)
 
 #include "LivingLifePage.h"
 #include <vector>

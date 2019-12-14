@@ -623,6 +623,10 @@ void HetuwMod::initSettings() {
 
 	ofstream ofs( hetuwSettingsFileName, ofstream::out );
 
+	ofs << "// if you want to support me and the hetuw mod you can send bitcoin to the address below, thank you <3" << endl;
+	ofs << "// bitcoin address: " << hetuwBitcoinWallet << endl;
+	ofs << endl;
+
 	writeCharKeyToStream( ofs, "key_up", charKey_Up );
 	writeCharKeyToStream( ofs, "key_down", charKey_Down );
 	writeCharKeyToStream( ofs, "key_left", charKey_Left );
