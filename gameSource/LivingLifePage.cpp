@@ -1143,6 +1143,8 @@ typedef enum messageType {
     GRAVE_MOVE,
     GRAVE_OLD,
     OWNER,
+    FOLLOWING,
+    EXILED,
     VALLEY_SPACING,
     FLIGHT_DEST,
     BAD_BIOMES,
@@ -1253,6 +1255,12 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "OW" ) == 0 ) {
         returnValue = OWNER;
+        }
+    else if( strcmp( copy, "FW" ) == 0 ) {
+        returnValue = FOLLOWING;
+        }
+    else if( strcmp( copy, "EX" ) == 0 ) {
+        returnValue = EXILED;
         }
     else if( strcmp( copy, "VS" ) == 0 ) {
         returnValue = VALLEY_SPACING;
@@ -2524,8 +2532,7 @@ LivingLifePage::LivingLifePage()
           mCellFillSprite( loadWhiteSprite( "cellFill.tga" ) ),
           mHintArrowSprite( loadSprite( "hintArrow.tga" ) ),
           mHomeSlipSprite( loadSprite( "homeSlip.tga", false ) ),
-          mHomeSlipBlankTopSprite( 
-              loadSprite( "homeSlipBlankTop.tga", false ) ),
+          mHomeSlip2Sprite( loadSprite( "homeSlip2.tga", false ) ),
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
@@ -2544,8 +2551,23 @@ LivingLifePage::LivingLifePage()
         mUsingSteam = true;
         }
 
+
+    const char *badgeSettingsNames[3] = { "badgeObjects",
+                                          "badgeObjectsHalfX",
+                                          "badgeObjectsFullX" };
+    for( int i=0; i<3; i++ ) {
+        SimpleVector<int> *badgeSetting = 
+            SettingsManager::getIntSettingMulti( badgeSettingsNames[i] );
+        
+        mLeadershipBadges[i].push_back_other( badgeSetting );
+        delete badgeSetting;
+        }
+    
+    mFullXObjectID = SettingsManager::getIntSetting( "fullX", 0 );
+    
+
     mHomeSlipSprites[0] = mHomeSlipSprite;
-    mHomeSlipSprites[1] = mHomeSlipBlankTopSprite;
+    mHomeSlipSprites[1] = mHomeSlip2Sprite;
     
 
     mForceGroundClick = false;
@@ -2628,12 +2650,18 @@ LivingLifePage::LivingLifePage()
 
     mHomeSlipHideOffset[0].x = 0;
     mHomeSlipHideOffset[0].y = -360 - HetuwMod::panelOffsetY;
+    //mNotePaperHideOffset.x = -282; // vanilla
+    //mNotePaperHideOffset.y = -420;
 
-    mHomeSlipHideOffset[1].x = 0;
-    mHomeSlipHideOffset[1].y = 421;
+
+    //mHomeSlipHideOffset[0].x = -41; // vanilla
+    //mHomeSlipHideOffset[0].y = -360;
+
+    mHomeSlipHideOffset[1].x =  30;
+    mHomeSlipHideOffset[1].y = -360;
 
     mHomeSlipShowDelta[0] = 68;
-    mHomeSlipShowDelta[1] = -50;
+    mHomeSlipShowDelta[1] = 68;
     
 
 
@@ -2657,6 +2685,11 @@ LivingLifePage::LivingLifePage()
     
         mHungerSlipHideOffsets[i].x = -540;
         mHungerSlipHideOffsets[i].y = -370 - HetuwMod::panelOffsetY;
+        //mHungerSlipShowOffsets[i].x = -558; // vanilla
+        //mHungerSlipShowOffsets[i].y = -250;
+    
+        //mHungerSlipHideOffsets[i].x = -558; // vanilla
+        //mHungerSlipHideOffsets[i].y = -370;
         
         mHungerSlipWiggleTime[i] = 0;
         mHungerSlipWiggleAmp[i] = 0;
@@ -2930,6 +2963,10 @@ void LivingLifePage::clearLiveObjects() {
         if( nextObject->name != NULL ) {
             delete [] nextObject->name;
             }
+        
+        if( nextObject->leadershipNameTag != NULL ) {
+            delete [] nextObject->leadershipNameTag;
+            }
 
         delete nextObject->futureAnimStack;
         delete nextObject->futureHeldAnimStack;
@@ -3062,7 +3099,7 @@ LivingLifePage::~LivingLifePage() {
     freeSprite( mChalkBlotSprite );
     freeSprite( mPathMarkSprite );
     freeSprite( mHomeSlipSprite );
-    freeSprite( mHomeSlipBlankTopSprite );
+    freeSprite( mHomeSlip2Sprite );
     
     if( teaserVideo ) {
         freeSprite( mTeaserArrowLongSprite );
@@ -4576,6 +4613,32 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
     
     HoldingPos holdingPos;
     holdingPos.valid = false;
+
+    int badge = -1;
+    if( inObj->hasBadge && inObj->clothing.tunic != NULL ) {
+        int badgeXIndex = 0;
+        
+        if( inObj->isDubious ) {
+            badgeXIndex = 1;
+            }
+        if( inObj->isExiled ) {
+            badgeXIndex = 2;
+            }
+        
+        if( inObj->leadershipLevel < mLeadershipBadges[badgeXIndex].size() ) {
+            badge = mLeadershipBadges[badgeXIndex].
+                getElementDirect( inObj->leadershipLevel );
+            }
+        else if( mLeadershipBadges[badgeXIndex].size() > 0 ) {
+            badge = mLeadershipBadges[badgeXIndex].
+                getElementDirect( mLeadershipBadges[badgeXIndex].size() - 1 );
+            }
+        }
+    else if( inObj->isExiled ) {
+        // exiled and no badge visible
+        // show straight X
+        badge = mFullXObjectID;
+        }
     
 
     if( inObj->holdingID > 0 &&
@@ -4645,6 +4708,20 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
             personPos.x -= shiftScale * 32;
             }
         
+        
+        // draw on bare skin only if plain X
+        setAnimationBadge( badge, 
+                           ( badge == mFullXObjectID ) );
+        if( badge != -1 ) {
+            if( badge == mFullXObjectID ) {
+                FloatColor white = { 1, 1, 1, 1 };
+                setAnimationBadgeColor( white );
+                }
+            else {
+                setAnimationBadgeColor( inObj->badgeColor );
+                }
+            }
+
         holdingPos =
             drawObjectAnim( inObj->displayID, 2, curType, 
                             timeVal,
@@ -4669,7 +4746,9 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                             inObj->clothing,
                             inObj->clothingContained );
         hidePersonShadows( false );
-        
+
+        setAnimationBadge( -1 );
+
         setAnimationEmotion( NULL );
         }
     
@@ -4880,7 +4959,12 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                 
                 restoreSkipDrawing( heldObject );
                 }
+
             
+            setAnimationBadge( badge );
+            if( badge != -1 ) {
+                setAnimationBadgeColor( inObj->badgeColor );
+                }
 
             // rideable object
             holdingPos =
@@ -4908,6 +4992,8 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
                                 inObj->clothingContained );
             
             setAnimationEmotion( NULL );
+       
+            setAnimationBadge( -1 );
             }
         
 
@@ -5680,7 +5766,7 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
         arrowPos.y += 35;
         }
     else {
-        arrowPos.y -= 35;
+        arrowPos.y += 35;
         }
     
     LiveObject *ourLiveObject = getOurLiveObject();
@@ -5763,20 +5849,26 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
             mapHintPos.y -= 47;
             }
         else {
-            distPos.y += 32;
-            mapHintPos.y += 32;
+            distPos.y -= 47;
+            mapHintPos.y -= 47;
             }
         
 
         setDrawColor( 0, 0, 0, 1 );
 
+        if( inIndex == 1 ) {
+            doublePair bellPos = distPos;
+            bellPos.y += 20;    
+            handwritingFont->drawString( "BELL", bellPos, alignCenter );
+            }
+        
         if( temporary ) {
             // push distance label further down
             if( inIndex == 0 ) {
                 distPos.y -= 20;
                 }
             else {
-                distPos.y += 20;
+                distPos.y -= 20;
                 }
             mapHintEverDrawn[inIndex] = true;
             pencilFont->drawString( "MAP", mapHintPos, alignCenter );
@@ -5786,7 +5878,7 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
                 distPos.y -= 20;
                 }
             else {
-                distPos.y += 20;
+                distPos.y -= 20;
                 }
             pencilErasedFont->drawString( "MAP", mapHintPos, alignCenter );
             }
@@ -9085,7 +9177,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
 
 
-    for( int j=0; j<2; j++ ) {
+    for( int j=0; j<1; j++ ) { // hetuw mod - only draw first home - vanilla: j<2 
         doublePair slipPos = add( mHomeSlipPosOffset[j], lastScreenViewCenter );
         
         if( ! equal( mHomeSlipPosOffset[j], mHomeSlipHideOffset[j] ) ) {
@@ -9957,10 +10049,30 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 else {
                     des = (char*)translate( "you" );
-                    if( ourLiveObject->name != NULL ) {
-                        des = autoSprintf( "%s - %s", des, 
-                                           ourLiveObject->name );
+                    
+                    if( ourLiveObject->leadershipNameTag != NULL ||
+                        ourLiveObject->name != NULL ) {
+                        char *workingName;
+                        if( ourLiveObject->name != NULL ) {
+                            workingName = 
+                                autoSprintf( " %s", ourLiveObject->name );
+                            }
+                        else {
+                            workingName = stringDuplicate( "" );
+                            }
+                        
+                        const char *leaderString = "";
+                        
+                        if( ourLiveObject->leadershipNameTag != NULL ) {
+                            leaderString = ourLiveObject->leadershipNameTag;
+                            }
+                        
+                        
+                        des = autoSprintf( "%s - %s%s", des, 
+                                           leaderString, workingName );
                         desToDelete = des;
+
+                        delete [] workingName;
                         }
                     }
                 }
@@ -9999,6 +10111,25 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     
                     desToDelete = des;
                     }
+                
+                if( otherObj->leadershipNameTag != NULL ) {
+                    if( otherObj->name == NULL ) {
+                        des = autoSprintf( "%s - %s",
+                                           otherObj->leadershipNameTag, des );
+                        }
+                    else {
+                        des = autoSprintf( "%s %s",
+                                           otherObj->leadershipNameTag, des );
+                        }
+                    
+                    if( desToDelete != NULL ) {
+                        delete [] desToDelete;
+                        }
+                    
+                    desToDelete = des;
+                    }
+                
+
                 if( otherObj != NULL && 
                     ( otherObj->dying || isSick( otherObj ) )
                     && otherObj->holdingID > 0 ) {
@@ -11781,6 +11912,34 @@ void LivingLifePage::endExtraObjectMove( int inExtraIndex ) {
 
 
 
+// color list from here:
+// https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
+
+#define NUM_BADGE_COLORS 17
+static const char *badgeColors[NUM_BADGE_COLORS] = { "#e6194B", 
+                                                     "#3cb44b", 
+                                                     "#ffe119", 
+                                                     "#4363d8", 
+                                                     "#f58231",
+                                                     
+                                                     "#42d4f4", 
+                                                     "#f032e6", 
+                                                     "#fabebe", 
+                                                     "#469990",
+                                                     "#e6beff", 
+                                                     
+                                                     "#9A6324", 
+                                                     "#fffac8", 
+                                                     "#800000", 
+                                                     "#aaffc3", 
+                                                     "#000075", 
+                                                     
+                                                     "#a9a9a9", 
+                                                     "#ffffff" };
+
+
+
+
         
 void LivingLifePage::step() {
     
@@ -12173,7 +12332,7 @@ void LivingLifePage::step() {
                         mHomeSlipPosTargetOffset[j].y += 20;
                         }
                     else {
-                        mHomeSlipPosTargetOffset[j].y -= 20;
+                        mHomeSlipPosTargetOffset[j].y += 20;
                         }
                     }
                 if( temporary || 
@@ -12182,7 +12341,7 @@ void LivingLifePage::step() {
                         mHomeSlipPosTargetOffset[j].y += 20;
                         }
                     else {
-                        mHomeSlipPosTargetOffset[j].y -= 20;
+                        mHomeSlipPosTargetOffset[j].y += 20;
                         }
                     }
                 }
@@ -13709,6 +13868,84 @@ void LivingLifePage::step() {
             tokens->deallocateStringElements();
             delete tokens;
             }
+        else if( type == FOLLOWING ) {
+            SimpleVector<char*> *tokens = tokenizeString( message );
+            
+            if( tokens->size() >= 4 ) {
+             
+                for( int i=1; i< tokens->size() - 1; i += 3 ){
+                    
+                    int f = 0;
+                    int l = 0;
+                    int c = -1;
+                    
+                    sscanf( tokens->getElementDirect( i ), "%d", &f );
+                    sscanf( tokens->getElementDirect( i + 1 ), "%d", &l );
+                    sscanf( tokens->getElementDirect( i + 2 ), "%d", &c );
+                    
+                    LiveObject *fo = getLiveObject( f );
+                    
+                    if( fo != NULL ) {
+                        if( l != 0 ) {
+                            fo->followingID = l;
+                            }
+                        else {
+                            fo->followingID = -1;
+                            }
+                        }
+                    
+                    if( l > 0 && c != -1 ) {
+                        LiveObject *lo = getLiveObject( l );
+                        if( lo != NULL ) {
+                            while( c >= NUM_BADGE_COLORS ) {
+                                // wrap around
+                                c -= NUM_BADGE_COLORS;
+                                }
+                            lo->personalLeadershipColor = getFloatColor(
+                                badgeColors[c] );
+                            }
+                        }
+                    }
+                }
+            tokens->deallocateStringElements();
+            delete tokens;
+            
+            updateLeadership();
+            }
+        else if( type == EXILED ) {
+            SimpleVector<char*> *tokens = tokenizeString( message );
+            
+            if( tokens->size() >= 3 ) {
+             
+                for( int i=1; i< tokens->size() - 1; i += 2 ){
+                    
+                    // target and perp
+                    int t = 0;
+                    int p = 0;
+                
+                    sscanf( tokens->getElementDirect( i ), "%d", &t );
+                    sscanf( tokens->getElementDirect( i + 1 ), "%d", &p );
+                    
+                    LiveObject *to = getLiveObject( t );
+                    
+                    if( to != NULL ) {
+                        if( p == -1 ) {
+                            // their exile list has been cleared
+                            to->exiledByIDs.deleteAll();
+                            }
+                        else if( p > 0 ) {
+                            if( to->exiledByIDs.getElementIndex( p ) == -1 ) {
+                                to->exiledByIDs.push_back( p );
+                                }
+                            }
+                        }
+                    }
+                }
+            tokens->deallocateStringElements();
+            delete tokens;
+            
+            updateLeadership();
+            }
         else if( type == VALLEY_SPACING ) {
             sscanf( message, "VS\n%d %d",
                     &valleySpacing, &valleyOffset );
@@ -15234,6 +15471,19 @@ void LivingLifePage::step() {
                 o.killMode = false;
                 o.killWithID = -1;
                 o.chasingUs = false;
+
+                o.followingID = -1;
+                o.highestLeaderID = -1;
+                o.leadershipLevel = 0;
+                o.personalLeadershipColor.r = 1;
+                o.personalLeadershipColor.g = 1;
+                o.personalLeadershipColor.b = 1;
+                o.personalLeadershipColor.a = 1;
+                o.hasBadge = false;
+                o.isExiled = false;
+                o.isDubious = false;
+                o.followingUs = false;
+                o.leadershipNameTag = NULL;
                 
 
                 int forced = 0;
@@ -17187,10 +17437,16 @@ void LivingLifePage::step() {
                                 delete [] nextObject->name;
                                 }
 
+                            if( nextObject->leadershipNameTag != NULL ) {
+                                delete [] nextObject->leadershipNameTag;
+                                }
+
                             delete nextObject->futureAnimStack;
                             delete nextObject->futureHeldAnimStack;
 
                             gameObjects.deleteElement( i );
+
+                            updateLeadership();
                             break;
                             }
                         }
@@ -23960,3 +24216,298 @@ void LivingLifePage::pushOldHintArrow( int inIndex ) {
 char LivingLifePage::isHintFilterStringInvalid() {
     return mHintFilterString == NULL || mHintFilterStringNoMatch;
     }
+
+
+
+
+static void prependLeadershipTag( LiveObject *inPlayer, const char *inPrefix ) {
+    LiveObject *o = inPlayer;
+    
+    char *newTag;
+    
+    if( o->leadershipNameTag != NULL ) {
+        
+        newTag = autoSprintf( "%s %s", 
+                              inPrefix,
+                              o->leadershipNameTag );
+        
+        delete [] o->leadershipNameTag;
+        }
+    else {
+        newTag = autoSprintf( "%s", inPrefix );
+        }
+    
+    o->leadershipNameTag = newTag;
+    }
+
+
+
+
+
+
+
+
+#define NUM_LEADERSHIP_NAMES 8
+static const char *
+leadershipNameKeys[NUM_LEADERSHIP_NAMES][2] = { { "lord",
+                                                  "lady" },
+                                                { "baron",
+                                                  "baroness" },
+                                                { "count",
+                                                  "countess" },
+                                                { "duke",
+                                                  "duchess" },
+                                                { "king",
+                                                  "queen" },
+                                                { "emperor",
+                                                  "empress" },
+                                                { "highEmperor",
+                                                  "highEmpress" },
+                                                { "supremeEmperor",
+                                                  "supremeEmpress" } };
+
+
+
+void LivingLifePage::updateLeadership() {
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+        
+        // reset for now
+        // we will rebuild these
+        o->leadershipLevel = 0;
+        o->highestLeaderID = -1;
+        o->hasBadge = false;
+        o->isExiled = false;
+        o->isDubious = false;
+        o->followingUs = false;
+        }
+
+
+    // compute leadership levels
+    char change = true;
+    
+    while( change ) {
+        change = false;
+        for( int i=0; i<gameObjects.size(); i++ ) {
+            LiveObject *o = gameObjects.getElement( i );
+            
+            if( o->followingID != -1 ) {
+                
+                LiveObject *l = getGameObject( o->followingID );
+                
+                if( l != NULL ) {
+                    if( l->leadershipLevel <= o->leadershipLevel ) {
+                        l->leadershipLevel = o->leadershipLevel + 1;
+                        change = true;
+                        }
+                    }
+                }
+            }
+        }
+    
+    // now form names based on leadership levels
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+        
+        if( o->leadershipNameTag != NULL ) {
+            delete [] o->leadershipNameTag;
+            o->leadershipNameTag = NULL;
+            }
+        
+        if( o->leadershipLevel > 0 ) {
+            
+            int lv = o->leadershipLevel;
+            
+            if( lv > NUM_LEADERSHIP_NAMES ) {
+                lv = NUM_LEADERSHIP_NAMES;
+                }
+            
+            lv -= 1;
+
+            int gIndex = 0;
+            if( ! getObject( o->displayID )->male ) {
+                gIndex = 1;
+                }
+            o->leadershipNameTag = 
+                stringDuplicate( translate( leadershipNameKeys[lv][gIndex] ) );
+            }
+        }
+
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+
+        int nextID = o->followingID;
+
+        while( nextID != -1 ) {
+            if( nextID == ourID ) {
+                o->followingUs = true;
+                }
+            
+            LiveObject *l = getGameObject( nextID );
+            if( l != NULL ) {
+                o->highestLeaderID = nextID;
+                
+                if( l->highestLeaderID != -1 ) {
+                    o->highestLeaderID = l->highestLeaderID;
+                    if( l->followingUs ) {
+                        o->followingUs = true;
+                        }
+                    nextID = -1;
+                    }
+                else {
+                    nextID = l->followingID;
+                    }
+                }
+            else {
+                nextID = -1;
+                }
+            }
+        if( o->highestLeaderID != -1 ) {
+            LiveObject *l = getGameObject( o->highestLeaderID );
+            if( l != NULL ) {
+                o->hasBadge = true;
+                o->badgeColor = l->personalLeadershipColor;
+                }
+            }
+        else if( o->leadershipLevel > 0 ) {
+            // a leader with no other leaders above
+            o->hasBadge = true;
+            o->badgeColor = o->personalLeadershipColor;
+            }
+        }
+
+    
+    SimpleVector<int> ourLeadershipChain;
+    
+    LiveObject *ourLiveObject = getOurLiveObject();
+    
+    int nextID = ourLiveObject->followingID;
+    
+    while( nextID != -1 ) {
+        ourLeadershipChain.push_back( nextID );
+        
+        LiveObject *l = getGameObject( nextID );
+
+        if( l != NULL ) {
+            nextID = l->followingID;
+            }
+        else {
+            nextID = -1;
+            }
+        }
+
+
+
+    // find our followers
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+        if( o->followingUs ) {
+            
+            prependLeadershipTag( o, translate( "follower" ) );
+            }
+        }
+
+
+    
+    // find exiled people.  We might see ourselves as exiled.
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+        
+        // see if any of our leaders (or us) have this person exiled
+        for( int e=0; e < o->exiledByIDs.size(); e++ ) {
+            int eID = o->exiledByIDs.getElementDirect( e );
+            
+            if( eID == ourID ||
+                ourLeadershipChain.getElementIndex( eID ) != -1 ) {
+                
+                o->isExiled = true;
+                
+                prependLeadershipTag( o, translate( "exiled" ) );
+                break;
+                }
+            }
+        }
+    // now find dubious people who are following those we see as exiled
+    // we can be dubious too
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+
+        if( o->isExiled ) {
+            continue;
+            }
+        
+        // not seen as exiled by us
+        
+        // follow their leadership chain up
+        // look for exiled leaders
+        int nextID = o->followingID;
+
+        while( nextID != -1 ) {
+            
+            LiveObject *l = getGameObject( nextID );
+            if( l != NULL ) {
+                if( l->isExiled ) {
+                    
+                    o->isDubious = true;
+                    
+                    prependLeadershipTag( o, translate( "dubious" ) );
+                    
+                    break;
+                    }
+                nextID = l->followingID;
+                }
+            else {
+                nextID = -1;
+                }
+            }
+        }
+
+
+    // add YOUR in front of our leaders and followers, even if exiled
+    for( int i=0; i<ourLeadershipChain.size(); i++ ) {
+        
+        LiveObject *l = getGameObject( 
+            ourLeadershipChain.getElementDirect( i ) );
+
+        if( l != NULL ) {
+            if( l->leadershipNameTag != NULL ) {
+                
+                prependLeadershipTag( l, translate( "your" ) );
+                }
+            }
+        }
+    for( int i=0; i<gameObjects.size(); i++ ) {
+        LiveObject *o = gameObjects.getElement( i );
+        if( o->followingUs ) {
+                            
+            if( o->leadershipNameTag != NULL ) {
+                
+                prependLeadershipTag( o, translate( "your" ) );
+                }            
+            }
+        }
+
+
+    
+
+    // find our allies
+    if( ourLiveObject->highestLeaderID != -1 ) {
+        for( int i=0; i<gameObjects.size(); i++ ) {
+            LiveObject *o = gameObjects.getElement( i );
+            if( o != ourLiveObject && 
+                o->highestLeaderID == ourLiveObject->highestLeaderID &&
+                ! o->isExiled &&
+                ! o->followingUs &&
+                o->leadershipNameTag == NULL ) {
+                
+                o->leadershipNameTag = autoSprintf( "%s %s",
+                                                    translate( "your" ),
+                                                    translate( "ally" ) );
+                }
+            }
+        }
+
+    
+    
+    }
+
