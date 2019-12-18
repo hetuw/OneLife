@@ -1,8 +1,6 @@
 #ifndef HETUWMOD_H
 #define HETUWMOD_H
 
-#define hetuwSayDelay 2.1
-
 #define hetuwWaitingText "press %c in game for help"
 #define hetuwSettingsFileName "hetuw.cfg"
 #define hetuwLogFileName "hetuwlog.txt"
@@ -504,6 +502,7 @@ private:
 	static vector<char*> sayBuffer;
 	static double timeLastSay;
 	static bool clearSayBuffer;
+	static float sayDelay;
 
 	static bool bMoveClick;
 	static bool bMoveClickAlpha;

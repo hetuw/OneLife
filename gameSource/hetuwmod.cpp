@@ -191,6 +191,7 @@ double HetuwMod::timeLastLanguage = 0;
 vector<char*> HetuwMod::sayBuffer;
 double HetuwMod::timeLastSay = 0;
 bool HetuwMod::clearSayBuffer;
+float HetuwMod::sayDelay = 2.1;
 
 int *HetuwMod::becomesFoodID;
 SimpleVector<int> HetuwMod::yummyFoodChain;
@@ -591,6 +592,11 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 		return true;
 	}
 
+	if (strstr(name, "chat_delay")) {
+		sayDelay = stoi(value)/10.0f;
+		return true;
+	}
+
 	return false;
 }
 
@@ -615,8 +621,12 @@ void HetuwMod::initSettings() {
 			getSettingsFileLine( name, value, line );
 			if (strlen(name) < 1) continue;
 			//printf("hetuw name: %s, value: %s\n", name, value);
-			if (!setSetting( name, value ))
-				printf("hetuw WARNING invalid %s line: %s\n", hetuwSettingsFileName, line.c_str());
+			try {
+				if (!setSetting( name, value ))
+					printf("hetuw WARNING invalid %s line: %s\n", hetuwSettingsFileName, line.c_str());
+			} catch (...) {
+				printf("hetuw WARNING %s, exception thrown at line: %s\n", hetuwSettingsFileName, line.c_str());
+			}
 		}
 	}
 	ifs.close();
@@ -675,6 +685,8 @@ void HetuwMod::initSettings() {
 	ofs << endl;
 	ofs << "automatic_data_update = " << (char)(bAutoDataUpdate+48) << endl;
 	ofs << "hetuw_log = " << (char)(bWriteLogs+48) << " // will create a log file '" << hetuwLogFileName << "' which resets at the beginning of each life - logs different events" << endl;
+	ofs << endl;
+	ofs << "chat_delay = " << to_string((int)(sayDelay*10)) << " // wait atleast X time before sending the next text (10 = 1 second) - set it to 0 to deactivate it" << endl;
 
 	ofs.close();
 }
@@ -1119,7 +1131,7 @@ void HetuwMod::SayStep() {
 	}
 
 	double curTime = game_getCurrentTime();
-	if (curTime-timeLastSay < hetuwSayDelay) return;
+	if (curTime-timeLastSay < sayDelay) return;
 	timeLastSay = curTime;
 
 	livingLifePage->hetuwSay(sayBuffer.front());
@@ -1139,7 +1151,7 @@ void HetuwMod::Say(const char *text) {
 
 void HetuwMod::teachLanguage() {
 	double curTime = game_getCurrentTime();
-	if (curTime-timeLastLanguage < hetuwSayDelay) return;
+	if (curTime-timeLastLanguage < 2.1) return;
 	timeLastLanguage = curTime;
 	
 	int maxTextLength = livingLifePage->hetuwGetTextLengthLimit();
