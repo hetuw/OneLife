@@ -14900,12 +14900,14 @@ int main() {
                      nextConnection->ticketServerAccepted &&
                      ! nextConnection->lifeTokenSpent ) {
 
+                // this "butDisconnected" state applies even if
+                // we see them as connected, becasue they are clearly
+                // reconnecting now
                 char liveButDisconnected = false;
                 
                 for( int p=0; p<players.size(); p++ ) {
                     LiveObject *o = players.getElement( p );
                     if( ! o->error && 
-                        ! o->connected && 
                         strcmp( o->email, 
                                 nextConnection->email ) == 0 ) {
                         liveButDisconnected = true;
@@ -19179,7 +19181,7 @@ int main() {
                                 // instead, stick to the food cap shown
                                 // in the client (what we last reported
                                 // to them)
-                                int cap = nextPlayer->lastReportedFoodCapacity;
+                                int cap = targetPlayer->lastReportedFoodCapacity;
                                 
 
                                 // first case:
@@ -22901,7 +22903,7 @@ int main() {
                 int followL = 0;
                 unsigned char *followM = getFollowingMessage( true, &followL );
                 
-                if( followM != NULL ) {
+                if( followM != NULL && nextPlayer->connected ) {
                     nextPlayer->sock->send( 
                         followM, 
                         followL, 
@@ -22915,7 +22917,7 @@ int main() {
                 int exileL = 0;
                 unsigned char *exileM = getExileMessage( true, &exileL );
                 
-                if( exileM != NULL ) {
+                if( exileM != NULL && nextPlayer->connected ) {
                     nextPlayer->sock->send( 
                         exileM, 
                         exileL, 

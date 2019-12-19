@@ -10112,7 +10112,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     desToDelete = des;
                     }
                 
-                if( otherObj->leadershipNameTag != NULL ) {
+                if( otherObj != NULL && otherObj->leadershipNameTag != NULL ) {
                     if( otherObj->name == NULL ) {
                         des = autoSprintf( "%s - %s",
                                            otherObj->leadershipNameTag, des );
@@ -16544,7 +16544,8 @@ void LivingLifePage::step() {
                                         getObject( existing->holdingID );
                                     
 
-                                    if( oldHeld > 0 && 
+                                    if( oldHeld > 0 &&
+                                        oldHeld != existing->holdingID &&
                                         heldTransitionSourceID == -1 ) {
                                         // held object auto-decayed from 
                                         // some other object
@@ -16610,7 +16611,8 @@ void LivingLifePage::step() {
                                         }
                                     
                                     
-                                    if( ( ! otherSoundPlayed ||
+                                    if( oldHeld != existing->holdingID &&
+                                        ( ! otherSoundPlayed ||
                                           heldObj->creationSoundForce )
                                           && 
                                         ! clothingChanged &&
@@ -22477,15 +22479,14 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
             delete [] killMessage;
             
 
-            // try to walk near victim right away
-            killMode = true;
-                    
+            // given that there's a cool-down now before killing, don't
+            // auto walk there.
+            // Player will enter kill state, and we'll let them navivate there
+            // after that.
             ourLiveObject->killMode = true;
             ourLiveObject->killWithID = ourLiveObject->holdingID;
-
-            // ignore mod-click from here on out, to avoid
-            // force-dropping weapon
-            modClick = false;
+            
+            return;
             }
         }
     
