@@ -3225,6 +3225,8 @@ void HetuwMod::onNameUpdate(LiveObject* o) {
 		else if (strstr(o->name, "EVE TARR") != NULL) sendEmote("/JOY");
 		else if (strstr(o->name, "EVE BOOB") != NULL) sendEmote("/SHOCKED");
 		else if (strstr(o->name, "EVE GAY") != NULL) sendEmote("/HAPPY");
+		else if (strstr(o->name, "EVE GRIM") != NULL) sendEmote("/HUBBA");
+		else if (strstr(o->name, "EVE ROHRER") != NULL) sendEmote("/HUBBA");
 	}
 }
 
