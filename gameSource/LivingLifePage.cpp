@@ -23456,7 +23456,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
 			setSignal( "twinCancel" );
 		}
 	}
-	if (HetuwMod::livingLifeKeyDown(inASCII))
+	if (!vogMode) if (HetuwMod::livingLifeKeyDown(inASCII))
 		return;
 
     switch( inASCII ) {
