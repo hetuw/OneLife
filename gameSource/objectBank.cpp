@@ -717,6 +717,21 @@ static void setupAlcohol( ObjectRecord *inR ) {
     }
 
 
+static void setupBlocksMoving( ObjectRecord *inR ) {
+    inR->blocksMoving = false;
+    
+    if( inR->blocksWalking ) {
+        inR->blocksMoving = true;
+        return;
+        }
+    
+    char *pos = strstr( inR->description, "+blocksMoving" );
+
+    if( pos != NULL ) {
+        inR->blocksMoving = true;
+        }
+    }
+
 
 
 int getMaxSpeechPipeIndex() {
@@ -786,6 +801,7 @@ float initObjectBankStep() {
                 setupNoBackAccess( r );                
 
                 setupAlcohol( r );
+                
 
                 // do this later, after we parse floorHugging
                 // setupWall( r );
@@ -908,6 +924,9 @@ float initObjectBankStep() {
                     
 
                 next++;
+
+                
+                setupBlocksMoving( r );
 
 
                 
@@ -3536,6 +3555,9 @@ int addObject( const char *inDescription,
     setupAlcohol( r );
 
     setupWall( r );
+
+    setupBlocksMoving( r );
+    
     
     r->toolSetIndex = -1;
     
