@@ -232,6 +232,7 @@ static const char *allowedSayChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?! ";
 
 static int killEmotionIndex = 2;
 static int victimEmotionIndex = 2;
+static int victimTerrifiedEmotionIndex = 2;
 
 
 static double lastBabyPassedThresholdTime = 0;
@@ -908,6 +909,10 @@ typedef struct LiveObject {
         // babies born to this player
         SimpleVector<timeSec_t> *babyBirthTimes;
         SimpleVector<int> *babyIDs;
+
+        // for CURSE MY BABY after baby is dead/deleted
+        char *lastBabyEmail;
+        
         
         // wall clock time after which they can have another baby
         // starts at 0 (start of time epoch) for non-mothers, as
@@ -1654,6 +1659,11 @@ static void deleteMembers( FreshConnection *inConnection ) {
 
 
 
+static SimpleVector<char *> curseWords;
+
+static char *curseSecret = NULL;
+
+
 static SimpleVector<char *> familyNamesAfterEveWindow;
 static SimpleVector<int> familyLineageEveIDsAfterEveWindow;
 static SimpleVector<int> familyCountsAfterEveWindow;
@@ -1741,6 +1751,9 @@ void quitCleanup() {
             }
         if( nextPlayer->origEmail != NULL  ) {
             delete [] nextPlayer->origEmail;
+            }
+        if( nextPlayer->lastBabyEmail != NULL  ) {
+            delete [] nextPlayer->lastBabyEmail;
             }
 
         if( nextPlayer->murderPerpEmail != NULL  ) {
@@ -1897,9 +1910,67 @@ void quitCleanup() {
         fclose( postWindowFamilyLogFile );
         postWindowFamilyLogFile = NULL;
         }
+
+    curseWords.deallocateStringElements();
+    
+    if( curseSecret != NULL ) {
+        delete [] curseSecret;
+        curseSecret = NULL;
+        }
     }
 
 
+
+#include "minorGems/util/crc32.h"
+
+JenkinsRandomSource curseSource;
+
+
+static int cursesUseSenderEmail = 0;
+
+static int useCurseWords = 1;
+
+
+// result NOT destroyed by caller
+static const char *getCurseWord( char *inSenderEmail,
+                                 char *inEmail, int inWordIndex ) {
+    if( ! useCurseWords || curseWords.size() == 0 ) {
+        return "X";
+        }
+
+    if( curseSecret == NULL ) {
+        curseSecret = 
+            SettingsManager::getStringSetting( 
+                "statsServerSharedSecret", "sdfmlk3490sadfm3ug9324" );
+        }
+    
+    char *emailPlusSecret;
+
+    if( cursesUseSenderEmail ) {
+        emailPlusSecret =
+            autoSprintf( "%s_%s_%s", inSenderEmail, inEmail, curseSecret );
+        }
+    else {
+        emailPlusSecret = 
+            autoSprintf( "%s_%s", inEmail, curseSecret );
+        }
+    
+    unsigned int c = crc32( (unsigned char*)emailPlusSecret, 
+                            strlen( emailPlusSecret ) );
+    
+    delete [] emailPlusSecret;
+
+    curseSource.reseed( c );
+    
+    // mix based on index
+    for( int i=0; i<inWordIndex; i++ ) {
+        curseSource.getRandomDouble();
+        }
+
+    int index = curseSource.getRandomBoundedInt( 0, curseWords.size() - 1 );
+    
+    return curseWords.getElementDirect( index );
+    }
 
 
 
@@ -5103,6 +5174,28 @@ GridPos findClosestEmptyMapSpot( int inX, int inY, int inMaxPointsToCheck,
 
 
 
+// returns NULL if not found
+static LiveObject *getPlayerByEmail( char *inEmail ) {
+    for( int j=0; j<players.size(); j++ ) {
+        LiveObject *otherPlayer = players.getElement( j );
+        if( ! otherPlayer->error &&
+            otherPlayer->email != NULL &&
+            strcmp( otherPlayer->email, inEmail ) == 0 ) {
+            
+            return otherPlayer;
+            }
+        }
+    return NULL;
+    }
+
+
+
+static int usePersonalCurses = 0;
+
+
+void sendMessageToPlayer( LiveObject *inPlayer, 
+                          char *inMessage, int inLength );
+
 
 
 SimpleVector<ChangePosition> newSpeechPos;
@@ -5383,6 +5476,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         }
     
     
+    char *dbCurseTargetEmail = NULL;
+
 
     if( cursedName != NULL && 
         strcmp( cursedName, "" ) != 0 ) {
@@ -5398,6 +5493,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             char *targetEmail = getCurseReceiverEmail( cursedName );
             if( targetEmail != NULL ) {
                 setDBCurse( inPlayer->email, targetEmail );
+                dbCurseTargetEmail = targetEmail;
                 }
             }
         }
@@ -5417,6 +5513,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             
             isCurse = true;
             setDBCurse( inPlayer->email, youCursePlayer->email );
+            dbCurseTargetEmail = youCursePlayer->email;
             }
         else if( isBabyShortcut && babyCursePlayer != NULL &&
             spendCurseToken( inPlayer->email ) ) {
@@ -5430,9 +5527,35 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
                 }
             if( targetEmail != NULL ) {
                 setDBCurse( inPlayer->email, targetEmail );
+                dbCurseTargetEmail = targetEmail;
                 }
             }
+        else if( isBabyShortcut && babyCursePlayer == NULL &&
+                 inPlayer->lastBabyEmail != NULL &&
+                 spendCurseToken( inPlayer->email ) ) {
+            
+            isCurse = true;
+            
+            setDBCurse( inPlayer->email, inPlayer->lastBabyEmail );
+            dbCurseTargetEmail = inPlayer->lastBabyEmail;
+            }
         }
+
+    if( dbCurseTargetEmail != NULL && usePersonalCurses ) {
+        LiveObject *targetP = getPlayerByEmail( dbCurseTargetEmail );
+        
+        if( targetP != NULL ) {
+            char *message = autoSprintf( "CU\n%d 1 %s_%s\n#", targetP->id,
+                                         getCurseWord( inPlayer->email,
+                                                       targetP->email, 0 ),
+                                         getCurseWord( inPlayer->email,
+                                                       targetP->email, 1 ) );
+            sendMessageToPlayer( inPlayer,
+                                 message, strlen( message ) );
+            delete [] message;
+            }
+        }
+    
 
 
     if( isCurse ) {
@@ -5550,8 +5673,6 @@ static void forcePlayerToRead( LiveObject *inPlayer,
 char canPlayerUseTool( LiveObject *inPlayer, int inToolID );
 
 
-void sendMessageToPlayer( LiveObject *inPlayer, 
-                          char *inMessage, int inLength );
 
 
 
@@ -6976,7 +7097,7 @@ static void setupToolSlots( LiveObject *inPlayer ) {
     double B = 0.7;
     double C = 0.3;
     
-    double D = 10;
+    double D = 7;
     
     
     // when this is called, we already have a valid fitness score between 0..60
@@ -7106,6 +7227,38 @@ char getForceSpawn( char *inEmail, ForceSpawnRecord *outRecordToFill ) {
 
 
 
+static void makeOffspringSayMarker( int inPlayerID, int inIDToSkip ) {
+    
+    LiveObject *playerO = getLiveObject( inPlayerID );
+    
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *o = players.getElement( i );
+        
+        if( o->id != inPlayerID && o->id != inIDToSkip ) {
+            
+            if( o->ancestorIDs->getElementIndex( inPlayerID ) != -1 ) {
+                // this player is an ancestor of this other
+                
+                // make other say ++, but only so this player can hear it
+
+                char *message = autoSprintf( "PS\n"
+                                             "%d/0 +FAMILY+\n#",
+                                             o->id );
+                sendMessageToPlayer( playerO, message, strlen( message ) );
+                delete [] message;
+                }
+            }
+        }
+    }
+
+
+
+
+static double killDelayTime = 12.0;
+
+static double posseDelayReductionFactor = 2.0;
+
+static int victimTerrifiedPosseSize = 3;
 
 
 // for placement of tutorials out of the way 
@@ -7127,6 +7280,9 @@ static SimpleVector<char*> tempTwinEmails;
 
 static char nextLogInTwin = false;
 
+static int firstTwinID = -1;
+
+
 // returns ID of new player,
 // or -1 if this player reconnected to an existing ID
 int processLoggedInPlayer( char inAllowReconnect,
@@ -7143,8 +7299,8 @@ int processLoggedInPlayer( char inAllowReconnect,
                            GridPos *inForcePlayerPos = NULL ) {
     
 
-    int usePersonalCurses = SettingsManager::getIntSetting( "usePersonalCurses",
-                                                            0 );
+    usePersonalCurses = SettingsManager::getIntSetting( "usePersonalCurses",
+                                                        0 );
     
     if( usePersonalCurses ) {
         // ignore what old curse system said
@@ -7296,6 +7452,30 @@ int processLoggedInPlayer( char inAllowReconnect,
     
 
 
+    foodScaleFactor = 
+        SettingsManager::getFloatSetting( "foodScaleFactor", 1.0 );
+    
+    
+    killDelayTime = 
+        SettingsManager::getFloatSetting( "killDelayTime", 12.0 );
+    
+    
+    posseDelayReductionFactor = 
+        SettingsManager::getFloatSetting( "posseDelayReductionFactor", 2.0 );
+
+
+    victimTerrifiedPosseSize = 
+        SettingsManager::getIntSetting( "victimTerrifiedPosseSize", 3 );
+
+
+    cursesUseSenderEmail = 
+        SettingsManager::getIntSetting( "cursesUseSenderEmail", 0 );
+
+    useCurseWords = 
+        SettingsManager::getIntSetting( "useCurseWords", 1 );
+    
+    
+
 
     numConnections ++;
                 
@@ -7304,6 +7484,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.email = inEmail;
     newObject.origEmail = NULL;
     
+    newObject.lastBabyEmail = NULL;
+
     newObject.id = nextID;
     nextID++;
 
@@ -7566,7 +7748,7 @@ int processLoggedInPlayer( char inAllowReconnect,
                     totalBabies, totalAdults, ratio );
 
                 
-                if( ratio > 2 ) {
+                if( ratio >= 2 ) {
                     // more than 2/3 of the population are helpless babies 
                     // force an Eve spawn to compensate for this condition
                     
@@ -7588,10 +7770,10 @@ int processLoggedInPlayer( char inAllowReconnect,
                     ratio = (double)totalBabies / (double)totalMoms;
 
                     AppLog::infoF( 
-                        "Counting %d babies for %d moms, ratio %f (max 4.0)",
+                        "Counting %d babies for %d moms, ratio %f (max 3.0)",
                         totalBabies, totalMoms, ratio );
                     
-                    if( ratio > 4 ) {
+                    if( ratio >= 3 ) {
                         // too many babies per mom
                         AppLog::infoF( 
                             "%d babies for %d moms, forcing Eve.",
@@ -7615,6 +7797,52 @@ int processLoggedInPlayer( char inAllowReconnect,
         }
     
     
+    if( parentChoices.size() > 1 ) {
+        // filter them so that we avoid mothers who WE have curse-blocked
+        // (only if we have a choice)
+        SimpleVector<LiveObject*> oldParentList;
+        oldParentList.push_back_other( &parentChoices );
+        
+        for( int i=0; i<parentChoices.size(); i++ ) {
+            LiveObject *mom = parentChoices.getElementDirect( i );
+            
+            if( isCursed( newObject.email, mom->email ) ) {
+                parentChoices.deleteElement( i );
+                i--;
+                }
+            }
+        if( parentChoices.size() == 0 ) {
+            // restore original list, we have them all curse-blocked
+            parentChoices.push_back_other( &oldParentList );
+            }
+        }
+    else if( parentChoices.size() == 1 && countFertileMothers() == 1 ) {
+        // only one possible mom
+
+        // make sure WE don't have THEM curse blocked
+        LiveObject *mom = parentChoices.getElementDirect( 0 );
+        
+        if( isCursed( newObject.email, mom->email ) ) {
+            AppLog::info( 
+                "We have only fertile mom on server curse-blocked.  "
+                "Avoiding her, and not going to d-town, spawning new Eve" );
+            parentChoices.deleteAll();
+            
+            // don't send ourselves to d-town in this case
+            numBirthLocationsCurseBlocked = 0;
+            }
+        }
+    else if( parentChoices.size() == 0 && 
+             numBirthLocationsCurseBlocked > 0 &&
+             countFertileMothers() == 1 ) {
+        // there's only one mom on the server, and we're curse-blocked from her
+        // don't send us to d-town in this case
+        numBirthLocationsCurseBlocked = 0;
+        
+        AppLog::info( 
+                "Only fertile mom on server has us curse-blocked.  "
+                "Avoiding her, and not going to d-town, spawning new Eve" );   
+        }
 
     
     if( parentChoices.size() > 0 ) {
@@ -8091,6 +8319,12 @@ int processLoggedInPlayer( char inAllowReconnect,
             parent->babyBirthTimes->push_back( curTime );
             parent->babyIDs->push_back( newObject.id );
             
+            if( parent->lastBabyEmail != NULL ) {
+                delete [] parent->lastBabyEmail;
+                }
+            parent->lastBabyEmail = stringDuplicate( newObject.email );
+            
+
             // set cool-down time before this worman can have another baby
             parent->birthCoolDown = pickBirthCooldownSeconds() + curTime;
 
@@ -8554,6 +8788,12 @@ int processLoggedInPlayer( char inAllowReconnect,
         // child inherits mother's leader
         newObject.followingID = parent->followingID;
         
+        if( newObject.followingID == -1 ) {
+            // boostrap the whole thing by having leaderless mothers
+            // get their children as automatic followers.
+            newObject.followingID = parent->id;
+            }
+
 
         newObject.parentChainLength = parent->parentChainLength + 1;
 
@@ -8799,8 +9039,12 @@ int processLoggedInPlayer( char inAllowReconnect,
         // will affect your score.
         
         if( newObject.parentID > 0 &&
-            newObject.parentID == otherPlayer->parentID ) {
-            // sibs
+            newObject.parentID == otherPlayer->parentID &&
+            ( firstTwinID == -1 || otherPlayer->id < firstTwinID ) ) {
+            
+            // sibs, but NOT twins
+            // only consider sibs that joined before the firstTwinID in
+            // our twin set
             
             newObject.ancestorIDs->push_back( otherPlayer->id );
 
@@ -8876,6 +9120,41 @@ int processLoggedInPlayer( char inAllowReconnect,
 
     // generate log line whenever a new baby is born
     logFamilyCounts();
+
+
+    // tell non-mother ancestors about this baby
+    for( int i=0; i<newObject.ancestorIDs->size(); i++ ) {
+        int id = newObject.ancestorIDs->getElementDirect( i );
+        
+        if( id == newObject.id ) {
+            continue;
+            }
+        
+        // skip this baby when saying ++
+        // we are already getting a pointer to them, probably
+        makeOffspringSayMarker( id, newObject.id );
+        
+
+        if( id == newObject.parentID ) {
+            continue;
+            }
+        
+        LiveObject *o = getLiveObject( id );
+        
+        if( o != NULL && ! o->error && o->connected ) {
+            
+            char *message = autoSprintf( "PS\n"
+                                         "%d/0 A NEW OFFSPRING BABY "
+                                         "*baby %d *map %d %d\n#",
+                                         id,
+                                         newObject.id,
+                                         newObject.xs,
+                                         newObject.ys );
+            sendMessageToPlayer( o, message, strlen( message ) );
+            delete [] message;
+            }
+        }
+
     
     return newObject.id;
     }
@@ -8944,6 +9223,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
             }
         
         nextLogInTwin = true;
+        firstTwinID = -1;
         
         int newID = processLoggedInPlayer( false,
                                            inConnection.sock,
@@ -8983,6 +9263,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
 
         delete [] emailCopy;
         
+        firstTwinID = newID;
         
         LiveObject *newPlayer = NULL;
 
@@ -9071,6 +9352,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                 }
             }
         
+        firstTwinID = -1;
 
         char *twinCode = stringDuplicate( inConnection.twinCode );
         
@@ -10572,7 +10854,6 @@ int readIntFromFile( const char *inFileName, int inDefaultValue ) {
     }
 
 
-double killDelayTime = 6.0;
 
 
 typedef struct KillState {
@@ -10582,6 +10863,7 @@ typedef struct KillState {
         double killStartTime;
         double emotStartTime;
         int emotRefreshSeconds;
+        int posseSize;
     } KillState;
 
 
@@ -11395,12 +11677,33 @@ SimpleVector<int> killStatePosseChangedPlayerIDs;
 static int countPosseSize( LiveObject *inTarget ) {
     int p = 0;
     
+    int twinCount = 0;
+
     for( int i=0; i<activeKillStates.size(); i++ ) {
         KillState *s = activeKillStates.getElement( i );
         if( s->targetID == inTarget->id ) {
-            p++;
+
+            LiveObject *killerO = getLiveObject( s->killerID );
+            
+            if( killerO != NULL ) {
+                
+                // twins don't count toward posse size
+                if( ! killerO->isTwin ) {
+                    p++;
+                    }
+                else {
+                    twinCount ++;
+                    }
+                }
             }
         }
+    
+    if( p == 0 &&
+        twinCount > 0 ) {
+        // if twin is only one in posse, count as a posse of 1
+        p = 1;
+        }
+
     return p;
     }
 
@@ -11416,6 +11719,8 @@ static void updatePosseSize( LiveObject *inTarget,
         
         if( s->targetID == inTarget->id ) {
             int killerID = s->killerID;
+
+            s->posseSize = p;
             
             LiveObject *o = getLiveObject( killerID );
             
@@ -11530,7 +11835,8 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                         inTarget->id, 
                         curTime,
                         curTime,
-                        30 };
+                        30,
+                        1 };
         
         if( isNoWaitWeapon( inKiller->holdingID ) ) {
                 // allow it to happen right now
@@ -11589,7 +11895,8 @@ static void removeKillState( LiveObject *inKiller, LiveObject *inTarget ) {
     if( newPosseSize == 0 &&
         inTarget != NULL &&
         inTarget->emotFrozen &&
-        inTarget->emotFrozenIndex == victimEmotionIndex ) {
+        ( inTarget->emotFrozenIndex == victimEmotionIndex ||
+          inTarget->emotFrozenIndex == victimTerrifiedEmotionIndex ) ) {
         
         // inTarget's emot hasn't been replaced, end it
         inTarget->emotFrozen = false;
@@ -13029,10 +13336,16 @@ static char isFollower( LiveObject *inLeader, LiveObject *inTestFollower ) {
     
 
 
+char *getLeadershipName( LiveObject *nextPlayer, 
+                         char inNoName = false );
+
+
+
 // any followers switch to following the leader of this leader
 // exiles are passed down to followers
 static void leaderDied( LiveObject *inLeader ) {
-
+    char *leaderName = getLeadershipName( inLeader );
+    
     SimpleVector<LiveObject*> exiledByThisLeader;
     
     for( int i=0; i<players.size(); i++ ) {
@@ -13053,6 +13366,19 @@ static void leaderDied( LiveObject *inLeader ) {
                 // take ourselves off their list, we're dead
                 otherPlayer->exiledByIDs.deleteElement( exileIndex );
                 otherPlayer->exileUpdate = true;
+                }
+            }
+        }
+
+
+    SimpleVector<LiveObject*> oldFollowers;
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *otherPlayer = players.getElement( i );
+        if( otherPlayer != inLeader &&
+            ! otherPlayer->error ) {
+        
+            if( isFollower( inLeader, otherPlayer ) ) {
+                oldFollowers.push_back( otherPlayer );
                 }
             }
         }
@@ -13093,13 +13419,145 @@ static void leaderDied( LiveObject *inLeader ) {
                 } 
             }
         }
+
+
+
+    if( leaderName == NULL ) {
+        // no followers to inform
+        return;
+        }
+
+
+    char *newLeaderExplain = NULL;
+    LiveObject *newLeaderO = NULL;
     
+    if( inLeader->followingID != -1 ) {
+        newLeaderO = getLiveObject( inLeader->followingID );
+        
+        char *newLeaderName = getLeadershipName( newLeaderO );
+        newLeaderExplain = autoSprintf( "YOU NOW FOLLOW %s.", newLeaderName );
+        delete [] newLeaderName;
+        }
+
+    // tell followers about our death
+    for( int i=0; i<oldFollowers.size(); i++ ) {
+        LiveObject *otherPlayer = oldFollowers.getElementDirect( i );
+        
+        
+        char *secondLine;
+        
+        if( newLeaderExplain != NULL ) {
+            secondLine = stringDuplicate( newLeaderExplain );
+            }
+        else {
+            // no heir for this position.
+
+            // who is there prime leader?
+            int primeID = otherPlayer->followingID;
+            while( primeID != -1 ) {
+                LiveObject *primeO = getLiveObject( primeID );
+                if( primeO != NULL ) {
+                    if( primeO->followingID != -1 ) {
+                        primeID = primeO->followingID;
+                        }
+                    else {
+                        break;
+                        }
+                    }
+                }
+            newLeaderO = NULL;
+            if( primeID != -1 ) {
+                newLeaderO = getLiveObject( primeID );
+                }
+            if( newLeaderO != NULL ) {
+                char *primeName = getLeadershipName( newLeaderO );
+                secondLine = autoSprintf( "YOUR PRIME LEADER IS NOW %s.",
+                                          primeName );
+                delete [] primeName;
+                }
+            else {
+                secondLine = autoSprintf( "YOU NOW HAVE NO LEADER." );
+                }
+                
+            }
+
+        char *mesage =
+            autoSprintf( "YOUR %s HAS DIED.**"
+                         "%s",
+                         leaderName,
+                         secondLine );
+        
+        delete [] secondLine;
+                                
+        sendGlobalMessage( mesage, otherPlayer );
+        delete [] mesage;
+        
+
+        if( newLeaderO != NULL ) {
+            // give them an arrow to their new leader
+            char *newLeaderName = getLeadershipName( newLeaderO );
+            
+            GridPos lPos = getPlayerPos( newLeaderO );
+
+            char *psMessage = 
+                autoSprintf( "PS\n"
+                             "%d/0 MY %s "
+                             "*leader %d *map %d %d\n#",
+                             otherPlayer->id,
+                             newLeaderName,
+                             newLeaderO->id,
+                             lPos.x,
+                             lPos.y );
+            
+            delete [] newLeaderName;
+            
+            sendMessageToPlayer( otherPlayer, psMessage, strlen( psMessage ) );
+            delete [] psMessage;
+            }
+        }
+
+    
+    delete [] newLeaderExplain;
+    delete [] leaderName;
     }
 
 
 
 
-static void tryToStartKill( LiveObject *nextPlayer, int inTargetID ) {
+static LiveObject *getClosestFollower( LiveObject *inLeader ) {
+    GridPos leaderPos = getPlayerPos( inLeader );
+    
+    double minDist = DBL_MAX;
+    LiveObject *closestFollower = NULL;
+    
+    for( int i=0; i<players.size(); i++ ) {
+        
+        LiveObject *otherPlayer = players.getElement( i );
+        
+        if( otherPlayer != inLeader &&
+            ! otherPlayer->error ) {
+            
+            if( isFollower( inLeader, otherPlayer ) ) {
+                
+                GridPos fPos = getPlayerPos( otherPlayer );
+                
+                double d = distance( leaderPos, fPos );
+                
+                if( d < minDist ) {
+                    minDist = d;
+                    closestFollower = otherPlayer;
+                    }
+                }
+            }
+        }
+    return closestFollower;
+    }
+
+
+
+
+static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
+                            char inInfiniteRange = false ) {
     if( inTargetID > 0 && 
         nextPlayer->holdingID > 0 &&
         canPlayerUseOrLearnTool( nextPlayer,
@@ -13150,7 +13608,8 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID ) {
                                         
                     char enteredState =
                         addKillState( nextPlayer,
-                                      targetPlayer );
+                                      targetPlayer,
+                                      inInfiniteRange );
                                         
                     if( enteredState && 
                         ! isNoWaitWeapon( 
@@ -13172,15 +13631,22 @@ static void tryToStartKill( LiveObject *nextPlayer, int inTargetID ) {
                         newEmotTTLs.push_back( 120 );
                                             
                         if( ! targetPlayer->emotFrozen ) {
-                                                
+                            int posseSize = countPosseSize( targetPlayer );
+                            
+                            int emotIndex = victimEmotionIndex;
+                            
+                            if( posseSize >= victimTerrifiedPosseSize ) {
+                                emotIndex = victimTerrifiedEmotionIndex;
+                                }
+
                             targetPlayer->emotFrozen = true;
                             targetPlayer->emotFrozenIndex =
-                                victimEmotionIndex;
+                                emotIndex;
                                                 
                             newEmotPlayerIDs.push_back( 
                                 targetPlayer->id );
                             newEmotIndices.push_back( 
-                                victimEmotionIndex );
+                                emotIndex );
                             newEmotTTLs.push_back( 120 );
                             }
                         }
@@ -13241,8 +13707,8 @@ leadershipNames[NUM_LEADERSHIP_NAMES][2] = { { "LORD",
                                                "SUPREME EMPRESS" } };
 
 
-static char *getLeadershipName( LiveObject *nextPlayer, 
-                                char inNoName = false ) {
+char *getLeadershipName( LiveObject *nextPlayer, 
+                         char inNoName ) {
     
     int level = 0;
     
@@ -13449,6 +13915,33 @@ static void checkOrderPropagation() {
 
                         sendGlobalMessage( fullOrder, o );
                         delete [] fullOrder;
+
+                        LiveObject *leaderO = 
+                            getLiveObject( l->currentOrderOriginatorID );
+                        
+                        if( leaderO != NULL ) {
+                            // arrow to leader
+                            GridPos leaderPos = getPlayerPos( leaderO );
+                            
+                            char *leadershipName = 
+                                getLeadershipName( leaderO, true );
+                            
+                            char *message = 
+                                autoSprintf( "PS\n"
+                                             "%d/0 MY %s "
+                                             "*leader %d *map %d %d\n#",
+                                             o->id,
+                                             leadershipName,
+                                             l->currentOrderOriginatorID,
+                                             leaderPos.x,
+                                             leaderPos.y );
+                            
+                            delete [] leadershipName;
+
+                            sendMessageToPlayer( o, message, 
+                                                 strlen( message ) );
+                            delete [] message;
+                            }
                         }
                     }
                 }
@@ -13692,6 +14185,31 @@ int main() {
 
     victimEmotionIndex =
         SettingsManager::getIntSetting( "victimEmotionIndex", 2 );
+
+    victimTerrifiedEmotionIndex =
+        SettingsManager::getIntSetting( "victimTerrifiedEmotionIndex", 2 );
+
+
+    FILE *f = fopen( "curseWordList.txt", "r" );
+    
+    if( f != NULL ) {
+    
+        int numRead = 1;
+        
+        char buff[100];
+        
+        while( numRead == 1 ) {
+            numRead = fscanf( f, "%99s", buff );
+            
+            if( numRead == 1 ) {
+                if( strlen( buff ) < 6 ) {
+                    // short words only, 3, 4, 5 letters
+                    curseWords.push_back( stringToUpperCase( buff ) );
+                    }
+                }
+            }
+        fclose( f );
+        }
     
 
 #ifdef WIN_32
@@ -17015,6 +17533,18 @@ int main() {
                                     continue;
                                     }
                                 
+                                if( s->posseSize == 1 &&
+                                    strstr( 
+                                        getObject( s->killerWeaponID )->
+                                        description,
+                                        "+noWait" ) != NULL ) {
+                                    // single-person posse, where leader
+                                    // not holding a deadly weapon
+                                    // (snowball or tattoo needle)
+                                    // Can't join this posse.
+                                    continue;
+                                    }
+                                
                                 LiveObject *killer = 
                                     getLiveObject( s->killerID );
                                 
@@ -17267,6 +17797,24 @@ int main() {
                                 
                                 delete [] formattedOrder;
                                 nextOrderNumber++;
+
+                                // give them a pointer to their closest
+                                // follower
+                                LiveObject *closeF = 
+                                    getClosestFollower( nextPlayer );
+                                if( closeF != NULL ) {
+                                    GridPos fPos = getPlayerPos( closeF );
+                                    
+                                    char *newSaidText = 
+                                        autoSprintf( "%s "
+                                             "*follower %d *map %d %d\n#",
+                                             m.saidText,
+                                             closeF->id,
+                                             fPos.x,
+                                             fPos.y );
+                                    delete [] m.saidText;
+                                    m.saidText = newSaidText;
+                                    }
                                 }
                             delete [] order;
                             }
@@ -17293,11 +17841,24 @@ int main() {
                                                          nextPlayer );
                                     delete [] namedPlayer;
                                     }
+
+                                if( otherToKill != NULL ) {
+                                    if( distance( 
+                                            getPlayerPos( nextPlayer ),
+                                            getPlayerPos( otherToKill ) )
+                                        >= 20 ) {
+                                        // same limit as for YOU
+                                        otherToKill = NULL;
+                                        }
+                                    }
                                 }
 
                             if( otherToKill != NULL ) {
                                 playerIndicesToSendUpdatesAbout.push_back( i );
-                                tryToStartKill( nextPlayer, otherToKill->id );
+                                // spoken intent to kill has unlimited distance
+                                // based on limits above instead
+                                tryToStartKill( nextPlayer, otherToKill->id,
+                                                true );
                                 }
                             }
                         
@@ -17499,16 +18060,63 @@ int main() {
                                     }
                                 }
                             }
+
+
+                            
+                        int target = getMapObject( m.x, m.y );
+
+
+                        
+                        char isAdjacent = false;
+                        
+                        if( !distanceUseAllowed ) {
+                            isAdjacent = isGridAdjacent( m.x, m.y,
+                                                         nextPlayer->xd, 
+                                                         nextPlayer->yd );
+                            
+                            
+                            if( ! isAdjacent &&
+                                m.x == nextPlayer->xd &&
+                                m.y == nextPlayer->yd ) {
+                                
+                                isAdjacent = true;
+                                }
+                            
+                        
+                            if( ! isAdjacent && target > 0 ) {
+                                ObjectRecord *destO = getObject( target );
+                            
+                                if( destO->wide ) {
+                                    for( int r=0; r<destO->leftBlockingRadius; 
+                                         r++ ) {
+                                        int testX = m.x - r - 1;
+                                        if( isGridAdjacent( testX, m.y,
+                                                            nextPlayer->xd,
+                                                            nextPlayer->yd ) ) {
+                                            isAdjacent = true;
+                                            break;
+                                            }
+                                        }
+                                    if( ! isAdjacent )
+                                    for( int r=0; r<destO->rightBlockingRadius; 
+                                         r++ ) {
+                                        int testX = m.x + r + 1;
+                                        if( isGridAdjacent( testX, m.y,
+                                                            nextPlayer->xd,
+                                                            nextPlayer->yd ) ) {
+                                            isAdjacent = true;
+                                            break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        
                         
                         if( isBiomeAllowedForPlayer( nextPlayer, m.x, m.y ) )
                         if( distanceUseAllowed 
                             ||
-                            isGridAdjacent( m.x, m.y,
-                                            nextPlayer->xd, 
-                                            nextPlayer->yd ) 
-                            ||
-                            ( m.x == nextPlayer->xd &&
-                              m.y == nextPlayer->yd ) ) {
+                            isAdjacent ) {
                             
                             nextPlayer->actionAttempt = 1;
                             nextPlayer->actionTarget.x = m.x;
@@ -17523,8 +18131,6 @@ int main() {
 
                             // can only use on targets next to us for now,
                             // no diags
-                            
-                            int target = getMapObject( m.x, m.y );
                             
                             int oldHolding = nextPlayer->holdingID;
                             
@@ -19969,7 +20575,14 @@ int main() {
             
             double curTime = Time::getCurrentTime();
 
-            if( curTime - s->killStartTime  > killDelayTime && 
+            // vary delay based on posse size
+            double delay = killDelayTime;
+            if( posseDelayReductionFactor > 0 && s->posseSize > 1 ) {
+                delay /=
+                    pow( posseDelayReductionFactor, s->posseSize - 1 );
+                }
+            
+            if( curTime - s->killStartTime  > delay && 
                 getObject( killer->holdingID )->deadlyDistance >= dist &&
                 ! directLineBlocked( playerPos, targetPos ) ) {
                 // enough warning time has passed
@@ -19988,7 +20601,17 @@ int main() {
                 // still not close enough
                 // see if we need to renew emote
                 
-                if( curTime - s->emotStartTime > s->emotRefreshSeconds ) {
+                if( curTime - s->emotStartTime > s->emotRefreshSeconds ||
+                    ( s->posseSize >= victimTerrifiedPosseSize &&
+                      target->emotFrozenIndex != 
+                      victimTerrifiedEmotionIndex ) ||
+                    ( s->posseSize < victimTerrifiedPosseSize &&
+                      target->emotFrozenIndex != 
+                      victimEmotionIndex ) ) {
+
+                    // emote time expired OR posse size changed
+                    // and demands different victim emote
+
                     s->emotStartTime = curTime;
                     
                     // refresh again in 30 seconds, even if we had a shorter
@@ -20001,8 +20624,17 @@ int main() {
                     newEmotTTLs.push_back( 120 );
 
                     newEmotPlayerIDs.push_back( target->id );
-                            
-                    newEmotIndices.push_back( victimEmotionIndex );
+                    
+                    int emotIndex = victimEmotionIndex;
+                    
+                    if( s->posseSize >= victimTerrifiedPosseSize ) {
+                        emotIndex = victimTerrifiedEmotionIndex;
+                        }
+                    
+                    newEmotIndices.push_back( emotIndex );
+                    target->emotFrozenIndex = emotIndex;
+                    
+                    
                     newEmotTTLs.push_back( 120 );
                     }
                 }
@@ -20074,6 +20706,36 @@ int main() {
                 
                 if( nextPlayer->curseStatus.curseLevel > 0 ) {
                     playerIndicesToSendCursesAbout.push_back( i );
+                    }
+                else if( usePersonalCurses ) {
+                    // send a unique CU message to each player
+                    // who has this player cursed
+                    for( int p=0; p<players.size(); p++ ) {
+                        LiveObject *otherPlayer = players.getElement( p );
+                        
+                        if( otherPlayer == nextPlayer ) {
+                            continue;
+                            }
+                        if( otherPlayer->error ||
+                            ! otherPlayer->connected ) {
+                            continue;
+                            }
+                        
+                        if( isCursed( otherPlayer->email, 
+                                      nextPlayer->email ) ) {
+                            char *message = autoSprintf( 
+                                "CU\n%d 1 %s_%s\n#",
+                                nextPlayer->id,
+                                getCurseWord( otherPlayer->email,
+                                              nextPlayer->email, 0 ),
+                                getCurseWord( otherPlayer->email,
+                                              nextPlayer->email, 1 ) );
+                            
+                            sendMessageToPlayer( otherPlayer,
+                                                 message, strlen( message ) );
+                            delete [] message;
+                            }
+                        }
                     }
 
                 nextPlayer->isNew = false;
@@ -21982,6 +22644,10 @@ int main() {
                     continue;
                     }
 
+                // leave name out of it for now
+                // this bit of code left over from before personal curses
+                // we don't have the sender's email here, b/c this
+                // message goes to everyone.
                 char *line = autoSprintf( "%d %d\n", nextPlayer->id,
                                          nextPlayer->curseStatus.curseLevel );
                 
@@ -22577,11 +23243,25 @@ int main() {
                     int level = o->curseStatus.curseLevel;
                     
                     if( level == 0 ) {
+
+                        if( usePersonalCurses ) {
+                            if( isCursed( nextPlayer->email,
+                                          o->email ) ) {
+                                level = 1;
+                                }
+                            }
+                        }
+                    
+                    if( level == 0 ) {
                         continue;
                         }
                     
 
-                    char *line = autoSprintf( "%d %d\n", o->id, level );
+                    char *line = autoSprintf( "%d %d %s_%s\n", o->id, level,
+                                              getCurseWord( nextPlayer->email,
+                                                            o->email, 0 ),
+                                              getCurseWord( nextPlayer->email,
+                                                            o->email, 1 ) );
                     cursesWorking.appendElementString( line );
                     delete [] line;
                     
@@ -23707,6 +24387,21 @@ int main() {
                                     }
 
                                 
+                                // any other * metadata before *map?
+                                char *otherStarLoc = strstr( trimmedPhrase,
+                                                             " *" );
+                                if( otherStarLoc != NULL ) {
+                                    if( speakerID != listenerID ) {
+                                        // only send * metadata through
+                                        // to speaker
+                                        // trim it otherwise
+                                        
+                                        otherStarLoc[0] = '\0';
+                                        }
+                                    }
+                                
+
+                                
                                 char *translatedPhrase = 
                                     translatePhraseFromSpeaker(
                                         trimmedPhrase, speakerObj, nextPlayer );
@@ -24372,6 +25067,9 @@ int main() {
                     }
                 if( nextPlayer->origEmail != NULL  ) {
                     delete [] nextPlayer->origEmail;
+                    }
+                if( nextPlayer->lastBabyEmail != NULL ) {
+                    delete [] nextPlayer->lastBabyEmail;
                     }
 
                 if( nextPlayer->murderPerpEmail != NULL ) {
