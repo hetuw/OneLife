@@ -54,6 +54,7 @@ unsigned char HetuwMod::charKey_Right;
 unsigned char HetuwMod::charKey_TileStandingOn;
 
 unsigned char HetuwMod::charKey_Backpack;
+unsigned char HetuwMod::charKey_TakeOffBackpack;
 unsigned char HetuwMod::charKey_Eat;
 unsigned char HetuwMod::charKey_Baby;
 unsigned char HetuwMod::charKey_ShowHelp;
@@ -236,6 +237,7 @@ void HetuwMod::init() {
 	charKey_TileStandingOn = ' ';
 
 	charKey_Backpack = 'q';
+	charKey_TakeOffBackpack = 'b';
 	charKey_Eat = 'e';
 	charKey_Baby = 'c';
 	charKey_ShowHelp = 'h';
@@ -498,6 +500,7 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	if (strstr(name, "key_right")) return setCharKey( charKey_Right, value );
 	if (strstr(name, "key_center")) return setCharKey( charKey_TileStandingOn, value );
 	if (strstr(name, "key_backpack")) return setCharKey( charKey_Backpack, value );
+	if (strstr(name, "key_takeOffBackpack")) return setCharKey( charKey_TakeOffBackpack, value );
 	if (strstr(name, "key_eat")) return setCharKey( charKey_Eat, value );
 	if (strstr(name, "key_baby")) return setCharKey( charKey_Baby, value );
 	if (strstr(name, "key_show_help")) return setCharKey( charKey_ShowHelp, value );
@@ -662,6 +665,7 @@ void HetuwMod::initSettings() {
 	writeCharKeyToStream( ofs, "key_teachlanguage", charKey_TeachLanguage );
 	writeCharKeyToStream( ofs, "key_findyum", charKey_FindYum );
 	writeCharKeyToStream( ofs, "key_hideplayers", charKey_HidePlayers );
+	writeCharKeyToStream( ofs, "key_takeOffBackpack", charKey_TakeOffBackpack );
 	ofs << endl;
 	ofs << "init_show_names = " << (char)(iDrawNames+48) << " // 0 = dont show names, 1 = show first name, 2 = show first and last name" << endl;
 	ofs << "init_show_selectedplayerinfo = " << (char)(bDrawSelectedPlayerInfo+48) << endl;
@@ -2117,6 +2121,12 @@ void HetuwMod::pickUpBabyInRange() {
 	pickUpBaby( babyX, babyY );
 }
 
+void HetuwMod::takeOffBackpack() {
+	char message[32];
+	sprintf(message, "SELF %i %i 5#", ourLiveObject->xd, ourLiveObject->yd);
+	livingLifePage->sendToServerSocket( message );
+}
+
 char* HetuwMod::stringToChar(string str) { // dont forget to delete[] cstr
 	char *cstr = new char[str.length() + 1];
 	strcpy(cstr, str.c_str());
@@ -2501,6 +2511,10 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	}
 	if (isCharKey(inASCII, charKey_Baby)) {
 		pickUpBabyInRange();
+		return true;
+	}
+	if (isCharKey(inASCII, charKey_TakeOffBackpack)) {
+		takeOffBackpack();
 		return true;
 	}
 
@@ -3637,19 +3651,6 @@ void HetuwMod::drawHelp() {
 	drawPos.x -= viewWidth/2 - 250*guiScale;
 	drawPos.y += viewHeight/2 - 80*guiScale;
 
-	sprintf(str, "%s - BABY SUICIDE", translate( "dieCommand" ));
-	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
-	drawPos.y -= lineHeight;
-	sprintf(str, "%s - TOGGLE SHOW FPS", translate( "fpsCommand" ));
-	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
-	drawPos.y -= lineHeight;
-	sprintf(str, "%s - TOGGLE SHOW NETWORK", translate( "netCommand" ));
-	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
-	drawPos.y -= lineHeight;
-	sprintf(str, "%s - SHOW PING", translate( "pingCommand" ));
-	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
-	drawPos.y -= lineHeight;
-
 	livingLifePage->hetuwDrawScaledHandwritingFont( "= MAKE SCREENSHOT", drawPos, guiScale );
 	drawPos.y -= lineHeight;
 
@@ -3706,6 +3707,12 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 
+	if (bDrawYum) setHelpColorSpecial();
+	else setHelpColorNormal();
+	sprintf(str, "%c FIND YUM", toupper(charKey_FindYum));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+
 	setHelpColorNormal();
 
 	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
@@ -3716,6 +3723,9 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "SHIFT+%c - USE BACKPACK", toupper(charKey_Backpack));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+	sprintf(str, "%c - TAKE OFF BACKPACK", toupper(charKey_TakeOffBackpack));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 	sprintf(str, "%c - EAT / PUT CLOTHES ON", toupper(charKey_Eat));
@@ -3772,12 +3782,6 @@ void HetuwMod::drawHelp() {
 	//sprintf(str, "%c - TEACH LANGUAGE", toupper(charKey_TeachLanguage));
 	//livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	//drawPos.y -= lineHeight;
-
-	if (bDrawYum) setHelpColorSpecial();
-	else setHelpColorNormal();
-	sprintf(str, "%c - FIND YUM", toupper(charKey_FindYum));
-	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
-	drawPos.y -= lineHeight;
 
 	sprintf(str, "CTRL+MOUSECLICK - TILE BASED CLICK");
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );

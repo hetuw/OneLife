@@ -182,6 +182,7 @@ public:
 	static unsigned char charKey_TileStandingOn;
 
 	static unsigned char charKey_Backpack;
+	static unsigned char charKey_TakeOffBackpack;
 	static unsigned char charKey_Eat;
 	static unsigned char charKey_Baby;
 
@@ -237,6 +238,8 @@ public:
 	static void pickUpBaby( int x, int y );
 	static bool playerIsInCloseRange( LiveObject* o );
 	static void pickUpBabyInRange();
+
+	static void takeOffBackpack();
 
 	static void splitLogLine(string* lineElements, string line);
 	static int getLastIdFromLogs();
