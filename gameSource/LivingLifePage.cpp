@@ -458,7 +458,7 @@ static void addHomeLocation( int inX, int inY ) {
 static void addTempHomeLocation( int inX, int inY, 
                                  char inPerson, int inPersonID,
                                  const char *inPersonKey ) {
-	HetuwMod::addHomeLocation( inX, inY, HetuwMod::hpt_map );
+	if (!inPerson) HetuwMod::addHomeLocation( inX, inY, HetuwMod::hpt_map );
     removeAllTempHomeLocations();
     
     GridPos newPos = { inX, inY };
@@ -18680,7 +18680,7 @@ void LivingLifePage::step() {
                                                                  person,
                                                                  personID,
                                                                  personKey );
-											HetuwMod::setMapText(existing->currentSpeech);
+											if (!person) HetuwMod::setMapText(existing->currentSpeech);
                                             }
 
                                         if( personID != -1 && baby) {
