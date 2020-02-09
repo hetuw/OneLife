@@ -1877,11 +1877,19 @@ void HetuwMod::drawHighlightedPlayer() {
 
 	getRelationNameColor( player->relationName, playerNameColor );
 
-	setDrawColor( 0.0, 0.0, 0.0, 0.8 );
-
 	float textWidth;
+	if (player->curseName && strlen(player->curseName) > 1) {
+		playerNamePos.y += 32*guiScale;
+		textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( player->curseName, guiScale );
+		setDrawColor( 0.0, 0.0, 0.0, 0.8 );
+		drawRect( playerNamePos, textWidth/2 + 6*guiScale, 16*guiScale );
+		setDrawColor( playerNameColor[0], playerNameColor[1], playerNameColor[2], 1 );
+		livingLifePage->hetuwDrawScaledHandwritingFont( player->curseName, playerNamePos, guiScale, alignCenter );
+		playerNamePos.y -= 32*guiScale;
+	}
 	if (player->name && strlen(player->name) > 1) {
 		textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( player->name, guiScale );
+		setDrawColor( 0.0, 0.0, 0.0, 0.8 );
 		drawRect( playerNamePos, textWidth/2 + 6*guiScale, 16*guiScale );
 		setDrawColor( playerNameColor[0], playerNameColor[1], playerNameColor[2], 1 );
 		livingLifePage->hetuwDrawScaledHandwritingFont( player->name, playerNamePos, guiScale, alignCenter );
