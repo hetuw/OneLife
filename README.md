@@ -1,6 +1,7 @@
 # OneLife
 
 This is a modified version of OneLife https://github.com/jasonrohrer/OneLife<br>
+Check out this forum thread to see what it can do and how to use it: https://onehouronelife.com/forums/viewtopic.php?pid=53465#p53465<br>
 <br>
 
 <b>Table of Contents</b><br>
