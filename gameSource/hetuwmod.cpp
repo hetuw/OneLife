@@ -1268,17 +1268,14 @@ void HetuwMod::setHomeLocationText(int x, int y, homePosType type, char *text) {
 		if (homePosStack[i]->y != y) continue;
 		homePosStack[i]->text = string(text);
 		logHomeLocation(homePosStack[i]);
-		break;
+		return;
 	}
+	printf("hetuw Warning: Could not find coord in list with x: %d, y: %d, text: %s\n", x, y, text);
 }
 
-void HetuwMod::setMapText(char *message) {
-	char *starPos = strstr( message, " *map" );
-	if( starPos == NULL ) return;
-
-	char mapName[64]; int mapX; int mapY;
-	int numRead = sscanf( message, ":%[^\t\n*] *map %d %d", mapName, &mapX, &mapY );
-	if (numRead < 3) return;
+void HetuwMod::setMapText(char *message, int mapX, int mapY) {
+	char mapName[64];
+	sscanf( message, ":%[^\t\n*]", mapName );
 	setHomeLocationText(mapX, mapY, hpt_map, mapName);
 }
 

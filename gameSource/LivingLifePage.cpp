@@ -18680,7 +18680,7 @@ void LivingLifePage::step() {
                                                                  person,
                                                                  personID,
                                                                  personKey );
-											if (!person) HetuwMod::setMapText(existing->currentSpeech);
+											if (!person) HetuwMod::setMapText(existing->currentSpeech, mapX, mapY);
                                             }
 
                                         if( personID != -1 && baby) {
