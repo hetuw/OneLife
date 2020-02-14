@@ -1232,6 +1232,9 @@ void HetuwMod::logHomeLocation(HomePos* hp) {
 		case hpt_map:
 			typeName = "map";
 			break;
+		case hpt_baby:
+			typeName = "baby";
+			break;
 		case hpt_babyboy:
 			typeName = "babyboy";
 			break;
@@ -1309,6 +1312,10 @@ void HetuwMod::setMapText(char *message, int mapX, int mapY) {
 
 void HetuwMod::addPersonHomeLocation(int x, int y, int personID ) {
 	//printf("hetuw addPersonHomeLocation x:%i, y:%i, id:%i\n", x, y, personID);
+	addHomeLocation(x, y, hpt_baby);
+
+	// person is not jet defined, person will be null, would need to do this later in order to get the gender
+	if (true) return;
 	LiveObject* person = livingLifePage->getLiveObject(personID);
 	if (!person) return;
 	//printf("hetuw person not null, age: %f\n", livingLifePage->hetuwGetAge(person));
@@ -1722,6 +1729,10 @@ void HetuwMod::createCordsDrawStr() {
 				sprintf( sBufA, "%s %d %d", mapName.c_str(), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
 				mapCount++;
 				break; }
+			case hpt_baby:
+				sprintf( sBufA, "BABY %c %d %d", (char)(babyCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				babyCount++;
+				break;
 			case hpt_babyboy:
 				sprintf( sBufA, "BABY BOY %c %d %d", (char)(babyCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
 				babyCount++;
@@ -1783,6 +1794,7 @@ void HetuwMod::drawHomeCords() {
 			case hpt_map:
 				setDrawColor( 0.7, 0.3, 1.0, 1.0 );
 				break;
+			case hpt_baby:
 			case hpt_babyboy:
 			case hpt_babygirl:
 				setDrawColor( 1.0, 0.45, 0.8, 1.0 );
