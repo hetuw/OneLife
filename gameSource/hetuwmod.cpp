@@ -221,6 +221,8 @@ bool HetuwMod::b_drawSearchPulsate = true;
 bool HetuwMod::bAutoDataUpdate = true;
 bool HetuwMod::bDrawGrid = false;
 
+bool HetuwMod::addBabyCoordsToList = false;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -598,6 +600,11 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 		return true;
 	}
 
+	if (strstr(name, "add_baby_coords_to_list")) {
+		addBabyCoordsToList = bool(value[0]-48);
+		return true;
+	}
+
 	if (strstr(name, "automatic_data_update")) {
 		bAutoDataUpdate = bool(value[0]-48);
 		return true;
@@ -700,6 +707,8 @@ void HetuwMod::initSettings() {
 	ofs << "draw_searchtext = " << (char)(b_drawSearchText+48) << endl;
 	ofs << "draw_searchrec = " << (char)(b_drawSearchTileRec+48) << endl;
 	ofs << "draw_searchpulsate = " << (char)(b_drawSearchPulsate+48) << endl;
+	ofs << endl;
+	ofs << "add_baby_coords_to_list = " << (char)(addBabyCoordsToList+48) << endl;
 	ofs << endl;
 	ofs << "automatic_data_update = " << (char)(bAutoDataUpdate+48) << endl;
 	ofs << "hetuw_log = " << (char)(bWriteLogs+48) << " // will create a log file '" << hetuwLogFileName << "' which resets at the beginning of each life - logs different events" << endl;
@@ -1323,6 +1332,7 @@ void HetuwMod::setMapText(char *message, int mapX, int mapY) {
 
 void HetuwMod::addPersonHomeLocation(int x, int y, int personID ) {
 	//printf("hetuw addPersonHomeLocation x:%i, y:%i, id:%i\n", x, y, personID);
+	if (!addBabyCoordsToList) return;
 	addHomeLocation(x, y, hpt_baby);
 
 	// person is not jet defined, person will be null, would need to do this later in order to get the gender

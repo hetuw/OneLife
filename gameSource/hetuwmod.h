@@ -523,6 +523,8 @@ private:
 
 	static bool bDrawGrid;
 	static void drawGrid();
+
+	static bool addBabyCoordsToList;
 };
 
 
