@@ -2518,7 +2518,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		}
 		return true;
 	}
-	if (!commandKey && isCharKey(inASCII, charKey_ShowGrid)) {
+	if (!commandKey && !shiftKey && isCharKey(inASCII, charKey_ShowGrid)) {
 		if (bHoldDownTo_ShowGrid) bDrawGrid = true;
 		else bDrawGrid = !bDrawGrid;
 		return true;
@@ -2641,6 +2641,7 @@ bool HetuwMod::livingLifeKeyUp(unsigned char inASCII) {
 	bool r = false;
 
 	bool commandKey = isCommandKeyDown();
+	bool shiftKey = isShiftKeyDown();
 
 	if (inASCII == charKey_Up || inASCII == toupper(charKey_Up)) {
 		upKeyDown = false;
@@ -2697,7 +2698,7 @@ bool HetuwMod::livingLifeKeyUp(unsigned char inASCII) {
 			r = true;
 		}
 	}
-	if (!commandKey && isCharKey(inASCII, charKey_ShowGrid)) {
+	if (!commandKey && !shiftKey && isCharKey(inASCII, charKey_ShowGrid)) {
 		if (bHoldDownTo_ShowGrid) {
 			bDrawGrid = false;
 		}
