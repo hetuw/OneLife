@@ -6263,30 +6263,20 @@ void LivingLifePage::draw( doublePair inViewCenter,
             // don't draw waiting message, not connected yet
             if( userReconnect ) {
                 drawMessage( "waitingReconnect", pos );
+				HetuwMod::drawWaitingText(pos);
                 }
             }
         else if( userReconnect ) {
             drawMessage( "waitingReconnect", pos );
-            doublePair hetuwPos = pos; // hetuw mod
-			hetuwPos.y -= 60; // hetuw mod
-			char hStr[128]; // hetuw mod
-			sprintf( hStr, hetuwWaitingText, toupper(HetuwMod::charKey_ShowHelp) ); // hetuw mod
+			HetuwMod::drawWaitingText(pos);
             }
         else if( mPlayerInFlight ) {
             drawMessage( "waitingArrival", pos );
-            doublePair hetuwPos = pos; // hetuw mod
-			hetuwPos.y -= 60; // hetuw mod
-			char hStr[128]; // hetuw mod
-			sprintf( hStr, hetuwWaitingText, toupper(HetuwMod::charKey_ShowHelp) ); // hetuw mod
-            drawMessage( hStr, hetuwPos ); // hetuw mod
+			HetuwMod::drawWaitingText(pos);
             }
         else if( userTwinCode == NULL ) {
             drawMessage( "waitingBirth", pos );
-            doublePair hetuwPos = pos; // hetuw mod
-			hetuwPos.y -= 60; // hetuw mod
-			char hStr[128]; // hetuw mod
-			sprintf( hStr, hetuwWaitingText, toupper(HetuwMod::charKey_ShowHelp) ); // hetuw mod
-            drawMessage( hStr, hetuwPos ); // hetuw mod
+			HetuwMod::drawWaitingText(pos);
             }
         else {
             const char *sizeString = translate( "twins" );
@@ -13554,6 +13544,8 @@ void LivingLifePage::step() {
                     "%199s\n"
                     "%d\n", &currentPlayers, &maxPlayers, challengeString, 
                     &mRequiredVersion );
+            if( mRequiredVersion > versionNumber ) HetuwMod::onInvalidVersionDetected(versionNumber, mRequiredVersion);
+			versionNumber = mRequiredVersion; // hetuw mod - ignore client version check - join server even if client is outdated
             
 
             if( mRequiredVersion > versionNumber ||
@@ -22083,7 +22075,7 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
             // store negative in place so that we can show their relation
             // string
             mCurMouseOverID = - p.hitOtherPersonID;
-			HetuwMod::OnPlayerHoverOver(p.hitOtherPersonID);
+			HetuwMod::onPlayerHoverOver(p.hitOtherPersonID);
             mCurMouseOverBiome = -1;
             }
         }

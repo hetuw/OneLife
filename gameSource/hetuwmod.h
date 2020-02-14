@@ -7,6 +7,7 @@
 #define hetuwLogSeperator " | " // needs to be 3 char long
 #define hetuwFakeCoord 1977
 #define hetuwBitcoinWallet "bc1q66jzg06xxd8uup0svwhhwum23d3mqlrnsccf2j" // donate something :)
+#define hetuwGetNewestVersionFromGithub "get newest version from github https://github.com/hetuw/OneLife/releases"
 
 #include "LivingLifePage.h"
 #include <vector>
@@ -230,9 +231,14 @@ public:
 	static SimpleVector<SimpleVector<int>> *mMapSubContainedStacks;
 	static int *mMapD;
 
+	static bool invalidVersionDetected;
+	static string strInvalidVersion;
+	static void drawWaitingText(doublePair pos);
+	static void onInvalidVersionDetected(int version, int requiredVersion);
+
 	static int *mCurMouseOverID;
 	static int selectedPlayerID; 
-	static void OnPlayerHoverOver(int id);
+	static void onPlayerHoverOver(int id);
 	static double timeLastPlayerHover;
 
 	static void pickUpBaby( int x, int y );

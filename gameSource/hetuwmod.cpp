@@ -123,6 +123,9 @@ SimpleVector<int> *HetuwMod::mMapContainedStacks;
 SimpleVector<SimpleVector<int>> *HetuwMod::mMapSubContainedStacks;
 int *HetuwMod::mMapD;
 
+bool HetuwMod::invalidVersionDetected = false;
+string HetuwMod::strInvalidVersion = "";
+
 int *HetuwMod::mCurMouseOverID;
 int HetuwMod::selectedPlayerID;
 double HetuwMod::timeLastPlayerHover;
@@ -950,7 +953,26 @@ void HetuwMod::guiScaleDecrease() {
 	guiScale = guiScaleRaw * zoomScale;
 }
 
-void HetuwMod::OnPlayerHoverOver(int id) {
+void HetuwMod::drawWaitingText(doublePair pos) {
+	pos.y -= 60;
+	char hStr[256];
+	sprintf( hStr, hetuwWaitingText, toupper(HetuwMod::charKey_ShowHelp) );
+	livingLifePage->hetuwDrawMainFont(hStr, pos, alignCenter);
+	if (!invalidVersionDetected) return;
+	pos.y -= 60;
+	setDrawColor(1.0, 0.5, 0.0, 1.0);
+	livingLifePage->hetuwDrawMainFont(strInvalidVersion.c_str(), pos, alignCenter);
+	pos.y -= 45;
+	livingLifePage->hetuwDrawMainFont(hetuwGetNewestVersionFromGithub, pos, alignCenter);
+	setDrawColor(1.0, 1.0, 1.0, 1.0);
+}
+
+void HetuwMod::onInvalidVersionDetected(int version, int requiredVersion) {
+	invalidVersionDetected = true;
+	strInvalidVersion = "Warning: Invalid Version detected "+to_string(version)+" < "+to_string(requiredVersion);
+}
+
+void HetuwMod::onPlayerHoverOver(int id) {
 	selectedPlayerID = id;
 	timeLastPlayerHover = game_getCurrentTime();
 }
