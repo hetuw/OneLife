@@ -69,6 +69,7 @@ unsigned char HetuwMod::charKey_Search;
 unsigned char HetuwMod::charKey_TeachLanguage;
 unsigned char HetuwMod::charKey_FindYum;
 unsigned char HetuwMod::charKey_HidePlayers;
+unsigned char HetuwMod::charKey_ShowGrid;
 
 unsigned char HetuwMod::charKey_CreateHome;
 unsigned char HetuwMod::charKey_FixCamera;
@@ -209,6 +210,7 @@ float *HetuwMod::objectDefaultColors;
 bool HetuwMod::bHoldDownTo_FixCamera = true;
 bool HetuwMod::bHoldDownTo_XRay = true;
 bool HetuwMod::bHoldDownTo_FindYum = true;
+bool HetuwMod::bHoldDownTo_ShowGrid = true;
 
 bool HetuwMod::b_drawYumColor = false;
 bool HetuwMod::b_drawYumPulsate = true;
@@ -217,6 +219,7 @@ bool HetuwMod::b_drawSearchTileRec = true;
 bool HetuwMod::b_drawSearchPulsate = true;
 
 bool HetuwMod::bAutoDataUpdate = true;
+bool HetuwMod::bDrawGrid = false;
 
 void HetuwMod::init() {
 	zoomScale = 1.5f;
@@ -256,6 +259,7 @@ void HetuwMod::init() {
 	charKey_TeachLanguage = 'l';
 	charKey_FindYum = 'y';
 	charKey_HidePlayers = 254;
+	charKey_ShowGrid = 'v';
 
 	charKey_ShowMap = 'm';
 	charKey_MapZoomIn = 'u';
@@ -520,6 +524,7 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	if (strstr(name, "key_teachlanguage")) return setCharKey( charKey_TeachLanguage, value );
 	if (strstr(name, "key_findyum")) return setCharKey( charKey_FindYum, value );
 	if (strstr(name, "key_hideplayers")) return setCharKey( charKey_HidePlayers, value );
+	if (strstr(name, "key_showgrid")) return setCharKey( charKey_ShowGrid, value );
 
 	if (strstr(name, "init_show_names")) {
 		iDrawNames = (int)(value[0]-'0');
@@ -556,6 +561,10 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	}
 	if (strstr(name, "keep_button_pressed_to_findyum")) {
 		bHoldDownTo_FindYum = bool(value[0]-48);
+		return true;
+	}
+	if (strstr(name, "keep_button_pressed_to_showgrid")) {
+		bHoldDownTo_ShowGrid = bool(value[0]-48);
 		return true;
 	}
 
@@ -669,6 +678,7 @@ void HetuwMod::initSettings() {
 	writeCharKeyToStream( ofs, "key_findyum", charKey_FindYum );
 	writeCharKeyToStream( ofs, "key_hideplayers", charKey_HidePlayers );
 	writeCharKeyToStream( ofs, "key_takeOffBackpack", charKey_TakeOffBackpack );
+	writeCharKeyToStream( ofs, "key_showgrid", charKey_ShowGrid );
 	ofs << endl;
 	ofs << "init_show_names = " << (char)(iDrawNames+48) << " // 0 = dont show names, 1 = show first name, 2 = show first and last name" << endl;
 	ofs << "init_show_selectedplayerinfo = " << (char)(bDrawSelectedPlayerInfo+48) << endl;
@@ -680,6 +690,7 @@ void HetuwMod::initSettings() {
 	ofs << endl;
 	ofs << "keep_button_pressed_to_fixcamera = " << (char)(bHoldDownTo_FixCamera+48) << endl;
 	ofs << "keep_button_pressed_to_findyum = " << (char)(bHoldDownTo_FindYum+48) << endl;
+	ofs << "keep_button_pressed_to_showgrid = " << (char)(bHoldDownTo_ShowGrid+48) << endl;
 	ofs << endl;
 	ofs << "keep_button_pressed_to_xray = " << (char)(bHoldDownTo_XRay+48) << endl;
 	ofs << "xray_opacity = " << (char)(xRayOpacity*10+48) << " // how visible objects should be, can be 0 - 10" << endl;
@@ -1447,6 +1458,7 @@ void HetuwMod::livingLifeDraw() {
  	ourLiveObject = livingLifePage->getOurLiveObject();
 	if (!ourLiveObject) return;
 
+	if (bDrawGrid) drawGrid();
 	drawAge();
 	if (bDrawCords) drawCords();
 	if (iDrawPlayersInRangePanel > 0) drawPlayersInRangePanel();
@@ -2496,6 +2508,11 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		}
 		return true;
 	}
+	if (!commandKey && isCharKey(inASCII, charKey_ShowGrid)) {
+		if (bHoldDownTo_ShowGrid) bDrawGrid = true;
+		else bDrawGrid = !bDrawGrid;
+		return true;
+	}
 
 	if (commandKey) {
 		if (isCharKey(inASCII, charKey_TileStandingOn)) {
@@ -2668,6 +2685,11 @@ bool HetuwMod::livingLifeKeyUp(unsigned char inASCII) {
 			resetObjectDrawScale();
 			resetObjectsColor();
 			r = true;
+		}
+	}
+	if (!commandKey && isCharKey(inASCII, charKey_ShowGrid)) {
+		if (bHoldDownTo_ShowGrid) {
+			bDrawGrid = false;
 		}
 	}
 
@@ -3667,6 +3689,29 @@ void HetuwMod::drawCords() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( sBufB, drawPosB, guiScale );
 }
 
+void HetuwMod::drawGrid() {
+	setDrawColor( 0.0, 0.0, 0.0, 1.0 );
+	doublePair drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	float recWidth = 1*guiScale;
+	float startX = drawPos.x - HetuwMod::viewWidth/2.0;
+	float endX = drawPos.x + HetuwMod::viewWidth/2.0;
+	float startY = drawPos.y - HetuwMod::viewHeight/2.0;
+	float endY = drawPos.y + HetuwMod::viewHeight/2.0;
+	int offsetX = fmod(startX, CELL_D)+(CELL_D/2.0);
+	int offsetY = fmod(startY, CELL_D)+(CELL_D/2.0);
+	drawPos.x = startX;
+	drawPos.y = startY;
+	for (float x = startX-offsetX; x < endX; x += CELL_D) {
+		drawPos.x = x;
+		drawRect( drawPos, recWidth, HetuwMod::viewHeight );
+	}
+	drawPos.x = startX;
+	for (float y = startY-offsetY; y < endY; y += CELL_D) {
+		drawPos.y = y;
+		drawRect( drawPos, HetuwMod::viewWidth, recWidth );
+	}
+}
+
 void HetuwMod::SetFixCamera(bool b) {
 	cameraIsFixed = !b;
 }
@@ -3783,6 +3828,12 @@ void HetuwMod::drawHelp() {
 	if (bDrawYum) setHelpColorSpecial();
 	else setHelpColorNormal();
 	sprintf(str, "%c FIND YUM", toupper(charKey_FindYum));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+
+	if (bDrawGrid) setHelpColorSpecial();
+	else setHelpColorNormal();
+	sprintf(str, "%c SHOW GRID", toupper(charKey_ShowGrid));
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 

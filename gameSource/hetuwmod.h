@@ -199,6 +199,7 @@ public:
 	static unsigned char charKey_TeachLanguage;
 	static unsigned char charKey_FindYum;
 	static unsigned char charKey_HidePlayers;
+	static unsigned char charKey_ShowGrid;
 
 	static unsigned char charKey_ShowMap;
 	static unsigned char charKey_MapZoomIn;
@@ -391,6 +392,7 @@ public:
 	static bool bHoldDownTo_FixCamera;
 	static bool bHoldDownTo_XRay;
 	static bool bHoldDownTo_FindYum;
+	static bool bHoldDownTo_ShowGrid;
 
 	static bool b_drawYumColor;
 	static bool b_drawYumPulsate;
@@ -518,6 +520,9 @@ private:
 	static bool bMoveClickAlpha;
 	static int bMoveClickX;
 	static int bMoveClickY;
+
+	static bool bDrawGrid;
+	static void drawGrid();
 };
 
 
