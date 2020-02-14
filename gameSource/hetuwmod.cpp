@@ -1232,6 +1232,12 @@ void HetuwMod::logHomeLocation(HomePos* hp) {
 		case hpt_map:
 			typeName = "map";
 			break;
+		case hpt_babyboy:
+			typeName = "babyboy";
+			break;
+		case hpt_babygirl:
+			typeName = "babygirl";
+			break;
 		default:
 			typeName = "unknowntype";
 	}
@@ -1299,6 +1305,17 @@ void HetuwMod::setMapText(char *message, int mapX, int mapY) {
 	char mapName[64];
 	sscanf( message, ":%[^\t\n*]", mapName );
 	setHomeLocationText(mapX, mapY, hpt_map, mapName);
+}
+
+void HetuwMod::addPersonHomeLocation(int x, int y, int personID ) {
+	//printf("hetuw addPersonHomeLocation x:%i, y:%i, id:%i\n", x, y, personID);
+	LiveObject* person = livingLifePage->getLiveObject(personID);
+	if (!person) return;
+	//printf("hetuw person not null, age: %f\n", livingLifePage->hetuwGetAge(person));
+	if (livingLifePage->hetuwGetAge(person) < 1) {
+		homePosType type = getObject(person->displayID)->male ? hpt_babyboy : hpt_babygirl;
+		addHomeLocation(x, y, type);
+	}
 }
 
 // thanks to https://raw.githubusercontent.com/JustinLove/onelife-client-patches/master/yum-hover
@@ -1669,6 +1686,7 @@ void HetuwMod::createCordsDrawStr() {
 	int apocCount = 0;
 	int tarrCount = 0;
 	int mapCount = 0;
+	int babyCount = 0;
 	for (unsigned i=0; i<homePosStack.size(); i++) {
 		switch (homePosStack[i]->type) {
 			case hpt_custom:
@@ -1694,7 +1712,7 @@ void HetuwMod::createCordsDrawStr() {
 				sprintf( sBufA, "TARR %c %d %d", (char)(tarrCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
 				tarrCount++;
 				break;
-			case hpt_map:
+			case hpt_map: {
 				string mapName = "MAP "+(char)(mapCount+65);
 				if (homePosStack[i]->text.length() > 0) {
 					if (homePosStack[i]->text.length() > 12) {
@@ -1703,6 +1721,14 @@ void HetuwMod::createCordsDrawStr() {
 				}
 				sprintf( sBufA, "%s %d %d", mapName.c_str(), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
 				mapCount++;
+				break; }
+			case hpt_babyboy:
+				sprintf( sBufA, "BABY BOY %c %d %d", (char)(babyCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				babyCount++;
+				break;
+			case hpt_babygirl:
+				sprintf( sBufA, "BABY GIRL %c %d %d", (char)(babyCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				babyCount++;
 				break;
 		}
 		homePosStack[i]->drawStr = string(sBufA);
@@ -1740,7 +1766,7 @@ void HetuwMod::drawHomeCords() {
 				setDrawColor( 1.0, 1.0, 1.0, 1.0 );
 				break;
 			case hpt_birth:
-				setDrawColor( 0.7, 0.6, 1.0, 1.0 );
+				setDrawColor( 0.63, 1.0, 0.8, 1.0 );
 				break;
 			case hpt_home:
 				setDrawColor( 0.2, 0.8, 1.0, 1.0 );
@@ -1756,6 +1782,10 @@ void HetuwMod::drawHomeCords() {
 				break;
 			case hpt_map:
 				setDrawColor( 0.7, 0.3, 1.0, 1.0 );
+				break;
+			case hpt_babyboy:
+			case hpt_babygirl:
+				setDrawColor( 1.0, 0.45, 0.8, 1.0 );
 				break;
 		}
 		livingLifePage->hetuwDrawScaledHandwritingFont( homePosStack[i]->drawStr.c_str(), drawPosA, guiScale );

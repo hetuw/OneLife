@@ -122,7 +122,7 @@ class HetuwMod
 public:
 
 	enum homePosType {
-		hpt_custom, hpt_birth, hpt_home, hpt_bell, hpt_apoc, hpt_tarr, hpt_map
+		hpt_custom, hpt_birth, hpt_home, hpt_bell, hpt_apoc, hpt_tarr, hpt_map, hpt_babyboy, hpt_babygirl,
 	};
 
 	typedef struct {
@@ -333,6 +333,7 @@ public:
 	static void setHomeLocationText(int x, int y, homePosType type, char *text);
 	static void setMapText(char *message, int mapX, int mapY);
 	static void logHomeLocation(HomePos* hp);
+	static void addPersonHomeLocation( int x, int y, int personId );
 
 	static GridPos cordOffset;
 

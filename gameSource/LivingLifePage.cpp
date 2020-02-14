@@ -459,6 +459,7 @@ static void addTempHomeLocation( int inX, int inY,
                                  char inPerson, int inPersonID,
                                  const char *inPersonKey ) {
 	if (!inPerson) HetuwMod::addHomeLocation( inX, inY, HetuwMod::hpt_map );
+	else HetuwMod::addPersonHomeLocation( inX, inY, inPersonID );
     removeAllTempHomeLocations();
     
     GridPos newPos = { inX, inY };
