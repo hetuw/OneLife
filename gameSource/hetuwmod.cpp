@@ -1772,6 +1772,37 @@ void HetuwMod::createCordsDrawStr() {
 	longestCordsTextWidth = biggestTextWidth;
 }
 
+void HetuwMod::setDrawColorToCoordType(homePosType type) {
+	switch (type) {
+		case hpt_custom:
+			setDrawColor( 1.0, 1.0, 1.0, 1.0 );
+			break;
+		case hpt_birth:
+			setDrawColor( 0.63, 1.0, 0.8, 1.0 );
+			break;
+		case hpt_home:
+			setDrawColor( 0.2, 0.8, 1.0, 1.0 );
+			break;
+		case hpt_bell:
+			setDrawColor( 1.0, 1.0, 0.2, 1.0 );
+			break;
+		case hpt_apoc:
+			setDrawColor( 1.0, 0.5, 0.2, 1.0 );
+			break;
+		case hpt_tarr:
+			setDrawColor( 0.4, 1.0, 0.4, 1.0 );
+			break;
+		case hpt_map:
+			setDrawColor( 0.7, 0.3, 1.0, 1.0 );
+			break;
+		case hpt_baby:
+		case hpt_babyboy:
+		case hpt_babygirl:
+			setDrawColor( 1.0, 0.45, 0.8, 1.0 );
+			break;
+	}
+}
+
 void HetuwMod::drawHomeCords() {
 	if (homePosStack.size() <= 0) return;
 
@@ -1794,34 +1825,7 @@ void HetuwMod::drawHomeCords() {
 	drawRect( drawPosB, recWidth + 6*guiScale, recHeight + 14*guiScale );
 
 	for (unsigned i=0; i<homePosStack.size(); i++) {
-		switch (homePosStack[i]->type) {
-			case hpt_custom:
-				setDrawColor( 1.0, 1.0, 1.0, 1.0 );
-				break;
-			case hpt_birth:
-				setDrawColor( 0.63, 1.0, 0.8, 1.0 );
-				break;
-			case hpt_home:
-				setDrawColor( 0.2, 0.8, 1.0, 1.0 );
-				break;
-			case hpt_bell:
-				setDrawColor( 1.0, 1.0, 0.2, 1.0 );
-				break;
-			case hpt_apoc:
-				setDrawColor( 1.0, 0.5, 0.2, 1.0 );
-				break;
-			case hpt_tarr:
-				setDrawColor( 0.4, 1.0, 0.4, 1.0 );
-				break;
-			case hpt_map:
-				setDrawColor( 0.7, 0.3, 1.0, 1.0 );
-				break;
-			case hpt_baby:
-			case hpt_babyboy:
-			case hpt_babygirl:
-				setDrawColor( 1.0, 0.45, 0.8, 1.0 );
-				break;
-		}
+		setDrawColorToCoordType(homePosStack[i]->type);
 		livingLifePage->hetuwDrawScaledHandwritingFont( homePosStack[i]->drawStr.c_str(), drawPosA, guiScale );
 		homePosStack[i]->drawStartPos.x = drawPosB.x-recWidth-6*guiScale;
 		homePosStack[i]->drawEndPos.x = drawPosB.x+recWidth+6*guiScale;
@@ -3486,6 +3490,24 @@ void HetuwMod::drawMap() {
 		else setLastNameColor( playersInMap[k]->lastName, alpha );
 
 		drawRect( drawPos, recWidthHalf, recHeightHalf );
+	}
+
+	setDrawColorToCoordType(hpt_bell);
+	double bellCrossWidth = recWidthHalf*0.3;
+	for (unsigned i=0; i<homePosStack.size(); i++) {
+		if (homePosStack[i]->type != hpt_bell) continue;
+		drawPos.x = (homePosStack[i]->x - ourLiveObject->xd) / mapScale;
+		drawPos.y = (homePosStack[i]->y - ourLiveObject->yd) / mapScale;
+		drawPos.x += mapOffsetX;
+		drawPos.y += mapOffsetY;
+		drawPos.x *= viewHeight;
+		drawPos.y *= viewHeight;
+		drawPos.x += screenCenter.x;
+		drawPos.y += screenCenter.y;
+		if (drawPos.x < minX || drawPos.x > maxX || drawPos.y < minY || drawPos.y > maxY)
+			continue;
+		drawRect( drawPos, bellCrossWidth, recHeightHalf );
+		drawRect( drawPos, recHeightHalf, bellCrossWidth );
 	}
 
 	setDrawColor( 0, 0, 0, 0.8 );

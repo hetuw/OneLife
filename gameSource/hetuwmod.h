@@ -479,6 +479,7 @@ private:
 
 	static bool bDrawHomeCords;
 	static void drawHomeCords();
+	static void setDrawColorToCoordType(homePosType type);
 	static bool bNextCharForHome;
 	static void createCordsDrawStr();
 	static float longestCordsTextWidth;
