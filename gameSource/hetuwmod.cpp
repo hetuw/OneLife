@@ -1333,11 +1333,11 @@ void HetuwMod::setMapText(char *message, int mapX, int mapY) {
 void HetuwMod::addPersonHomeLocation(int x, int y, int personID ) {
 	//printf("hetuw addPersonHomeLocation x:%i, y:%i, id:%i\n", x, y, personID);
 	if (!addBabyCoordsToList) return;
-	addHomeLocation(x, y, hpt_baby);
+	LiveObject* person = livingLifePage->getLiveObject(personID);
+	if (!person) addHomeLocation(x, y, hpt_baby); // if person does not exist it is a new baby, otherwise it might come from an order
 
 	// person is not jet defined, person will be null, would need to do this later in order to get the gender
 	if (true) return;
-	LiveObject* person = livingLifePage->getLiveObject(personID);
 	if (!person) return;
 	//printf("hetuw person not null, age: %f\n", livingLifePage->hetuwGetAge(person));
 	if (livingLifePage->hetuwGetAge(person) < 1) {
