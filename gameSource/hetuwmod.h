@@ -359,6 +359,7 @@ public:
 	static string ourFamilyName;
 
 	static bool charArrContainsCharArr(const char* arr1, const char* arr2);
+	static void strToUpper(const char* src, char* dest, int maxSize);
 	static void objDescrToUpper(const char* arr, char* output, int maxSize);
 	
 	static bool *objIsBeingSearched;
@@ -399,6 +400,11 @@ public:
 	static bool b_drawSearchText;
 	static bool b_drawSearchTileRec;
 	static bool b_drawSearchPulsate;
+
+	static char usingCustomServer;
+	static char *serverIP;
+	static int serverPort;
+	static void onGotServerAddress(char usingCustomServer, char *serverIP, int serverPort);
 
 	static bool bAutoDataUpdate;
 

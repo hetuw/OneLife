@@ -221,6 +221,10 @@ bool HetuwMod::b_drawSearchPulsate = true;
 bool HetuwMod::bAutoDataUpdate = true;
 bool HetuwMod::bDrawGrid = false;
 
+char HetuwMod::usingCustomServer = false;
+char *HetuwMod::serverIP = NULL;
+int HetuwMod::serverPort = 0;
+
 bool HetuwMod::addBabyCoordsToList = false;
 
 void HetuwMod::init() {
@@ -716,6 +720,12 @@ void HetuwMod::initSettings() {
 	ofs << "chat_delay = " << to_string((int)(sayDelay*10)) << " // wait atleast X time before sending the next text (10 = 1 second) - set it to 0 to deactivate it" << endl;
 
 	ofs.close();
+}
+
+void HetuwMod::onGotServerAddress(char inUsingCustomServer, char *inServerIP, int inServerPort) {
+	usingCustomServer = inUsingCustomServer;
+	serverIP = inServerIP;
+	serverPort = inServerPort;
 }
 
 void HetuwMod::initOnBirth() { // will be called from LivingLifePage.cpp
@@ -1554,6 +1564,18 @@ bool HetuwMod::charArrContainsCharArr(const char* arr1, const char* arr2) {
 		}
 		i = r+1;
 	}
+}
+
+void HetuwMod::strToUpper(const char* src, char* dest, int maxSize) {
+	int i = 0;
+	for ( ; src[i] != 0; i++) {
+		if (i >= maxSize) {
+			dest[i-1] = 0;
+			break;
+		}
+		dest[i] = toupper(src[i]);
+	}
+	dest[i] = 0;
 }
 
 void HetuwMod::objDescrToUpper(const char* arr, char* output, int maxSize) {
@@ -3767,8 +3789,17 @@ void HetuwMod::drawHelp() {
 
 	double lineHeight = 30*guiScale;
 
-	// emotion words
 	doublePair drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	drawPos.x -= viewWidth/2 - 20*guiScale;
+	drawPos.y += viewHeight/2 - 30*guiScale;
+	char serverIPupperCase[128];
+	//printf("hetuw server: %s:%d\n", serverIP, serverPort);
+	strToUpper(serverIP, serverIPupperCase, 128);
+	sprintf(str, "%s:%d", serverIPupperCase, serverPort);
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+
+	// emotion words
+	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
 	drawPos.x -= viewWidth/2 - 20*guiScale;
 	drawPos.y += viewHeight/2 - 80*guiScale;
 	SimpleVector<Emotion> emotions = hetuwGetEmotions();

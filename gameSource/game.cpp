@@ -1172,6 +1172,7 @@ static void startConnecting() {
         serverPort = SettingsManager::getIntSetting( 
             "customServerPort", 8005 );
 
+		HetuwMod::onGotServerAddress(usingCustomServer, serverIP, serverPort);
         printf( "Using custom server address: %s:%d\n", 
                 serverIP, serverPort );
                     
@@ -1838,7 +1839,7 @@ void drawFrame( char inUpdate ) {
                     }
                 else {
                     
-
+					HetuwMod::onGotServerAddress(usingCustomServer, serverIP, serverPort);
                     printf( "Got server address: %s:%d\n", 
                             serverIP, serverPort );
                 
