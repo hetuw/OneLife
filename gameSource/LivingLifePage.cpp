@@ -2614,7 +2614,7 @@ LivingLifePage::LivingLifePage()
           mChalkBlotSprite( loadWhiteSprite( "chalkBlot.tga" ) ),
           mPathMarkSprite( loadWhiteSprite( "pathMark.tga" ) ),
           mSayField( handwritingFont, 0, 1000, 10, true, NULL,
-                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?!/ " ),
+                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ.-,'?!/ 0123456789" ),
           mDeathReason( NULL ),
           mShowHighlights( true ),
           mUsingSteam( false ),
