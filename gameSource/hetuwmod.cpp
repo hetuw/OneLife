@@ -227,6 +227,8 @@ int HetuwMod::serverPort = 0;
 
 bool HetuwMod::addBabyCoordsToList = false;
 
+std::vector<HetuwMod::HttpRequest*> HetuwMod::httpRequests;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -301,6 +303,8 @@ void HetuwMod::init() {
 	initSettings();
 
 	lastLoggedId = getLastIdFromLogs();
+
+	makeHttpRequest(hetuwLinkArcReport, &processArcReport);
 }
 
 void HetuwMod::splitLogLine(string* lineElements, string line) { // lineElements should be a string array with size 16
@@ -1023,6 +1027,20 @@ void HetuwMod::stepLoopTroughObjectsInRange() {
 	}
 }
 
+// void callBackFunc(const char* website, string error)
+// type is optional - default is GET
+// intervalSeconds is optional - default is 60 - if request fails wait for X seconds and resend it, if its below 0 than report error and stop
+void HetuwMod::makeHttpRequest(string link, void (*callBackFunc)(const char*, string), string type, int intervalSeconds) {
+	httpRequests.push_back(new HttpRequest(link, callBackFunc, type, intervalSeconds));
+}
+
+void HetuwMod::stepHttpRequests() {
+	if (httpRequests.size() <= 0) return;
+	for(int i=0; (unsigned)i<httpRequests.size(); i++) {
+		if (!httpRequests[i]->step()) httpRequests.erase(httpRequests.begin()+i);
+	}
+}
+
 void HetuwMod::gameStep() {
 	HetuwMouseActionBuffer* mouseBuffer = hetuwGetMouseActionBuffer();
 	for (int i = 0; i < mouseBuffer->bufferPos; i++) {
@@ -1036,6 +1054,8 @@ void HetuwMod::gameStep() {
 		}
 	}
 	mouseBuffer->Reset();
+
+	stepHttpRequests();
 }
 
 void HetuwMod::livingLifeStep() {
@@ -3769,6 +3789,14 @@ void HetuwMod::drawGrid() {
 
 void HetuwMod::SetFixCamera(bool b) {
 	cameraIsFixed = !b;
+}
+
+void HetuwMod::processArcReport(const char* data, string error) {
+	if (error.length() > 0) {
+		printf("hetuw processArcReport error: %s\n", error.c_str());
+		return;
+	}
+	//printf("%s\n", data);
 }
 
 void HetuwMod::setHelpColorNormal() {

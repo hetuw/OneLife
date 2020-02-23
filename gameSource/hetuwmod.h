@@ -8,6 +8,7 @@
 #define hetuwFakeCoord 1977
 #define hetuwBitcoinWallet "bc1q66jzg06xxd8uup0svwhhwum23d3mqlrnsccf2j" // donate something :)
 #define hetuwGetNewestVersionFromGithub "get newest version from github https://github.com/hetuw/OneLife/releases"
+#define hetuwLinkArcReport "http://onehouronelife.com/arcServer/arcReport.php"
 
 #include "LivingLifePage.h"
 #include <vector>
@@ -116,6 +117,66 @@ class HetuwMod
 				if (name[i] != inName[i]) return false;
 			}
 			return true;
+		}
+	};
+
+	struct HttpRequest {
+		string link;
+		void (*callBackFunc)(const char*, string); // first argument contains data from website, second argument contains error
+		string type; // for example GET
+		int webRequest;
+		time_t startTime; // in seconds
+		int intervalSeconds; // if this is >= 0 than dont report error but instead try again in intervalSeconds
+		bool waitForRetry;
+		HttpRequest(string inLink, void (*inCallBackFunc)(const char*, string), string inType="GET", int inIntervalSeconds=60) {
+			link = inLink;
+			callBackFunc = inCallBackFunc;
+			type = inType;
+			intervalSeconds = inIntervalSeconds;
+			start();
+		}
+		void start() {
+			waitForRetry = false;
+			webRequest = startWebRequest(type.c_str(), link.c_str(), NULL);
+			startTime = time(NULL);
+		}
+		bool step() { // returns false if request is finished
+			if (waitForRetry) {
+				if (time(NULL)-startTime >= intervalSeconds) start();
+				return true;
+			}
+			if (webRequest == -1) { // error
+				if (intervalSeconds < 0) {
+					callBackFunc("", "webRequest == -1");
+					return false;
+				} else {
+					printf("hetuw Warning: HttpRequest failed %s\n", link.c_str());
+					printf("hetuw webRequest == -1\n");
+					printf("hetuw resend request in %i seconds\n", intervalSeconds-(int)(time(NULL)-startTime));
+					waitForRetry = true;
+					return true;
+				}
+			}
+			int result = stepWebRequest(webRequest);
+			if (result == 0) return true; // still waiting for request to complete
+			if (result == -1) { // error
+				clearWebRequest(webRequest);
+				if (intervalSeconds < 0) {
+					callBackFunc("", "result == -1");
+					return false;
+				} else {
+					printf("hetuw Warning: HttpRequest failed %s\n", link.c_str());
+					printf("hetuw result == -1\n");
+					printf("hetuw resend request in %i seconds\n", intervalSeconds-(int)(time(NULL)-startTime));
+					waitForRetry = true;
+					return true;
+				}
+			}
+			const char *resultText = getWebResult(webRequest);
+			clearWebRequest(webRequest);
+			webRequest = -1;
+			callBackFunc(resultText, "");
+			return false;
 		}
 	};
 
@@ -408,6 +469,8 @@ public:
 
 	static bool bAutoDataUpdate;
 
+	static void makeHttpRequest(string link, void (*callBackFunc)(const char*, string), string type="GET", int inIntervalSeconds=60);
+
 private:
 
  	static LiveObject *ourLiveObject;
@@ -532,6 +595,10 @@ private:
 	static void drawGrid();
 
 	static bool addBabyCoordsToList;
+
+	static std::vector<HttpRequest*> httpRequests;
+	static void stepHttpRequests();
+	static void processArcReport(const char* data, string error);
 };
 
 
