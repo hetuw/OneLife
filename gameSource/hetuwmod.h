@@ -8,6 +8,8 @@
 #define hetuwFakeCoord 1977
 #define hetuwBitcoinWallet "bc1q66jzg06xxd8uup0svwhhwum23d3mqlrnsccf2j" // donate something :)
 #define hetuwGetNewestVersionFromGithub "get newest version from github https://github.com/hetuw/OneLife/releases"
+
+#define hetuwLinkMainServer "bigserver2.onehouronelife.com"
 #define hetuwLinkArcReport "http://onehouronelife.com/arcServer/arcReport.php"
 
 #include "LivingLifePage.h"
@@ -471,6 +473,9 @@ public:
 
 	static void makeHttpRequest(string link, void (*callBackFunc)(const char*, string), string type="GET", int inIntervalSeconds=60);
 
+	static bool connectedToMainServer;
+	static time_t arcRunningSince;
+
 private:
 
  	static LiveObject *ourLiveObject;
@@ -599,6 +604,7 @@ private:
 	static std::vector<HttpRequest*> httpRequests;
 	static void stepHttpRequests();
 	static void processArcReport(const char* data, string error);
+	static string getArcTimeStr();
 };
 
 

@@ -229,6 +229,9 @@ bool HetuwMod::addBabyCoordsToList = false;
 
 std::vector<HetuwMod::HttpRequest*> HetuwMod::httpRequests;
 
+bool HetuwMod::connectedToMainServer = false;
+time_t HetuwMod::arcRunningSince = -1;
+
 void HetuwMod::init() {
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -303,8 +306,6 @@ void HetuwMod::init() {
 	initSettings();
 
 	lastLoggedId = getLastIdFromLogs();
-
-	makeHttpRequest(hetuwLinkArcReport, &processArcReport);
 }
 
 void HetuwMod::splitLogLine(string* lineElements, string line) { // lineElements should be a string array with size 16
@@ -730,6 +731,10 @@ void HetuwMod::onGotServerAddress(char inUsingCustomServer, char *inServerIP, in
 	usingCustomServer = inUsingCustomServer;
 	serverIP = inServerIP;
 	serverPort = inServerPort;
+	connectedToMainServer = strstr(hetuwLinkMainServer, inServerIP) ? true : false;
+	if (connectedToMainServer) {
+		if (arcRunningSince < 0) makeHttpRequest(hetuwLinkArcReport, &processArcReport);
+	}
 }
 
 void HetuwMod::initOnBirth() { // will be called from LivingLifePage.cpp
@@ -3796,7 +3801,29 @@ void HetuwMod::processArcReport(const char* data, string error) {
 		printf("hetuw processArcReport error: %s\n", error.c_str());
 		return;
 	}
-	//printf("%s\n", data);
+	int arcTime;
+	int scanCount = sscanf(data, "Current player arc has been going %d year", &arcTime);
+	if (scanCount != 1) {
+		printf("hetuw Warning: Could not get arc time from string\n");
+		printf("hetuw string: %s\n", data);
+		return;
+	}
+	arcRunningSince = time(NULL) - (arcTime*60);
+}
+
+string HetuwMod::getArcTimeStr() {
+	if (arcRunningSince < 0) return "";
+	int timeDiff = (int)(time(NULL) - arcRunningSince);
+	int days = timeDiff/60/60/24;
+	int hours = (timeDiff/60/60) - (days*24);
+	int minutes = timeDiff % 60;
+	if (days > 0) {
+		return to_string(days)+" DAYS "+to_string(hours)+" HOURS ";
+	} else {
+		if (hours > 0) {
+			return to_string(hours)+" HOURS "+to_string(minutes)+" MINUTES";
+		} else return to_string(minutes)+" MINUTEs";
+	}
 }
 
 void HetuwMod::setHelpColorNormal() {
@@ -3821,7 +3848,6 @@ void HetuwMod::drawHelp() {
 	drawPos.x -= viewWidth/2 - 20*guiScale;
 	drawPos.y += viewHeight/2 - 30*guiScale;
 	char serverIPupperCase[128];
-	//printf("hetuw server: %s:%d\n", serverIP, serverPort);
 	strToUpper(serverIP, serverIPupperCase, 128);
 	sprintf(str, "%s:%d", serverIPupperCase, serverPort);
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
@@ -4002,4 +4028,12 @@ void HetuwMod::drawHelp() {
 	sprintf(str, "CTRL+MOUSECLICK - TILE BASED CLICK");
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
+
+	if (connectedToMainServer && arcRunningSince > 0) {
+		drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+		drawPos.x += viewWidth/2 - 440*guiScale;
+		drawPos.y += viewHeight/2 - 30*guiScale;
+		sprintf(str, "MAP RUNNING SINCE: %s", getArcTimeStr().c_str());
+		livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	}
 }
