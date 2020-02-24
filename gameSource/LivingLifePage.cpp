@@ -8924,7 +8924,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         setDrawColor( 1, 1, 1, apocalypseDisplayProgress );
         
-        drawRect( lastScreenViewCenter, 640, 360 );
+        drawRect( lastScreenViewCenter, 640*HetuwMod::zoomScale, 360*HetuwMod::zoomScale );
         
         toggleAdditiveBlend( false );
         }
