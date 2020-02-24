@@ -8,6 +8,7 @@
 #define hetuwFakeCoord 1977
 #define hetuwBitcoinWallet "bc1q66jzg06xxd8uup0svwhhwum23d3mqlrnsccf2j" // donate something :)
 #define hetuwGetNewestVersionFromGithub "get newest version from github https://github.com/hetuw/OneLife/releases"
+#define hetuwPhotoSize 400
 
 #define hetuwLinkMainServer "bigserver2.onehouronelife.com"
 #define hetuwLinkArcReport "http://onehouronelife.com/arcServer/arcReport.php"
@@ -263,6 +264,7 @@ public:
 	static unsigned char charKey_FindYum;
 	static unsigned char charKey_HidePlayers;
 	static unsigned char charKey_ShowGrid;
+	static unsigned char charKey_MakePhoto;
 
 	static unsigned char charKey_ShowMap;
 	static unsigned char charKey_MapZoomIn;
@@ -380,7 +382,16 @@ public:
 	static bool charArrEqualsCharArr(const char *a, const char *b);
 	static void drawTextWithBckgr( doublePair pos, const char* text );
 
+	static doublePair getToScreenCoordsVec();
+
+	static int getRecWidth(int rec[]);
+	static int getRecHeight(int rec[]);
+	static void setRecPosition(int rec[], int startX, int endX);
+	static void setRecFromCenterWidthHeight(int rec[], int centerX, int centerY, int width, int height);
+	static void recToPixelCoords(int *rec);
 	static void hDrawRect( doublePair startPos, doublePair endPos );
+	static void hDrawRect(int startX, int startY, int endX, int endY);
+	static void hDrawRect(int rec[]);
 	static void drawTileRect( int x, int y );
 
 	static void onOurDeath();
@@ -410,6 +421,15 @@ public:
 
 	static void setTakingPhoto( bool inTakingPhoto );
 	static bool takingPhoto;
+	static bool takingSpecialPhoto;
+	static int recTakePhoto[4];
+	static bool bDrawPhotoRec;
+	static void drawPhotoRec(int rec[]);
+	static void updatePhotoRecPosition(int rec[]);
+	static int* getPhotoRecForImage();
+
+	static void saveImage(Image *image);
+	static void saveImage(Image *image, string name);
 
 	static float drawColorAlpha;
 	static float xRayOpacity;

@@ -14,6 +14,7 @@
 #include "minorGems/graphics/filters/FastBlurFilter.h"
 #include "minorGems/graphics/filters/BoxBlurFilter.h"
 
+#include "hetuwmod.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
@@ -26,6 +27,15 @@ extern int ourID;
 
 Image *photoBorder;
 
+Image *hetuwPhoto = NULL;
+void hetuwTakePhoto() {
+	if (hetuwPhoto) delete hetuwPhoto;
+	int *rec = HetuwMod::getPhotoRecForImage();
+	int startX = rec[0]; int startY = rec[1];
+	hetuwPhoto = getScreenRegionRaw( startX, startY, hetuwPhotoSize, hetuwPhotoSize );
+	HetuwMod::saveImage(hetuwPhoto);
+	delete[] rec;
+}
 
 void initPhotos() {
     photoBorder = readTGAFile( "photoBorder.tga" );
@@ -195,7 +205,11 @@ void takePhoto( doublePair inCamerLocation, int inCameraFacing,
         rectStartY = screenHeight - 401;
         }
 
-    Image *im = getScreenRegionRaw( rectStartX, rectStartY, 400, 400 );
+	Image *im;
+	if (hetuwPhoto) {
+		im = hetuwPhoto;
+		hetuwPhoto = NULL;
+    } else im = getScreenRegionRaw( rectStartX, rectStartY, 400, 400 );
     
     double *r = im->getChannel( 0 );
     double *g = im->getChannel( 1 );

@@ -210,6 +210,8 @@ static int photoSequenceNumber = -1;
 static char waitingForPhotoSig = false;
 static char *photoSig = NULL;
 
+void LivingLifePage::hetuwSetTakingPhoto(bool b) { takingPhoto = b; }
+
 // no moving for first 20 seconds of life
 static double noMoveAge = 0.20;
 
@@ -4264,6 +4266,7 @@ void LivingLifePage::drawMapCell( int inMapI,
             highlight = false;
             }
 
+		if (takingPhoto) highlight = false; // hetuw mod
         
         int numPasses = 1;
         int startPass = 0;
@@ -8929,7 +8932,14 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
     if( takingPhoto ) {
 
-        if( photoSequenceNumber == -1 ) {
+		if (HetuwMod::takingSpecialPhoto) {
+            int screenWidth, screenHeight;
+            getScreenDimensions( &screenWidth, &screenHeight );
+			hetuwTakePhoto();
+			HetuwMod::takingSpecialPhoto = false;
+            takingPhoto = false;
+			HetuwMod::setTakingPhoto(takingPhoto);
+        } else if( photoSequenceNumber == -1 ) {
             photoSequenceNumber = getNextPhotoSequenceNumber();
             }
         else if( photoSig == NULL && ! waitingForPhotoSig ) {            
@@ -9007,7 +9017,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 }
             
-
             takePhoto( pos, takingPhotoFlip ? -1 : 1,
                        photoSequenceNumber,
                        photoSig,

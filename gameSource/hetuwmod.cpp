@@ -11,7 +11,10 @@
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/game/drawUtils.h"
 #include "minorGems/graphics/openGL/ScreenGL.h"
+#include "minorGems/io/file/File.h"
+#include "minorGems/graphics/converters/TGAImageConverter.h"
 #include "groundSprites.h"
+#include "photos.h"
 
 using namespace std;
 
@@ -70,6 +73,7 @@ unsigned char HetuwMod::charKey_TeachLanguage;
 unsigned char HetuwMod::charKey_FindYum;
 unsigned char HetuwMod::charKey_HidePlayers;
 unsigned char HetuwMod::charKey_ShowGrid;
+unsigned char HetuwMod::charKey_MakePhoto;
 
 unsigned char HetuwMod::charKey_CreateHome;
 unsigned char HetuwMod::charKey_FixCamera;
@@ -172,6 +176,10 @@ std::vector<doublePair*> HetuwMod::searchWordEndPos;
 std::vector<bool> HetuwMod::searchWordListDelete;
 
 bool HetuwMod::takingPhoto;
+bool HetuwMod::takingSpecialPhoto = false;
+int HetuwMod::recTakePhoto[4];
+bool HetuwMod::bDrawPhotoRec = false;
+
 float HetuwMod::drawColorAlpha = 1.0f;
 float HetuwMod::xRayOpacity = 0.3f;
 bool HetuwMod::bxRay;
@@ -271,6 +279,7 @@ void HetuwMod::init() {
 	charKey_FindYum = 'y';
 	charKey_HidePlayers = 254;
 	charKey_ShowGrid = 'v';
+	charKey_MakePhoto = 254;
 
 	charKey_ShowMap = 'm';
 	charKey_MapZoomIn = 'u';
@@ -345,8 +354,111 @@ int HetuwMod::getLastIdFromLogs() {
 	return -1;
 }
 
+int HetuwMod::getRecWidth(int rec[]) {
+	return rec[2] - rec[0];
+}
+
+int HetuwMod::getRecHeight(int rec[]) {
+	return rec[3] - rec[1];
+}
+
+void HetuwMod::setRecPosition(int rec[], int startX, int startY) {
+	float width = rec[2] - rec[0];
+	float height = rec[3] - rec[1];
+	rec[0] = startX; rec[1] = startY;
+	rec[2] = startX+width; rec[3] = startY+height;
+}
+
+void HetuwMod::setRecFromCenterWidthHeight(int rec[], int centerX, int centerY, int width, int height) {
+	rec[0] = centerX - (width/2);
+	rec[1] = centerY - (height/2);
+	rec[2] = rec[0] + width;
+	rec[3] = rec[1] + height;
+}
+
 void HetuwMod::setTakingPhoto(bool inTakingPhoto) {
 	takingPhoto = inTakingPhoto;
+}
+
+void HetuwMod::updatePhotoRecPosition(int rec[]) {
+	int mouseX, mouseY;
+	livingLifePage->hetuwGetMouseXY( mouseX, mouseY );
+	int size = hetuwPhotoSize;
+	int screenWidth, screenHeight;
+	getScreenDimensions( &screenWidth, &screenHeight );
+	int width = size*(viewWidth/(double)screenWidth);
+	int height = size*(viewHeight/(double)screenHeight);
+	setRecFromCenterWidthHeight(rec, mouseX, mouseY, width, height);
+}
+
+void HetuwMod::drawPhotoRec(int rec[]) {
+	updatePhotoRecPosition(rec);
+	setDrawColor(1.0f, 1.0f, 1.0f, 1.0f);
+	int width = getRecWidth(rec);
+	int height = getRecHeight(rec);
+	int centerX = rec[0] + (width/2);
+	int centerY = rec[1] + (height/2);
+	doublePair center = { (double)centerX, (double)centerY };
+	int thickness = 4*zoomScale;
+	int centerRecWidth = 28*zoomScale;
+	drawRect( center, centerRecWidth, thickness );
+	drawRect( center, thickness, centerRecWidth );
+	int recWidth = getRecWidth(rec);
+	int sideRecWidth = recWidth*0.3;
+	thickness *= 2;
+
+	drawRect(rec[0], rec[1], rec[0]+sideRecWidth, rec[1]+thickness);
+	drawRect(rec[0], rec[1], rec[0]+thickness, rec[1]+sideRecWidth);
+
+	drawRect(rec[0], rec[3]-sideRecWidth, rec[0]+thickness, rec[3]);
+	drawRect(rec[0], rec[3], rec[0]+sideRecWidth, rec[3]-thickness);
+
+	drawRect(rec[2]-sideRecWidth, rec[3], rec[2], rec[3]-thickness);
+	drawRect(rec[2]-thickness, rec[3], rec[2], rec[3]-sideRecWidth);
+
+	drawRect(rec[2]-thickness, rec[1], rec[2], rec[1]+sideRecWidth);
+	drawRect(rec[2]-sideRecWidth, rec[1], rec[2], rec[1]+thickness);
+}
+
+doublePair HetuwMod::getToScreenCoordsVec() {
+	doublePair screenCenter = livingLifePage->hetuwGetLastScreenViewCenter();
+	screenCenter.x -= viewWidth/2;
+	screenCenter.y -= viewHeight/2;
+	return screenCenter;
+}
+
+void HetuwMod::recToPixelCoords(int *rec) {
+	doublePair screenCoordsVec = getToScreenCoordsVec();
+	rec[0] -= screenCoordsVec.x; rec[2] -= screenCoordsVec.x;
+	rec[1] -= screenCoordsVec.y; rec[3] -= screenCoordsVec.y;
+	int screenWidth, screenHeight;
+	getScreenDimensions( &screenWidth, &screenHeight );
+	double scaleX = ((double)screenWidth/viewWidth);
+	double scaleY = ((double)screenHeight/viewHeight);
+	rec[0] *= scaleX; rec[2] *= scaleX;
+	rec[1] *= scaleY; rec[3] *= scaleY;
+}
+
+int* HetuwMod::getPhotoRecForImage() {
+	int *rec = new int[4];
+	for (int i=0; i<4; i++) rec[i] = recTakePhoto[i];
+	recToPixelCoords(rec);
+	return rec;
+}
+
+void HetuwMod::saveImage(Image *image) {
+	saveImage(image, to_string(time(NULL)));
+}
+
+void HetuwMod::saveImage(Image *image, string name) {
+	File shotDir( NULL, "screenShots" );
+	if( !shotDir.exists() ) {
+		shotDir.makeDirectory();
+	}
+	File *file = shotDir.getChildFile( (name+".tga").c_str() );
+	FileOutputStream fos( file );
+	TGAImageConverter imageConverter;
+	imageConverter.formatImage( image, &fos );
 }
 
 // does not check for all dangerous animals, use isDangerousAnimal(int objId) instead
@@ -536,6 +648,7 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	if (strstr(name, "key_findyum")) return setCharKey( charKey_FindYum, value );
 	if (strstr(name, "key_hideplayers")) return setCharKey( charKey_HidePlayers, value );
 	if (strstr(name, "key_showgrid")) return setCharKey( charKey_ShowGrid, value );
+	if (strstr(name, "key_takephoto")) return setCharKey( charKey_MakePhoto, value );
 
 	if (strstr(name, "init_show_names")) {
 		iDrawNames = (int)(value[0]-'0');
@@ -646,7 +759,8 @@ void HetuwMod::initSettings() {
 		string line;
 		while (getline(ifs, line)) {
 			//printf("hetuw read line: %s\n", line.c_str());
-			if (line.length() < 2) continue;
+			if (line.length() < 3) continue;
+			if (line[0] == '/' && line[1] == '/') continue;
 			char name[64];
 			char value[64];
 			getSettingsFileLine( name, value, line );
@@ -695,6 +809,16 @@ void HetuwMod::initSettings() {
 	writeCharKeyToStream( ofs, "key_hideplayers", charKey_HidePlayers );
 	writeCharKeyToStream( ofs, "key_takeOffBackpack", charKey_TakeOffBackpack );
 	writeCharKeyToStream( ofs, "key_showgrid", charKey_ShowGrid );
+	ofs << endl;
+	ofs << "// WARNING: Jason doesnt want us to upload bogus photos and you might get banned if you do, read: OneLife/photoServer/protocol.txt" << endl;
+	ofs << "// How to use:" << endl;
+	ofs << "// 1. Set key_takephoto to a key you want" << endl;
+	ofs << "// 2. Press the key in game, a photo frame will appear, move the mouse around and zoom in and out to choose your photo" << endl;
+	ofs << "// 3. Press the key again to make the photo, it will be saved in the screenshots folder" << endl;
+	ofs << "// 4. If you want to upload it make an image with the camera in game, the last photo you took will be uploaded" << endl;
+	ofs << "//    Hold a camera and rightclick on a 'Protected Stack of Photo Paper'" << endl;
+	ofs << "//    Place the camera on the ground and rightlick it while it is rewinding" << endl;
+	writeCharKeyToStream( ofs, "key_takephoto", charKey_MakePhoto );
 	ofs << endl;
 	ofs << "init_show_names = " << (char)(iDrawNames+48) << " // 0 = dont show names, 1 = show first name, 2 = show first and last name" << endl;
 	ofs << "init_show_selectedplayerinfo = " << (char)(bDrawSelectedPlayerInfo+48) << endl;
@@ -971,7 +1095,7 @@ void HetuwMod::zoomIncrease(float value) {
 
 void HetuwMod::zoomDecrease(float value) {
 	zoomScale *= 1.0f - value;
-	if (zoomScale < 1.0f) zoomScale = 1.0f;
+	if (!bDrawPhotoRec && zoomScale < 1.0f) zoomScale = 1.0f;
 	zoomCalc();
 }
 
@@ -1513,6 +1637,7 @@ void HetuwMod::livingLifeDraw() {
 	if (bDrawHostileTiles) drawHostileTiles();
 	if (searchWordList.size() > 0) drawSearchTiles();
 	if (bDrawSelectedPlayerInfo && iDrawNames > 0 && !bHidePlayers) drawHighlightedPlayer();
+	if (bDrawPhotoRec) drawPhotoRec(recTakePhoto);
 	if (bDrawMap) drawMap();
 	if (bDrawInputString) drawInputString();
 	if (bDrawHelp) drawHelp();
@@ -1539,6 +1664,14 @@ void HetuwMod::hDrawRect( doublePair startPos, doublePair endPos ) {
 	startPos.x += width;
 	startPos.y += height;
 	drawRect( startPos, width, height );
+}
+
+void HetuwMod::hDrawRect(int startX, int startY, int endX, int endY) {
+	hDrawRect({(double)startX, (double)startY}, {(double)endX, (double)endY});
+}
+
+void HetuwMod::hDrawRect(int rec[]) {
+	hDrawRect({(double)rec[0], (double)rec[1]}, {(double)rec[2], (double)rec[3]});
 }
 
 void HetuwMod::drawTileRect( int x, int y ) {
@@ -2349,6 +2482,7 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		bHidePlayers = false;
 		bTeachLanguage = false;
 		clearSayBuffer = true;
+		bDrawPhotoRec = false;
 	}
 
 	if (bNextCharForHome) {
@@ -2572,6 +2706,17 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	if (!commandKey && !shiftKey && isCharKey(inASCII, charKey_ShowGrid)) {
 		if (bHoldDownTo_ShowGrid) bDrawGrid = true;
 		else bDrawGrid = !bDrawGrid;
+		return true;
+	}
+	if (!commandKey && isCharKey(inASCII, charKey_MakePhoto)) {
+		if (bDrawPhotoRec) {
+			bDrawPhotoRec = false;
+			HetuwMod::takingSpecialPhoto = true;
+			livingLifePage->hetuwSetTakingPhoto(true);
+			HetuwMod::setTakingPhoto(true);
+		} else {
+			bDrawPhotoRec = true;
+		}
 		return true;
 	}
 
