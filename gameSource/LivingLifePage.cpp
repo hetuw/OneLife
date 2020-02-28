@@ -4573,6 +4573,7 @@ ObjectAnimPack LivingLifePage::drawLiveObject(
         targetY = inObj->actionTargetY;
         }
     else {
+		if (!takingPhoto) // hetuw mod
         setClothingHighlightFades( inObj->clothingHighlightFades );
         }
     
