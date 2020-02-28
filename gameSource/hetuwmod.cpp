@@ -120,6 +120,7 @@ bool HetuwMod::bDrawHostileTiles = true;
 bool HetuwMod::bWriteLogs = false;
 int HetuwMod::lastLoggedId = -1;
 
+double HetuwMod::curStepTime;
 int HetuwMod::stepCount;
 double HetuwMod::ourAge;
 
@@ -240,7 +241,14 @@ std::vector<HetuwMod::HttpRequest*> HetuwMod::httpRequests;
 bool HetuwMod::connectedToMainServer = false;
 time_t HetuwMod::arcRunningSince = -1;
 
+doublePair HetuwMod::mouseRelativeToView = {0, 0};
+
+bool HetuwMod::isMovingInVog = false;
+HetuwMod::IntervalTimed HetuwMod::intervalVogMove(0.1);
+
 void HetuwMod::init() {
+	mouseRelativeToView = {0, 0};
+
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
 	guiScale = guiScaleRaw * zoomScale;
@@ -420,17 +428,26 @@ void HetuwMod::drawPhotoRec(int rec[]) {
 	drawRect(rec[2]-sideRecWidth, rec[1], rec[2], rec[1]+thickness);
 }
 
-doublePair HetuwMod::getToScreenCoordsVec() {
+doublePair HetuwMod::getFromMapToViewCoordsVec() {
 	doublePair screenCenter = livingLifePage->hetuwGetLastScreenViewCenter();
 	screenCenter.x -= viewWidth/2;
 	screenCenter.y -= viewHeight/2;
+	screenCenter.x = -screenCenter.x;
+	screenCenter.y = -screenCenter.y;
+	return screenCenter;
+}
+
+doublePair HetuwMod::getFromViewToMapCoordsVec() {
+	doublePair screenCenter = livingLifePage->hetuwGetLastScreenViewCenter();
+	screenCenter.x += viewWidth/2;
+	screenCenter.y += viewHeight/2;
 	return screenCenter;
 }
 
 void HetuwMod::recToPixelCoords(int *rec) {
-	doublePair screenCoordsVec = getToScreenCoordsVec();
-	rec[0] -= screenCoordsVec.x; rec[2] -= screenCoordsVec.x;
-	rec[1] -= screenCoordsVec.y; rec[3] -= screenCoordsVec.y;
+	doublePair screenCoordsVec = getFromMapToViewCoordsVec();
+	rec[0] += screenCoordsVec.x; rec[2] += screenCoordsVec.x;
+	rec[1] += screenCoordsVec.y; rec[3] += screenCoordsVec.y;
 	int screenWidth, screenHeight;
 	getScreenDimensions( &screenWidth, &screenHeight );
 	double scaleX = ((double)screenWidth/viewWidth);
@@ -946,6 +963,8 @@ void HetuwMod::initOnServerJoin() { // will be called from LivingLifePage.cpp an
 	if (ourLiveObject) {
 		ourGender = getObject(ourLiveObject->displayID)->male ? 'M' : 'F';
 	}
+
+	isMovingInVog = false;
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject> *inGameObjects,
@@ -957,6 +976,9 @@ void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<
 	mMapSubContainedStacks = inmMapSubContainedStacks;
 	mMapD = &inmMapD;
 	mCurMouseOverID = &inmCurMouseOverID;
+
+	mouseRelativeToView.x = viewWidth/2;
+	mouseRelativeToView.y = viewHeight/2;
 
 	maxObjects = getMaxObjectID() + 1;
 
@@ -1077,8 +1099,16 @@ void HetuwMod::RainbowColor::step() {
 }
 
 void HetuwMod::zoomCalc() {
-	viewWidth = defaultViewWidth*zoomScale;
-	viewHeight = defaultViewHeight*zoomScale;
+	int newViewWidth = defaultViewWidth*zoomScale;
+	int newViewHeight = defaultViewHeight*zoomScale;
+	if (viewWidth != 0 && viewHeight != 0) {
+		float scaleX = newViewWidth/(float)viewWidth;
+		float scaleY = newViewHeight/(float)viewHeight;
+		mouseRelativeToView.x *= scaleX;
+		mouseRelativeToView.y *= scaleY;
+	}
+	viewWidth = newViewWidth;
+	viewHeight = newViewHeight;
 	panelOffsetX = (int)(viewWidth - defaultViewWidth)/2;
 	panelOffsetY = (int)(viewHeight - defaultViewHeight)/2;
 	tutMessageOffsetX = viewHeight * 0.14f;
@@ -1114,6 +1144,18 @@ void HetuwMod::guiScaleDecrease() {
 	guiScaleRaw *= 1.1f;
 	if (guiScaleRaw > 1.5) guiScaleRaw = 1.5;
 	guiScale = guiScaleRaw * zoomScale;
+}
+
+void HetuwMod::onMouseEvent(float mX, float mY) {
+	doublePair toViewCoords = getFromMapToViewCoordsVec();
+	mouseRelativeToView.x = mX + toViewCoords.x;
+	mouseRelativeToView.y = mY + toViewCoords.y;
+}
+
+void HetuwMod::getMouseXY(int &x, int &y) {
+	doublePair toMapCoords = getFromViewToMapCoordsVec();
+	x = mouseRelativeToView.x + toMapCoords.x;
+	y = mouseRelativeToView.y + toMapCoords.y;
 }
 
 void HetuwMod::drawWaitingText(doublePair pos) {
@@ -1171,6 +1213,7 @@ void HetuwMod::stepHttpRequests() {
 }
 
 void HetuwMod::gameStep() {
+	curStepTime = game_getCurrentTime();
 	HetuwMouseActionBuffer* mouseBuffer = hetuwGetMouseActionBuffer();
 	for (int i = 0; i < mouseBuffer->bufferPos; i++) {
 		switch (mouseBuffer->buffer[i]) {
@@ -1254,6 +1297,55 @@ void HetuwMod::livingLifeStep() {
 		if (bMoveClickAlpha) actionAlphaRelativeToMe(tileRX, tileRY);
 		else actionBetaRelativeToMe(tileRX, tileRY);
 	}
+	
+	if (livingLifePage->hetuwIsVogMode()) {
+		if (intervalVogMove.step()) moveInVogMode();
+	}
+}
+
+void HetuwMod::moveInVogMode() {
+	isMovingInVog = false;
+
+	int mouseX, mouseY;
+	mouseX = mouseRelativeToView.x;
+	mouseY = mouseRelativeToView.y;
+
+	int x=0; int y=0;
+	int distX = viewWidth - mouseX;
+	int distY = viewHeight - mouseY;
+	x = mouseX < distX ? mouseX : distX;
+	y = mouseY < distY ? mouseY : distY;
+
+	int maxScreenEdgeDistance = viewWidth * 0.1;
+	if (x > maxScreenEdgeDistance && y > maxScreenEdgeDistance) return;
+	bool xToZero = x > maxScreenEdgeDistance ? true : false;
+	bool yToZero = y > maxScreenEdgeDistance ? true : false;
+	x = maxScreenEdgeDistance - x;
+	y = maxScreenEdgeDistance - y;
+	if (xToZero) x = 0;
+	if (yToZero) y = 0;
+
+	if (mouseX < distX) x = -x;
+	if (mouseY < distY) y = -y;
+
+	int maxTileJump = 5;
+	x = x/(float)maxScreenEdgeDistance * maxTileJump;
+	y = y/(float)maxScreenEdgeDistance * maxTileJump;
+	if (x == 0 && y == 0) return;
+
+	int max = 100; // just to be sure - very high numbers are bad for the server
+	if (x > max || x < -max || y > max || y < -max) return;
+
+	doublePair vogPos = livingLifePage->hetuwGetVogPos();
+	GridPos newPos;
+	newPos.x = vogPos.x;
+	newPos.y = vogPos.y;
+	newPos.x += x;
+	newPos.y += y;
+
+	isMovingInVog = true;
+	char *message = autoSprintf( "VOGM %d %d#", newPos.x, newPos.y );
+	livingLifePage->sendToServerSocket( message );
 }
 
 void HetuwMod::setYumObjectsColor() {

@@ -162,6 +162,8 @@ static doublePair vogPos = { 0, 0 };
 
 static char vogPickerOn = false;
 
+bool LivingLifePage::hetuwIsVogMode() { return vogMode; }
+doublePair LivingLifePage::hetuwGetVogPos() { return vogPos; }
     
 
 extern float musicLoudness;
@@ -14270,11 +14272,13 @@ void LivingLifePage::step() {
                 mObjectPicker.setPosition( vogPos.x * CELL_D + 510,
                                            vogPos.y * CELL_D + 90 );
 
+				if (!HetuwMod::isMovingInVog) {
                 // jump camp instantly
                 lastScreenViewCenter.x = posX * CELL_D;
                 lastScreenViewCenter.y = posY * CELL_D;
                 setViewCenterPosition( lastScreenViewCenter.x,
                                        lastScreenViewCenter.y );
+				}
 
                 mCurMouseOverCellFade = 1.0;
                 
@@ -19924,6 +19928,11 @@ void LivingLifePage::step() {
         
 
         doublePair dir = sub( screenTargetPos, lastScreenViewCenter );
+		if (vogMode && length(dir) > 300) { // hetuw mod - to prevent the camera from lagging behind - not the best fix but i couldnt find the camera moving code
+			lastScreenViewCenter.x += dir.x*0.08; // hetuw mod
+			lastScreenViewCenter.y += dir.y*0.08; // hetuw mod
+			setViewCenterPosition( lastScreenViewCenter.x, lastScreenViewCenter.y ); // hetuw mod
+		} // hetuw mod
         
         char viewChange = false;
         
@@ -21955,6 +21964,7 @@ void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
 void LivingLifePage::pointerMove( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
+	HetuwMod::onMouseEvent(inX, inY);
         
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
 
@@ -22314,6 +22324,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     lastMouseX = inX;
     lastMouseY = inY;
+	HetuwMod::onMouseEvent(inX, inY);
 
     if( showBugMessage ) {
         return;
@@ -23877,6 +23888,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 void LivingLifePage::pointerDrag( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
+	HetuwMod::onMouseEvent(inX, inY);
     getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
     
     if( showBugMessage ) {
@@ -23888,6 +23900,7 @@ void LivingLifePage::pointerDrag( float inX, float inY ) {
 void LivingLifePage::pointerUp( float inX, float inY ) {
     lastMouseX = inX;
     lastMouseY = inY;
+	HetuwMod::onMouseEvent(inX, inY);
 
     if( showBugMessage ) {
         return;

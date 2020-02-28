@@ -182,6 +182,19 @@ class HetuwMod
 			return false;
 		}
 	};
+	struct IntervalTimed {
+		double lastTime;
+		double interval;
+		IntervalTimed(double inInterval) {
+			interval = inInterval;
+			lastTime = 0;
+		}
+		bool step() {
+			if (HetuwMod::curStepTime-lastTime < interval) return false;
+			lastTime = HetuwMod::curStepTime;
+			return true;
+		}
+	};
 
 public:
 
@@ -348,6 +361,7 @@ public:
 
 	static void stepLoopTroughObjectsInRange();
 
+	static double curStepTime;
 	static void gameStep();
 
 	static void livingLifeStep();
@@ -382,7 +396,8 @@ public:
 	static bool charArrEqualsCharArr(const char *a, const char *b);
 	static void drawTextWithBckgr( doublePair pos, const char* text );
 
-	static doublePair getToScreenCoordsVec();
+	static doublePair getFromMapToViewCoordsVec();
+	static doublePair getFromViewToMapCoordsVec();
 
 	static int getRecWidth(int rec[]);
 	static int getRecHeight(int rec[]);
@@ -495,6 +510,13 @@ public:
 
 	static bool connectedToMainServer;
 	static time_t arcRunningSince;
+
+	static doublePair mouseRelativeToView;
+	static void onMouseEvent(float mX, float mY);
+	static void getMouseXY(int &x, int &y);
+
+	static bool isMovingInVog;
+	static IntervalTimed intervalVogMove;
 
 private:
 
@@ -625,6 +647,8 @@ private:
 	static void stepHttpRequests();
 	static void processArcReport(const char* data, string error);
 	static string getArcTimeStr();
+
+	static void moveInVogMode();
 };
 
 
