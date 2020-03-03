@@ -1316,7 +1316,7 @@ void HetuwMod::moveInVogMode() {
 	x = mouseX < distX ? mouseX : distX;
 	y = mouseY < distY ? mouseY : distY;
 
-	int maxScreenEdgeDistance = viewWidth * 0.1;
+	int maxScreenEdgeDistance = viewWidth * 0.03;
 	if (x > maxScreenEdgeDistance && y > maxScreenEdgeDistance) return;
 	bool xToZero = x > maxScreenEdgeDistance ? true : false;
 	bool yToZero = y > maxScreenEdgeDistance ? true : false;
@@ -1328,9 +1328,10 @@ void HetuwMod::moveInVogMode() {
 	if (mouseX < distX) x = -x;
 	if (mouseY < distY) y = -y;
 
-	int maxTileJump = 5;
-	x = x/(float)maxScreenEdgeDistance * maxTileJump;
-	y = y/(float)maxScreenEdgeDistance * maxTileJump;
+	int maxTileJump = 1*zoomScale;
+	if (maxTileJump > 6) maxTileJump = 6;
+	x = round(x/(float)maxScreenEdgeDistance) * maxTileJump;
+	y = round(y/(float)maxScreenEdgeDistance) * maxTileJump;
 	if (x == 0 && y == 0) return;
 
 	int max = 100; // just to be sure - very high numbers are bad for the server

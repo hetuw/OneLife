@@ -19972,7 +19972,7 @@ void LivingLifePage::step() {
         
 
         doublePair dir = sub( screenTargetPos, lastScreenViewCenter );
-		if (vogMode && length(dir) > 300) { // hetuw mod - to prevent the camera from lagging behind - not the best fix but i couldnt find the camera moving code
+		if (vogMode && length(dir) > 500) { // hetuw mod - to prevent the camera from lagging behind - not the best fix but i couldnt find the camera moving code
 			lastScreenViewCenter.x += dir.x*0.08; // hetuw mod
 			lastScreenViewCenter.y += dir.y*0.08; // hetuw mod
 			setViewCenterPosition( lastScreenViewCenter.x, lastScreenViewCenter.y ); // hetuw mod
