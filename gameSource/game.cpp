@@ -1,4 +1,4 @@
-int versionNumber = 312;
+int versionNumber = 314;
 int dataVersionNumber = 0;
 
 int binVersionNumber = versionNumber;
@@ -1967,6 +1967,21 @@ void drawFrame( char inUpdate ) {
 
                 currentGamePage->base_makeActive( true );
                 }
+            else if( livingLifePage->checkSignal( "reconnectFailed" ) ) {
+                lastScreenViewCenter.x = 0;
+                lastScreenViewCenter.y = 0;
+
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
+                
+                currentGamePage = existingAccountPage;
+                
+                existingAccountPage->setStatus( "reconnectFailed", true );
+
+                existingAccountPage->setStatusPositiion( true );
+
+                currentGamePage->base_makeActive( true );
+                }
             else if( livingLifePage->checkSignal( "noLifeTokens" ) ) {
                 lastScreenViewCenter.x = 0;
                 lastScreenViewCenter.y = 0;
@@ -2088,6 +2103,7 @@ void drawFrame( char inUpdate ) {
                 currentGamePage->base_makeActive( true );
                 }
             else if( livingLifePage->checkSignal( "died" ) ) {
+                existingAccountPage->setStatus( NULL, false );
                 showDiedPage();
                 }
             else if( livingLifePage->checkSignal( "disconnect" ) ) {
