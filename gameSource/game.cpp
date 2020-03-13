@@ -428,14 +428,14 @@ void hetuwSetViewSize() {
 
 void initDrawString( int inWidth, int inHeight ) {
 
-	HetuwMod::init();
-	hetuwSetViewSize();
-
     toggleLinearMagFilter( true );
     toggleMipMapGeneration( true );
     toggleMipMapMinFilter( true );
     toggleTransparentCropping( true );
     
+	HetuwMod::init();
+	hetuwSetViewSize();
+
     mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16 );
     mainFont->setMinimumPositionPrecision( 1 );
 

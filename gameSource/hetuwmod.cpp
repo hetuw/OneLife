@@ -15,6 +15,7 @@
 #include "minorGems/graphics/converters/TGAImageConverter.h"
 #include "groundSprites.h"
 #include "photos.h"
+#include "phex.h"
 
 using namespace std;
 
@@ -28,6 +29,11 @@ int HetuwMod::maxObjects;
 
 int HetuwMod::viewWidth;
 int HetuwMod::viewHeight;
+double HetuwMod::viewWidthToHeightFactor;
+double HetuwMod::viewHeightToWidthFactor;
+
+extern doublePair lastScreenViewCenter;
+doublePair HetuwMod::fromViewToMapCoordsVec;
 
 float HetuwMod::zoomScale;
 float HetuwMod::guiScaleRaw;
@@ -49,6 +55,8 @@ float HetuwMod::lastPosY;
 int HetuwMod::magnetMoveDir = -1;
 int HetuwMod::magnetWrongMoveDir = -1;
 int HetuwMod::magnetMoveCount = 0;
+
+int HetuwMod::cfgVersionNumber = 1;
 
 unsigned char HetuwMod::charKey_Up;
 unsigned char HetuwMod::charKey_Down;
@@ -74,6 +82,7 @@ unsigned char HetuwMod::charKey_FindYum;
 unsigned char HetuwMod::charKey_HidePlayers;
 unsigned char HetuwMod::charKey_ShowGrid;
 unsigned char HetuwMod::charKey_MakePhoto;
+unsigned char HetuwMod::charKey_Phex;
 
 unsigned char HetuwMod::charKey_CreateHome;
 unsigned char HetuwMod::charKey_FixCamera;
@@ -121,6 +130,7 @@ bool HetuwMod::bWriteLogs = false;
 int HetuwMod::lastLoggedId = -1;
 
 double HetuwMod::curStepTime;
+time_t HetuwMod::curStepSecondsSince1970;
 int HetuwMod::stepCount;
 double HetuwMod::ourAge;
 
@@ -246,8 +256,15 @@ doublePair HetuwMod::mouseRelativeToView = {0, 0};
 bool HetuwMod::isMovingInVog = false;
 HetuwMod::IntervalTimed HetuwMod::intervalVogMove(0.1);
 
+bool HetuwMod::phexIsEnabled = true;
+std::string HetuwMod::phexIp = "phexonelife.duckdns.org";
+int HetuwMod::phexPort = 6567;
+
 void HetuwMod::init() {
 	mouseRelativeToView = {0, 0};
+
+	viewWidthToHeightFactor = defaultViewWidth/(double)defaultViewHeight;
+	viewHeightToWidthFactor = defaultViewHeight/(double)defaultViewWidth;
 
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
@@ -288,6 +305,7 @@ void HetuwMod::init() {
 	charKey_HidePlayers = 254;
 	charKey_ShowGrid = 'v';
 	charKey_MakePhoto = 254;
+	charKey_Phex = '#';
 
 	charKey_ShowMap = 'm';
 	charKey_MapZoomIn = 'u';
@@ -323,6 +341,8 @@ void HetuwMod::init() {
 	initSettings();
 
 	lastLoggedId = getLastIdFromLogs();
+
+	Phex::init();
 }
 
 void HetuwMod::splitLogLine(string* lineElements, string line) { // lineElements should be a string array with size 16
@@ -365,8 +385,14 @@ int HetuwMod::getLastIdFromLogs() {
 int HetuwMod::getRecWidth(int rec[]) {
 	return rec[2] - rec[0];
 }
+double HetuwMod::getRecWidth(double rec[]) {
+	return rec[2] - rec[0];
+}
 
 int HetuwMod::getRecHeight(int rec[]) {
+	return rec[3] - rec[1];
+}
+double HetuwMod::getRecHeight(double rec[]) {
 	return rec[3] - rec[1];
 }
 
@@ -382,6 +408,116 @@ void HetuwMod::setRecFromCenterWidthHeight(int rec[], int centerX, int centerY, 
 	rec[1] = centerY - (height/2);
 	rec[2] = rec[0] + width;
 	rec[3] = rec[1] + height;
+}
+
+void HetuwMod::addToRec(int rec[], int x, int y) {
+	rec[0] += x; rec[1] += y; rec[2] += x; rec[3] += y;
+}
+void HetuwMod::addToRec(double rec[], double x, double y) {
+	rec[0] += x; rec[1] += y; rec[2] += x; rec[3] += y;
+}
+
+bool HetuwMod::pointIsInsideRec(double rec[], double x, double y) {
+	if (rec[0] <= x && rec[2] >= x) {
+		if (rec[1] <= y && rec[3] >= y) return true;
+	}
+	return false;
+}
+
+void HetuwMod::set4BorderRecs(double rec[4], double outRecs[4][4], double borderWidth, double borderHeight) {
+	double *leftBorder = outRecs[0];
+	leftBorder[0] = rec[0];
+	leftBorder[1] = rec[1];
+	leftBorder[2] = rec[0] + borderWidth;
+	leftBorder[3] = rec[3];
+	double *topBorder = outRecs[1];
+	topBorder[0] = rec[0];
+	topBorder[1] = rec[3] - borderHeight;
+	topBorder[2] = rec[2];
+	topBorder[3] = rec[3];
+	double *rightBorder = outRecs[2];
+	rightBorder[0] = rec[2] - borderWidth;
+	rightBorder[1] = rec[1];
+	rightBorder[2] = rec[2];
+	rightBorder[3] = rec[3];
+	double *bottomBorder = outRecs[3];
+	bottomBorder[0] = rec[0];
+	bottomBorder[1] = rec[1];
+	bottomBorder[2] = rec[2];
+	bottomBorder[3] = rec[1] + borderHeight;
+}
+
+void HetuwMod::logRec(string desc, double rec[]) {
+	printf("%s l: %f b: %f r: %f t: %f\n", desc.c_str(), rec[0], rec[1], rec[2], rec[3]);
+}
+
+doublePair HetuwMod::getFromMapToViewCoordsVec() {
+	doublePair screenCenter = livingLifePage->hetuwGetLastScreenViewCenter();
+	screenCenter.x -= viewWidth/2;
+	screenCenter.y -= viewHeight/2;
+	screenCenter.x = -screenCenter.x;
+	screenCenter.y = -screenCenter.y;
+	return screenCenter;
+}
+
+doublePair HetuwMod::getFromViewToMapCoordsVec() {
+	doublePair screenCenter = livingLifePage->hetuwGetLastScreenViewCenter();
+	screenCenter.x -= viewWidth/2;
+	screenCenter.y -= viewHeight/2;
+	return screenCenter;
+}
+
+void HetuwMod::pointFromPercentToMapCoords(float &x, float &y) {
+	x *= viewWidth; y *= viewHeight;
+	x += fromViewToMapCoordsVec.x; y += fromViewToMapCoordsVec.y;
+}
+void HetuwMod::pointFromPercentToMapCoords(double &x, double &y) {
+	x *= viewWidth; y *= viewHeight;
+	x += fromViewToMapCoordsVec.x; y += fromViewToMapCoordsVec.y;
+}
+void HetuwMod::pointFromMapToPercentCoords(float &x, float &y) {
+	doublePair mapToView = getFromMapToViewCoordsVec();
+	x += mapToView.x; y += mapToView.y;
+	x /= viewWidth; y /= viewHeight;
+}
+void HetuwMod::pointFromMapToPercentCoords(double &x, double &y) {
+	doublePair mapToView = getFromMapToViewCoordsVec();
+	x += mapToView.x; y += mapToView.y;
+	x /= viewWidth; y /= viewHeight;
+}
+void HetuwMod::xFromPercentToMapCoords(double &x) {
+	x = (x*viewWidth)+fromViewToMapCoordsVec.x;
+}
+void HetuwMod::yFromPercentToMapCoords(double &y) {
+	y = (y*viewHeight)+fromViewToMapCoordsVec.y;
+}
+
+void HetuwMod::recToPixelCoords(int *rec) {
+	doublePair screenCoordsVec = getFromMapToViewCoordsVec();
+	rec[0] += screenCoordsVec.x; rec[2] += screenCoordsVec.x;
+	rec[1] += screenCoordsVec.y; rec[3] += screenCoordsVec.y;
+	int screenWidth, screenHeight;
+	getScreenDimensions( &screenWidth, &screenHeight );
+	double scaleX = ((double)screenWidth/viewWidth);
+	double scaleY = ((double)screenHeight/viewHeight);
+	rec[0] *= scaleX; rec[2] *= scaleX;
+	rec[1] *= scaleY; rec[3] *= scaleY;
+}
+
+void HetuwMod::recFromPercentToMapCoords(double rec[]) {
+	rec[0] *= viewWidth; rec[1] *= viewHeight;
+	rec[2] *= viewWidth; rec[3] *= viewHeight;
+	//doublePair viewToMap = getFromViewToMapCoordsVec();
+	doublePair viewToMap = fromViewToMapCoordsVec;
+	rec[0] += viewToMap.x; rec[1] += viewToMap.y;
+	rec[2] += viewToMap.x; rec[3] += viewToMap.y;
+}
+void HetuwMod::recFromMapToPercentCoords(double rec[]) {
+	doublePair mapToView = getFromMapToViewCoordsVec();
+	rec[0] += mapToView.x; rec[1] += mapToView.y;
+	rec[2] += mapToView.x; rec[3] += mapToView.y;
+	rec[0] /= viewWidth; rec[1] /= viewHeight;
+	rec[2] /= viewWidth; rec[3] /= viewHeight;
 }
 
 void HetuwMod::setTakingPhoto(bool inTakingPhoto) {
@@ -428,34 +564,6 @@ void HetuwMod::drawPhotoRec(int rec[]) {
 	drawRect(rec[2]-sideRecWidth, rec[1], rec[2], rec[1]+thickness);
 }
 
-doublePair HetuwMod::getFromMapToViewCoordsVec() {
-	doublePair screenCenter = livingLifePage->hetuwGetLastScreenViewCenter();
-	screenCenter.x -= viewWidth/2;
-	screenCenter.y -= viewHeight/2;
-	screenCenter.x = -screenCenter.x;
-	screenCenter.y = -screenCenter.y;
-	return screenCenter;
-}
-
-doublePair HetuwMod::getFromViewToMapCoordsVec() {
-	doublePair screenCenter = livingLifePage->hetuwGetLastScreenViewCenter();
-	screenCenter.x += viewWidth/2;
-	screenCenter.y += viewHeight/2;
-	return screenCenter;
-}
-
-void HetuwMod::recToPixelCoords(int *rec) {
-	doublePair screenCoordsVec = getFromMapToViewCoordsVec();
-	rec[0] += screenCoordsVec.x; rec[2] += screenCoordsVec.x;
-	rec[1] += screenCoordsVec.y; rec[3] += screenCoordsVec.y;
-	int screenWidth, screenHeight;
-	getScreenDimensions( &screenWidth, &screenHeight );
-	double scaleX = ((double)screenWidth/viewWidth);
-	double scaleY = ((double)screenHeight/viewHeight);
-	rec[0] *= scaleX; rec[2] *= scaleX;
-	rec[1] *= scaleY; rec[3] *= scaleY;
-}
-
 int* HetuwMod::getPhotoRecForImage() {
 	int *rec = new int[4];
 	for (int i=0; i<4; i++) rec[i] = recTakePhoto[i];
@@ -476,6 +584,25 @@ void HetuwMod::saveImage(Image *image, string name) {
 	FileOutputStream fos( file );
 	TGAImageConverter imageConverter;
 	imageConverter.formatImage( image, &fos );
+}
+
+// splits a string count times whenever it finds a splitChar - removes splitChar chars
+std::vector<std::string> HetuwMod::splitStrXTimes(const std::string &str, char splitChar, int count) {
+	std::vector<std::string> result;
+	if (str.length() <= 0) return result;
+	size_t strPos = 0;
+	for (int i=0; i<count; i++) {
+		size_t firstCharPos = str.find(splitChar, strPos);
+		if (firstCharPos == std::string::npos) break;
+		string sub = str.substr(strPos, firstCharPos-strPos);
+		if (sub.length() > 0) result.push_back(sub); // sub.length() might be 0 if str contains several splitChars in a row
+		strPos = firstCharPos+1;
+	}
+	//string sub = str.substr(strPos, str.length());
+	//printf("Phex len: %d sub: %s\n", sub.length(), sub.c_str());
+	//if (sub.length() > 0) result.push_back(sub);
+	if (strPos < str.length()) result.push_back(str.substr(strPos, str.length()));
+	return result;
 }
 
 // does not check for all dangerous animals, use isDangerousAnimal(int objId) instead
@@ -666,6 +793,7 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	if (strstr(name, "key_hideplayers")) return setCharKey( charKey_HidePlayers, value );
 	if (strstr(name, "key_showgrid")) return setCharKey( charKey_ShowGrid, value );
 	if (strstr(name, "key_takephoto")) return setCharKey( charKey_MakePhoto, value );
+	if (strstr(name, "key_phex")) return setCharKey( charKey_Phex, value );
 
 	if (strstr(name, "init_show_names")) {
 		iDrawNames = (int)(value[0]-'0');
@@ -693,6 +821,19 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	}
 	if (strstr(name, "init_show_hostiletiles")) {
 		bDrawHostileTiles = bool(value[0]-48);
+		return true;
+	}
+
+	if (strstr(name, "phex_enabled")) {
+		phexIsEnabled = bool(value[0]-48);
+		return true;
+	}
+	if (strstr(name, "phex_ip")) {
+		phexIp = string(value);
+		return true;
+	}
+	if (strstr(name, "phex_port")) {
+		phexPort = atoi(value);
 		return true;
 	}
 
@@ -795,8 +936,14 @@ void HetuwMod::initSettings() {
 
 	ofstream ofs( hetuwSettingsFileName, ofstream::out );
 
-	ofs << "// if you want to support me and the hetuw mod you can send bitcoin to the address below, thank you <3" << endl;
+	ofs << "// this file will be created whenever you start the mod" << endl;
+	ofs << "// if you want to reset this file, just delete it" << endl;
+	ofs << endl;
+	ofs << "// if you want to support me and the hetuw mod you can send bitcoin to the address below, thank you" << endl;
 	ofs << "// bitcoin address: " << hetuwBitcoinWallet << endl;
+	ofs << endl;
+
+	ofs << "cfg_version = " << cfgVersionNumber << endl;
 	ofs << endl;
 
 	writeCharKeyToStream( ofs, "key_up", charKey_Up );
@@ -826,6 +973,7 @@ void HetuwMod::initSettings() {
 	writeCharKeyToStream( ofs, "key_hideplayers", charKey_HidePlayers );
 	writeCharKeyToStream( ofs, "key_takeOffBackpack", charKey_TakeOffBackpack );
 	writeCharKeyToStream( ofs, "key_showgrid", charKey_ShowGrid );
+	writeCharKeyToStream( ofs, "key_phex", charKey_Phex );
 	ofs << endl;
 	ofs << "// WARNING: Jason doesnt want us to upload bogus photos and you might get banned if you do, read: OneLife/photoServer/protocol.txt" << endl;
 	ofs << "// How to use:" << endl;
@@ -844,6 +992,10 @@ void HetuwMod::initSettings() {
 	ofs << "init_show_deathmessages = " << (char)(bDrawDeathMessages+48) << endl;
 	ofs << "init_show_homecords = " << (char)(bDrawHomeCords+48) << endl;
 	ofs << "init_show_hostiletiles = " << (char)(bDrawHostileTiles+48) << endl;
+	ofs << endl;
+	ofs << "phex_enabled = " << (char)(phexIsEnabled+48) << endl;
+	ofs << "phex_ip = " << phexIp << endl;
+	ofs << "phex_port = " << phexPort << endl;
 	ofs << endl;
 	ofs << "keep_button_pressed_to_fixcamera = " << (char)(bHoldDownTo_FixCamera+48) << endl;
 	ofs << "keep_button_pressed_to_findyum = " << (char)(bHoldDownTo_FindYum+48) << endl;
@@ -965,6 +1117,8 @@ void HetuwMod::initOnServerJoin() { // will be called from LivingLifePage.cpp an
 	}
 
 	isMovingInVog = false;
+
+	Phex::onServerJoin();
 }
 
 void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<LiveObject> *inGameObjects,
@@ -1055,6 +1209,13 @@ string HetuwMod::getTimeStamp() {
 	return string(str);
 }
 
+string HetuwMod::getTimeStamp(time_t t) {
+	struct tm *timeinfo = localtime(&t);
+	char *str = asctime(timeinfo);
+	str[strlen(str)-1] = 0; // remove end of line char
+	return string(str);
+}
+
 void HetuwMod::createNewLogFile() {
 	if (!bWriteLogs) return;
 	ofstream ofs( hetuwLogFileName, ofstream::out );
@@ -1115,6 +1276,7 @@ void HetuwMod::zoomCalc() {
 	tutMessageOffsetX2 = viewHeight * 0.31f;
 	guiScale = guiScaleRaw * zoomScale;
 	hetuwSetViewSize();
+	Phex::onZoom();
 }
 
 void HetuwMod::zoomIncrease(float value) {
@@ -1138,24 +1300,31 @@ void HetuwMod::guiScaleIncrease() {
 	guiScaleRaw *= 0.9f;
 	if (guiScaleRaw < 0.1) guiScaleRaw = 0.1;
 	guiScale = guiScaleRaw * zoomScale;
+	Phex::onGuiScaleChange();
 }
 
 void HetuwMod::guiScaleDecrease() {
 	guiScaleRaw *= 1.1f;
 	if (guiScaleRaw > 1.5) guiScaleRaw = 1.5;
 	guiScale = guiScaleRaw * zoomScale;
+	Phex::onGuiScaleChange();
 }
 
 void HetuwMod::onMouseEvent(float mX, float mY) {
 	doublePair toViewCoords = getFromMapToViewCoordsVec();
 	mouseRelativeToView.x = mX + toViewCoords.x;
 	mouseRelativeToView.y = mY + toViewCoords.y;
+	Phex::onMouseEvent(mX, mY);
 }
 
 void HetuwMod::getMouseXY(int &x, int &y) {
 	doublePair toMapCoords = getFromViewToMapCoordsVec();
 	x = mouseRelativeToView.x + toMapCoords.x;
 	y = mouseRelativeToView.y + toMapCoords.y;
+}
+
+void HetuwMod::hSetDrawColor(float rgba[]) {
+	setDrawColor(rgba[0], rgba[1], rgba[2], rgba[3]);
 }
 
 void HetuwMod::drawWaitingText(doublePair pos) {
@@ -1214,6 +1383,7 @@ void HetuwMod::stepHttpRequests() {
 
 void HetuwMod::gameStep() {
 	curStepTime = game_getCurrentTime();
+	curStepSecondsSince1970 = time(NULL);
 	HetuwMouseActionBuffer* mouseBuffer = hetuwGetMouseActionBuffer();
 	for (int i = 0; i < mouseBuffer->bufferPos; i++) {
 		switch (mouseBuffer->buffer[i]) {
@@ -1715,6 +1885,8 @@ void HetuwMod::foodIsMeh(int objID) {
 }
 
 void HetuwMod::livingLifeDraw() {
+	fromViewToMapCoordsVec = getFromViewToMapCoordsVec();
+
 	if (takingPhoto) return; // dont draw special mod stuff while taking a photo
 
  	ourLiveObject = livingLifePage->getOurLiveObject();
@@ -1732,6 +1904,7 @@ void HetuwMod::livingLifeDraw() {
 	if (bDrawSelectedPlayerInfo && iDrawNames > 0 && !bHidePlayers) drawHighlightedPlayer();
 	if (bDrawPhotoRec) drawPhotoRec(recTakePhoto);
 	if (bDrawMap) drawMap();
+	Phex::draw();
 	if (bDrawInputString) drawInputString();
 	if (bDrawHelp) drawHelp();
 
@@ -1749,6 +1922,27 @@ void HetuwMod::drawTextWithBckgr( doublePair pos, const char* text ) {
 	livingLifePage->hetuwDrawScaledHandwritingFont( text, pos, guiScale, alignCenter );
 }
 
+void HetuwMod::drawPointFromPercent(float x, float y) {
+	pointFromPercentToMapCoords(x, y);
+	drawRect({x, y}, 5., 5.);
+}
+
+void HetuwMod::hDrawRecFromPercent(double rec[]) {
+	double tRec[4];
+	for (int i=0; i<4; i++) tRec[i] = rec[i];
+	HetuwMod::recFromPercentToMapCoords(tRec);
+	hDrawRect(tRec);
+}
+
+void HetuwMod::hDrawRecsFromPercent(double rec[][4], int recCount) {
+	double tRec[4];
+	for (int r=0; r<recCount; r++) {
+		for (int i=0; i<4; i++) tRec[i] = rec[r][i];
+		HetuwMod::recFromPercentToMapCoords(tRec);
+		hDrawRect(tRec);
+	}
+}
+
 void HetuwMod::hDrawRect( doublePair startPos, doublePair endPos ) {
 	double width = endPos.x - startPos.x;
 	double height = endPos.y - startPos.y;
@@ -1757,6 +1951,19 @@ void HetuwMod::hDrawRect( doublePair startPos, doublePair endPos ) {
 	startPos.x += width;
 	startPos.y += height;
 	drawRect( startPos, width, height );
+}
+
+void HetuwMod::hDrawRect(double rec[]) {
+	doublePair startPos = { rec[0], rec[1] };
+	doublePair endPos = { rec[2], rec[3] };
+	hDrawRect(startPos, endPos);
+}
+
+void HetuwMod::hDrawRectWidthHeight(int left, int bottom, int width, int height) {
+	int widthHalf = (int)(width/2.0);
+	int heightHalf = (int)(height/2.0);
+	doublePair center = { (double)(left+widthHalf), (double)(bottom+heightHalf) };
+	drawRect(center, widthHalf, heightHalf);
 }
 
 void HetuwMod::hDrawRect(int startX, int startY, int endX, int endY) {
@@ -2547,6 +2754,8 @@ bool HetuwMod::addToTempInputString( unsigned char c, bool onlyNumbers, int minS
 // when return true -> end/return in keyDown function in LivingLife
 bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 
+	if (Phex::onKeyDown(inASCII)) return true;
+
 	if (livingLifePage->hetuwSayFieldIsFocused()) {
 		return false;
 	}
@@ -2928,6 +3137,8 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 bool HetuwMod::livingLifeKeyUp(unsigned char inASCII) {
 
 	bool r = false;
+
+	if (Phex::onKeyUp(inASCII)) r = true;
 
 	bool commandKey = isCommandKeyDown();
 	bool shiftKey = isShiftKeyDown();

@@ -13,9 +13,10 @@
 #define hetuwLinkMainServer "bigserver2.onehouronelife.com"
 #define hetuwLinkArcReport "http://onehouronelife.com/arcServer/arcReport.php"
 
-#include "LivingLifePage.h"
 #include <vector>
 #include <string>
+
+#include "LivingLifePage.h"
 
 using namespace std;
                             
@@ -182,6 +183,49 @@ class HetuwMod
 			return false;
 		}
 	};
+
+public:
+
+	struct KeyboardKey {
+		unsigned char c;
+		double timePressedSince = -1;
+	};
+
+	struct KeyHandler {
+		KeyboardKey lastKeyPressed;
+		void (*onKeyEvent)(unsigned char);
+		// everything in seconds
+		double waitTimeUntilRepeatSignal = 0.4;
+		double repeatFrequency = 0.03;
+		double timeSinceLastSignal = -1;
+
+		KeyHandler(void (*inOnKeyEvent)(unsigned char)) {
+			onKeyEvent = inOnKeyEvent;
+		}
+		void onKeyDown(unsigned char c) {
+			lastKeyPressed.c = c;
+			lastKeyPressed.timePressedSince = curStepTime;
+			onKeyEvent(c);
+		}
+		void onKeyUp(unsigned char c) {
+			if (lastKeyPressed.c != c) return;
+			lastKeyPressed.timePressedSince = -1;
+			timeSinceLastSignal = -1;
+		}
+		void step() {
+			if (lastKeyPressed.timePressedSince < 0) return;
+			if (curStepTime - lastKeyPressed.timePressedSince < waitTimeUntilRepeatSignal) return;
+			if (timeSinceLastSignal < 0) {
+				onKeyEvent(lastKeyPressed.c);
+				timeSinceLastSignal = curStepTime;
+				return;
+			}
+			if (curStepTime - timeSinceLastSignal < repeatFrequency) return;
+			onKeyEvent(lastKeyPressed.c);
+			timeSinceLastSignal = curStepTime;
+		}
+	};
+
 	struct IntervalTimed {
 		double lastTime;
 		double interval;
@@ -195,8 +239,6 @@ class HetuwMod
 			return true;
 		}
 	};
-
-public:
 
 	enum homePosType {
 		hpt_custom, hpt_birth, hpt_home, hpt_bell, hpt_apoc, hpt_tarr, hpt_map, hpt_baby, hpt_babyboy, hpt_babygirl,
@@ -244,6 +286,10 @@ public:
 
 	static int viewWidth;
 	static int viewHeight;
+	static double viewWidthToHeightFactor;
+	static double viewHeightToWidthFactor;
+
+	static doublePair fromViewToMapCoordsVec;
 
 	static float zoomScale;
 	static float guiScale;
@@ -253,6 +299,8 @@ public:
 	static int tutMessageOffsetX;
 	static int tutMessageOffsetX2;
 	
+	static int cfgVersionNumber;
+
 	static unsigned char charKey_Up;
 	static unsigned char charKey_Down;
 	static unsigned char charKey_Left;
@@ -278,6 +326,7 @@ public:
 	static unsigned char charKey_HidePlayers;
 	static unsigned char charKey_ShowGrid;
 	static unsigned char charKey_MakePhoto;
+	static unsigned char charKey_Phex;
 
 	static unsigned char charKey_ShowMap;
 	static unsigned char charKey_MapZoomIn;
@@ -303,12 +352,18 @@ public:
 
 	static int stepCount;
 	static double ourAge;
+	
+	static bool phexIsEnabled;
+	static std::string phexIp;
+	static int phexPort;
 
 	static SimpleVector<LiveObject> *gameObjects;
 	static std::vector<PlayerInMap*> playersInMap;
 	static SimpleVector<int> *mMapContainedStacks;
 	static SimpleVector<SimpleVector<int>> *mMapSubContainedStacks;
 	static int *mMapD;
+
+	static void hSetDrawColor(float rgba[]);
 
 	static bool invalidVersionDetected;
 	static string strInvalidVersion;
@@ -342,6 +397,7 @@ public:
 							int &inmMapD, int &inmCurMouseOverID);
 
 	static string getTimeStamp();
+	static string getTimeStamp(time_t t);
 
 	static void zoomIncrease(float value);
 	static void zoomDecrease(float value);
@@ -362,6 +418,7 @@ public:
 	static void stepLoopTroughObjectsInRange();
 
 	static double curStepTime;
+	static time_t curStepSecondsSince1970;
 	static void gameStep();
 
 	static void livingLifeStep();
@@ -398,13 +455,33 @@ public:
 
 	static doublePair getFromMapToViewCoordsVec();
 	static doublePair getFromViewToMapCoordsVec();
+	static void pointFromPercentToMapCoords(float &x, float &y);
+	static void pointFromPercentToMapCoords(double &x, double &y);
+	static void pointFromMapToPercentCoords(float &x, float &y);
+	static void pointFromMapToPercentCoords(double &x, double &y);
+	static void xFromPercentToMapCoords(double &x);
+	static void yFromPercentToMapCoords(double &y);
 
 	static int getRecWidth(int rec[]);
+	static double getRecWidth(double rec[]);
 	static int getRecHeight(int rec[]);
+	static double getRecHeight(double rec[]);
 	static void setRecPosition(int rec[], int startX, int endX);
 	static void setRecFromCenterWidthHeight(int rec[], int centerX, int centerY, int width, int height);
+	static void addToRec(int rec[], int x, int y);
+	static void addToRec(double rec[], double x, double y);
+	static bool pointIsInsideRec(double rec[], double x, double y);
+	static void set4BorderRecs(double rec[4], double outRecs[4][4], double borderWidth, double borderHeight);
+	static void logRec(string desc, double rec[]);
 	static void recToPixelCoords(int *rec);
+	static void recFromPercentToMapCoords(double rec[]);
+	static void recFromMapToPercentCoords(double rec[]);
+	static void drawPointFromPercent(float x, float y);
+	static void hDrawRecFromPercent(double rec[]);
+	static void hDrawRecsFromPercent(double rec[][4], int recCount);
 	static void hDrawRect( doublePair startPos, doublePair endPos );
+	static void hDrawRect(double rec[]);
+	static void hDrawRectWidthHeight(int left, int bottom, int width, int height);
 	static void hDrawRect(int startX, int startY, int endX, int endY);
 	static void hDrawRect(int rec[]);
 	static void drawTileRect( int x, int y );
@@ -430,6 +507,8 @@ public:
 	static void getSettingsFileLine( char* name, char* value, string line );
 	static bool setSetting( const char* name, const char* value );
 	static bool setCharKey( unsigned char &key, const char *value );
+
+	static std::vector<std::string> splitStrXTimes(const std::string &str, char splitChar, int count);
 
 	static bool strContainsDangerousAnimal(const char* str);
 	static bool *isDangerousAnimal;

@@ -51,6 +51,7 @@
 #include "ObjectPickable.h"
 
 #include "hetuwmod.h"
+#include "phex.h"
 #include <string>
 
 static ObjectPickable objectPickable;
@@ -22388,9 +22389,10 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 	if (!mForceGroundClick && HetuwMod::livingLifePageMouseDown( inX, inY ))
 		return;
 
+	if (Phex::onMouseDown(inX, inY)) return;
+	HetuwMod::onMouseEvent(inX, inY);
     lastMouseX = inX;
     lastMouseY = inY;
-	HetuwMod::onMouseEvent(inX, inY);
 
     if( showBugMessage ) {
         return;
@@ -23964,9 +23966,10 @@ void LivingLifePage::pointerDrag( float inX, float inY ) {
 
 
 void LivingLifePage::pointerUp( float inX, float inY ) {
+	if (Phex::onMouseUp(inX, inY)) return;
+	HetuwMod::onMouseEvent(inX, inY);
     lastMouseX = inX;
     lastMouseY = inY;
-	HetuwMod::onMouseEvent(inX, inY);
 
     if( showBugMessage ) {
         return;
