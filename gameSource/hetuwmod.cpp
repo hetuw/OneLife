@@ -1513,6 +1513,9 @@ void HetuwMod::logHomeLocation(HomePos* hp) {
 		case hpt_babygirl:
 			typeName = "babygirl";
 			break;
+		case hpt_expert:
+			typeName = "expert";
+			break;
 		default:
 			typeName = "unknowntype";
 	}
@@ -1989,6 +1992,7 @@ void HetuwMod::createCordsDrawStr() {
 	int tarrCount = 0;
 	int mapCount = 0;
 	int babyCount = 0;
+	int expertCount = 0;
 	for (unsigned i=0; i<homePosStack.size(); i++) {
 		switch (homePosStack[i]->type) {
 			case hpt_custom:
@@ -2036,6 +2040,10 @@ void HetuwMod::createCordsDrawStr() {
 				sprintf( sBufA, "BABY GIRL %c %d %d", (char)(babyCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
 				babyCount++;
 				break;
+			case hpt_expert:
+				sprintf( sBufA, "EXPERT %c %d %d", (char)(expertCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				expertCount++;
+				break;
 		}
 		homePosStack[i]->drawStr = string(sBufA);
 
@@ -2072,6 +2080,9 @@ void HetuwMod::setDrawColorToCoordType(homePosType type) {
 		case hpt_babyboy:
 		case hpt_babygirl:
 			setDrawColor( 1.0, 0.45, 0.8, 1.0 );
+			break;
+		case hpt_expert:
+			setDrawColor( 0.6, 0.6, 0.7, 1.0 );
 			break;
 	}
 }
@@ -3101,6 +3112,7 @@ bool HetuwMod::livingLifePageMouseDown( float mX, float mY ) {
 }
 
 void HetuwMod::moveToAndClickTile(int tileX, int tileY, bool alpha) {
+	if (!ourLiveObject) return;
 	int tileRX = tileX - ourLiveObject->xd;
 	int tileRY = tileY - ourLiveObject->yd;
 	if (tileRX <= 1 && tileRX >= -1) {
