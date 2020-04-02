@@ -208,7 +208,7 @@ public:
 			onKeyEvent(c);
 		}
 		void onKeyUp(unsigned char c) {
-			if (lastKeyPressed.c != c) return;
+			if (toupper(lastKeyPressed.c) != toupper(c)) return;
 			lastKeyPressed.timePressedSince = -1;
 			timeSinceLastSignal = -1;
 		}
