@@ -492,9 +492,7 @@ double HetuwFont::getCharPos( SimpleVector<doublePair> *outPositions,
         outPositions->push_back( drawPos );
 		if (skipChar) continue;
         
-		if (inString[i] == '\n' || (hetuwMaxXActive && (x+charWidth) > hetuwMaxX)) {
-			//x = inPosition.x;
-			//x += scale * mSpriteWidth / 2;
+		if (inString[i] == '\n' || (hetuwMaxXActive && (x+charWidth) > hetuwMaxX) && i+1 < numChars) {
 			x = startX;
 			if (x-inPosition.x > hetuwWidth) hetuwWidth = x-inPosition.x;
 			y -= lineHeight;
