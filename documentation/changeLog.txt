@@ -3,6 +3,165 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 320     2020-March-28
+
+--Finally figured out a way to make deadly moving objects (like bears) attack
+  in passing, when they cross your position while you're standing on a
+  non-blocking object.  Server checks their rounded intermediary position, when
+  checking whether you're standing on a deadly object, if you're standing on a
+  non-empty tile.  Animal turns into attack state immediately, mid-move, and
+  client has been fixed to allow moving objects to transition in-motion
+  (before, they would snap to their destination instantly if a transition
+  happened in-motion).  This will also fix a few other snap-to-destination
+  glitches.
+
+--Whoops... switch to STARVING slip was not working for elderly people who were
+  listinging to their final music (final music blocks starving chime, but was
+  also blocking slip change).
+
+--Helpless babies (under age 3) now flip between FULL or STARVING, with no
+  HUNGRY state in between.  They can only nurse or be fed food while STARVING.
+  A mother picking up a non-starving baby still burns one of her food pips, and
+  holds the baby at the current food level for the duration of the holding, but
+  won't top up the baby.  The only way to top up a baby is to feed them when
+  STARVING.  Baby communication to care-givers is now much more crucial.
+
+--Touching a property gate that you don't own now gives you an arrow pointing
+  to the closest owner.
+
+--Fixed a glitch in populating use dummy transitions with no use pass-through,
+  where we weren't populating the case for the unused actor or target with the
+  used target or actor.
+
+--Support for transitions where lastUseActor AND lastUseTarget is flagged at
+  same time.  This has never been needed before, but was needed for mining pick
+  used on mine, since both can be exhausted.
+
+
+
+
+Server Fixes
+
+--Nurse cost back to 1 (was 2).
+
+--Optional code for counting visually unique objects.
+
+--Fixed glitch where you could transform worn clothing into some other clothing
+  type (cloak into ghost costume whith knife).  Fixes #575
+
+--Fixed bug in way held object was being set after SELF action to transform
+  clothing (eta decay for held wasn't being set).  Fixed to handle instant-
+  decay (1-second auto-decay) when processing SELF action to use object on
+  clothing.
+
+--Max flight distance 10,000 tiles.  No more flights to tutorial or d-town.
+
+--Support for +primaryHomeland tag, which limits creation through tap-out to a
+  family's first homeland.
+
+
+
+
+Version 318    2020-March-19
+
+--Fixed misspelling of ABANDONED for wells.
+
+--Added a priority ranking for temporary home arrows (EXPT/MAP is top,
+  LEAD/SUPP is middle, and BABY is low priority).  This prevents less-important
+  home arrows from interrupting your more intentional and directed home arrows.
+  If you're out actively searching for an expert, you don't need constant
+  arrows pointing back to new babies at home.  Fixes #570
+
+--Fixed so that 1-second "instant" transtions can go through instantly if they
+  would otherwise block a player action.  1-second transitions are used for
+  lots of temporary objects that are used to play a special creation sound
+  (example:  cleaning a dirty pad plays a different sound than making a pad
+  from scratch).  Fixes #571
+
+
+
+Server Fixes
+
+--Fixed to send homeland info for your spawn position.  Fixes #567
+
+--You get +MORE FOOD+ above your head when an action fails due to hungry work.
+  Fixes #568
+
+--Nomad Eves (with no well and no homeland) no longer lose their reproduction
+  capabilities permanently when they enter other homelands.  They still need to
+  leave the other homeland to have babies (but get +FREE REIN+ status when they
+  leave).
+
+--Fixed glitch with swapping a sub-container into a super-container that is
+  already filled with identical sub-containers (before, you could store a
+  hidden extra sub-container in there).  Fixes #572
+
+--Nurse cost is now a live server setting.  Pushed up to 2 (was 1).
+
+
+
+
+Version 316    2020-March-12
+
+--100-radius homelands around wells, where family that built well feels
+  comfortable enough to have babies.  Leaving this area makes you homesick.
+
+--Expert-finder way stones occure along ley lines in specialist biomes.
+  Touching one points you toward the nearest expert for that biome.
+
+--Fixed issue with some partially-used objects not being containable on table
+  (use dummies have # appended to name, which was interfering with the end of
+  +cont tags).  Fixes #560
+ 
+--Fixed baby bones (SIDS) grave identity tracking.  Fixes #559
+
+--Hunger chimes can now play right up until when final music starts
+  (previously, there was a 23-second gap where music hadn't started playing
+  yet, but hunger chimes were still muted).
+
+--Support for forcing USE when trying to DROP an object into an empty
+  container where a consuming transition applies (so instead of containing the
+  held item, it is used on the empty container).  Example:  stacking grapes in
+  an empty basket, even though grapes would otherwise be containable in the
+  basket.  But if something else is already in the basket, the grapes go in
+  next to it, like an ordinary containable item.
+  Part of jasonrohrer/OneLifeData7#663 
+
+--Maps and waystones now show the age of the destination point when you read
+  them.  Fixes #562
+
+--New *spicyFood forced emote for hot pepper eating.
+
+--Client correctly routes you to front of noBackAccess objects (like wall
+  shelf).  Fixes #563
+
+--Phantom baby position (for held baby) no longer counted when looking for
+  closest player (like for bear to chase).  Fixes #564
+
+
+
+
+Server Fixes
+
+--Fixed so that +vertical tag can't match a prefix of another tag by accident
+  +verticalD from a property fence was matching +vertialDoorSnow, causing the
+  snow door to be the vertical auto-orient version of the property fence). 
+  Fixes #557
+
+--Added live server setting for toggling propUpWeakestRace and
+  propUpWeakestFamily (force-sending babies to bolster the race or family with
+  the lowest potentially-fertile female count).
+
+--Boiling the frog:  eatBonus now starts at 2 for Eve and decays to 0 (was 1)
+  with a half life of 4 generations.
+
+--To keep things fresh, we force-spawn a new Eve when everyone on the server is
+  part of a family that is over generation 40 (every family at least roughly 10
+  hours old).
+
+
+
+
 Version 314   2020-March-5
 
 --Container objects that have no sprites in front of contained (like table) now

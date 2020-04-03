@@ -468,7 +468,11 @@ static CoordinateTimeTracking lookTimeTracking;
 // about whether arrival has happened or not
 typedef struct MovementRecord {
         int x, y;
+        int sourceX, sourceY;
+        int id;
+        char deadly;
         double etaTime;
+        double totalTime;
     } MovementRecord;
 
 
@@ -517,6 +521,74 @@ typedef struct TestMapRecord {
 
 
 
+
+
+typedef struct Homeland {
+        int x, y;
+
+        int radius;
+
+        int lineageEveID;
+        
+        double lastBabyBirthTime;
+        
+        char expired;
+        
+        char changed;
+        
+    } Homeland;
+
+
+
+static SimpleVector<Homeland> homelands;
+
+
+// NULL if not found
+static Homeland *getHomeland( int inX, int inY, 
+                              char includeExpired = false ) {
+    double t = Time::getCurrentTime();
+    
+    int staleTime = 
+        SettingsManager::getIntSetting( "homelandStaleSeconds", 3600 );
+    
+    double tooOldTime = t - staleTime;
+
+    for( int i=0; i<homelands.size(); i++ ) {
+        Homeland *h = homelands.getElement( i );
+        
+        // watch for stale
+        if( ! h->expired && h->lastBabyBirthTime < tooOldTime ) {
+            h->expired = true;
+            h->changed = true;
+            }
+
+        
+        if( ! includeExpired && h->expired ) {
+            continue;
+            }
+
+
+        if( inX < h->x + h->radius &&
+            inX > h->x - h->radius &&
+            inY < h->y + h->radius &&
+            inY > h->y - h->radius ) {
+            return h;
+            }
+        }
+    return NULL;
+    }
+
+
+
+static char hasHomeland( int inLineageEveID ) {
+    for( int i=0; i<homelands.size(); i++ ) {
+        Homeland *h = homelands.getElement( i );
+        if( h->lineageEveID == inLineageEveID ) {
+            return true;
+            }
+        }
+    return false;
+    }
 
 
 
@@ -1832,20 +1904,21 @@ void printBiomeSamples() {
 
 
 
-void printObjectSamples() {
+int printObjectSamples( int inXCenter, int inYCenter ) {
     int objectToCount = 2285;
     
     JenkinsRandomSource sampleRandSource;
 
     int numSamples = 0;
 
-    int range = 354;
+    int rangeX = 354;
+    int rangeY = 354;
 
     int count = 0;
     
-    for( int y=-range; y<range; y++ ) {
-        for( int x=-range; x<range; x++ ) {
-            int obj = getMapObjectRaw( x, y );
+    for( int y=-rangeY; y<=rangeY; y++ ) {
+        for( int x=-rangeX; x<=rangeX; x++ ) {
+            int obj = getMapObjectRaw( x  + inXCenter, y + inYCenter );
             
             
             if( obj == objectToCount ) {
@@ -1856,7 +1929,7 @@ void printObjectSamples() {
         }
     
 
-    int rangeSize = (range + range ) * ( range + range );
+    int rangeSize = (rangeX + rangeX + 1 ) * ( rangeY + rangeY + 1 );
 
     float sampleFraction = 
         numSamples / 
@@ -1864,6 +1937,8 @@ void printObjectSamples() {
     
     printf( "Counted %d objects in %d/%d samples, expect %d total\n",
             count, numSamples, rangeSize, (int)( count / sampleFraction ) );
+    
+    return count;
     }
 
 
@@ -4434,6 +4509,8 @@ void freeMap( char inSkipCleanup ) {
     speechPipesOut = NULL;
 
     flightLandingPos.deleteAll();
+
+    homelands.deleteAll();
     }
 
 
@@ -5568,12 +5645,14 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                     double speed = 4.0f;
                     
-                    
+                    char deadly = false;
                     if( newID > 0 ) {
                         ObjectRecord *newObj = getObject( newID );
                         
                         if( newObj != NULL ) {
                             speed *= newObj->speedMult;
+                            
+                            deadly = ( newObj->deadlyDistance > 0 );
                             }
                         }
                     
@@ -5581,7 +5660,11 @@ int checkDecayObject( int inX, int inY, int inID ) {
                     
                     double etaTime = Time::getCurrentTime() + moveTime;
                     
-                    MovementRecord moveRec = { newX, newY, etaTime };
+                    MovementRecord moveRec = { newX, newY, inX, inY, 
+                                               newID,
+                                               deadly, 
+                                               etaTime,
+                                               moveTime };
                     
                     liveMovementEtaTimes.insert( newX, newY, 0, 0, etaTime );
                     
@@ -5985,7 +6068,28 @@ int getTweakedBaseMap( int inX, int inY ) {
             if( s2ID > 0 && getObjectHeight( s2ID ) >= 3 ) {
                 return 0;
                 }                
-            }            
+            }
+
+        if( o->forceBiome != -1 &&
+            biomeDBGet( inX, inY ) == -1 &&
+            getBiomeIndex( o->forceBiome ) != -1 ) {
+            
+            // naturally-occurring object that forces a biome
+            // stick into floorDB            
+            biomeDBPut( inX, inY, o->forceBiome, o->forceBiome, 0.5 );
+
+            if( lastCheckedBiome != -1 &&
+                lastCheckedBiomeX == inX &&
+                lastCheckedBiomeY == inY ) {
+                // replace last checked with this
+                lastCheckedBiome = o->forceBiome;
+                }
+
+            // we also need to force-set the object itself into the DB
+            // otherwise, the next time we gen this square, we might not
+            // generate this object, because the underlying biome has changed
+            setMapObjectRaw( inX, inY, o->id );
+            }
         }
     return result;
     }
@@ -6640,6 +6744,7 @@ static void runTapoutOperation( int inX, int inY,
                                 int inRadiusX, int inRadiusY,
                                 int inSpacingX, int inSpacingY,
                                 int inTriggerID,
+                                char inPlayerHasHomeland,
                                 char inIsPost = false ) {
     for( int y =  inY - inRadiusY; 
          y <= inY + inRadiusY; 
@@ -6721,6 +6826,19 @@ static void runTapoutOperation( int inX, int inY,
                     newTarget = t->newTarget;
                     }
                 }
+
+            if( newTarget != -1 ) {
+                if( inPlayerHasHomeland ) {
+                    // block creation of objects that require +primaryHomeland
+                    // player already has a homeland
+                    ObjectRecord *nt = getObject( newTarget );
+                    
+                    if( strstr( nt->description, 
+                                "+primaryHomeland" ) != NULL ) {
+                        newTarget = -1;
+                        }
+                    }
+                }
             
             if( newTarget != -1 ) {
                 setMapObjectRaw( x, y, newTarget );
@@ -6730,6 +6848,11 @@ static void runTapoutOperation( int inX, int inY,
     }
 
 
+
+// from server.cpp
+extern int getPlayerLineage( int inID );
+
+    
 
 
 void setMapObjectRaw( int inX, int inY, int inID ) {
@@ -6990,6 +7113,20 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
     else if( o->isTapOutTrigger ) {
         // this object, when created, taps out other objects in grid around
 
+        char playerHasHomeland = false;
+        
+        if( currentResponsiblePlayer != -1 ) {
+            int pID = currentResponsiblePlayer;
+            if( pID < 0 ) {
+                pID = -pID;
+                }
+            int lineage = getPlayerLineage( pID );
+            
+            if( lineage != -1 ) {
+                playerHasHomeland = hasHomeland( lineage );
+                }
+            }
+        
         // don't make current player responsible for all these changes
         int restoreResponsiblePlayer = currentResponsiblePlayer;
         currentResponsiblePlayer = -1;        
@@ -7001,7 +7138,8 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
             runTapoutOperation( inX, inY, 
                                 r->limitX, r->limitY,
                                 r->gridSpacingX, r->gridSpacingY, 
-                                inID );
+                                inID,
+                                playerHasHomeland );
             
             
             r->buildCount++;
@@ -7013,13 +7151,52 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                 runTapoutOperation( inX, inY, 
                                     r->postBuildLimitX, r->postBuildLimitY,
                                     r->gridSpacingX, r->gridSpacingY, 
-                                    inID, true );
+                                    inID, 
+                                    playerHasHomeland, true );
                 }
             }
         
         currentResponsiblePlayer = restoreResponsiblePlayer;
         }
     
+    
+    if( o->famUseDist > 0  && currentResponsiblePlayer != -1 ) {
+        
+        int p = currentResponsiblePlayer;
+        if( p < 0 ) {
+            p = - p;
+            }
+        
+        int lineage = getPlayerLineage( p );
+        
+        if( lineage != -1 ) {
+
+            // include expired, and update
+            Homeland *h = getHomeland( inX, inY, true );
+
+            double t = Time::getCurrentTime();
+                                  
+            if( h == NULL ) {
+                Homeland newH = { inX, inY, o->famUseDist,
+                                  lineage,
+                                  t,
+                                  false,
+                                  // changed
+                                  true };
+                homelands.push_back( newH );
+                }
+            else if( h->expired ) {
+                // update expired record
+                h->x = inX;
+                h->y = inY;
+                h->radius = o->famUseDist;
+                h->lineageEveID = lineage;
+                h->lastBabyBirthTime = t;
+                h->expired = false;
+                h->changed = true;
+                }
+            }
+        }
     }
 
 
@@ -8785,16 +8962,6 @@ int addMetadata( int inObjectID, unsigned char *inBuffer ) {
 
 
 
-static double distSquared( GridPos inA, GridPos inB ) {
-    double xDiff = (double)inA.x - (double)inB.x;
-    double yDiff = (double)inA.y - (double)inB.y;
-    
-    return xDiff * xDiff + yDiff * yDiff;
-    }
-
-
-
-
 void removeLandingPos( GridPos inPos ) {
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         if( equal( inPos, flightLandingPos.getElementDirect( i ) ) ) {
@@ -8833,6 +9000,9 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
     int closestIndex = -1;
     GridPos closestPos;
     double closestDist = DBL_MAX;
+
+    double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
+                                                        10000 );
     
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
@@ -8845,8 +9015,12 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
 
         
         if( isInDir( inCurPos, thisPos, inDir ) ) {
-            double dist = distSquared( inCurPos, thisPos );
+            double dist = distance( inCurPos, thisPos );
             
+            if( dist > maxDist ) {
+                continue;
+                }
+
             if( dist < closestDist ) {
                 // check if this is still a valid landing pos
                 int oID = getMapObject( thisPos.x, thisPos.y );
@@ -8884,13 +9058,20 @@ GridPos getClosestLandingPos( GridPos inTargetPos, char *outFound ) {
     int closestIndex = -1;
     GridPos closestPos;
     double closestDist = DBL_MAX;
+
+    double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
+                                                        10000 );
     
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
 
         
-        double dist = distSquared( inTargetPos, thisPos );
+        double dist = distance( inTargetPos, thisPos );
         
+        if( dist > maxDist ) {
+            continue;
+            }
+
         if( dist < closestDist ) {
             // check if this is still a valid landing pos
             int oID = getMapObject( thisPos.x, thisPos.y );
@@ -8930,6 +9111,9 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
     GridPos closestPos;
     double closestDist = DBL_MAX;
 
+    double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
+                                                        10000 );
+
     GridPos curPos = { inCurrentX, inCurrentY };
 
     char useLimit = false;
@@ -8952,7 +9136,11 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
             }
         
               
-        double dist = distSquared( curPos, thisPos );
+        double dist = distance( curPos, thisPos );
+
+        if( dist > maxDist ) {
+            continue;
+            }
         
         if( dist < closestDist ) {
             
@@ -9267,4 +9455,140 @@ void stepMapLongTermCulling( int inNumCurrentPlayers ) {
                 }
             }
         }
+    }
+
+
+
+
+int isHomeland( int inX, int inY, int inLineageEveID ) {
+    Homeland *h = getHomeland( inX, inY );
+    
+    if( h != NULL ) {
+        if( h->lineageEveID == inLineageEveID ) {
+            return 1;
+            }
+        else {
+            return -1;
+            }
+        }
+
+    // else check if they even have one
+    
+    for( int i=0; i<homelands.size(); i++ ) {
+        h = homelands.getElement( i );
+        
+        if( h->lineageEveID == inLineageEveID ) {
+            // they are outside of their homeland
+            return -1;
+            }
+        }
+    
+    // never found one, and they aren't inside someone else's
+    // report that they don't have one
+    return 0;
+    }
+
+
+
+void logHomelandBirth( int inX, int inY, int inLineageEveID ) {
+    Homeland *h = getHomeland( inX, inY );
+    
+    if( h != NULL ) {
+        if( h->lineageEveID == inLineageEveID ) {
+            h->lastBabyBirthTime = Time::getCurrentTime();
+            }
+        }
+    }
+
+
+
+char getHomelandCenter( int inX, int inY, 
+                        GridPos *outCenter, int *outLineageEveID ) {
+    
+    // include expired
+    Homeland *h = getHomeland( inX, inY, true );
+
+    if( h != NULL ) {
+        outCenter->x = h->x;
+        outCenter->y = h->y;
+        
+        if( h->expired ) {
+            *outLineageEveID = -1;
+            }
+        else {
+            *outLineageEveID = h->lineageEveID;
+            }
+        
+        return true;
+        }
+    else {
+        return false;
+        }
+    }
+
+
+
+SimpleVector<HomelandInfo> getHomelandChanges() {
+    SimpleVector<HomelandInfo> list;
+    
+    for( int i=0; i<homelands.size(); i++ ) {
+        Homeland *h = homelands.getElement( i );
+        
+        if( h->changed ) {
+            GridPos p = { h->x, h->y };
+            
+            HomelandInfo hi = { p, h->radius, h->lineageEveID };
+            
+            if( h->expired ) {
+                hi.lineageEveID = -1;
+                }
+
+            list.push_back( hi );
+            
+            h->changed = false;
+            }
+        }
+    return list;
+    }
+
+
+
+
+int getDeadlyMovingMapObject( int inPosX, int inPosY,
+                              int *outMovingDestX, int *outMovingDestY ) {
+    
+    double curTime = Time::getCurrentTime();
+    
+    int numMoving = liveMovements.size();
+    
+    for( int i=0; i<numMoving; i++ ) {
+        MovementRecord *m = liveMovements.getElement( i );
+        
+        if( ! m->deadly ) {
+            continue;
+            }
+        double progress = 
+            ( m->totalTime - ( m->etaTime - curTime )  )
+            / m->totalTime;
+        
+        if( progress < 0 ||
+            progress > 1 ) {
+            continue;
+            }
+        int curPosX = lrint( ( m->x - m->sourceX ) * progress + m->sourceX );
+        int curPosY = lrint( ( m->y - m->sourceY ) * progress + m->sourceY );
+        
+        if( curPosX != inPosX ||
+            curPosY != inPosY ) {
+            continue;
+            }
+        
+        // hit position
+        *outMovingDestX = m->x;
+        *outMovingDestY = m->y;
+        return m->id;
+        }
+    
+
+    return 0;
     }

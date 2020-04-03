@@ -734,6 +734,43 @@ static void setupBlocksMoving( ObjectRecord *inR ) {
 
 
 
+static void setupFamHomeland( ObjectRecord *inR ) {
+    inR->famUseDist = 0;
+
+    char *pos = strstr( inR->description, "+famUse" );
+
+    if( pos != NULL ) {
+        
+        sscanf( pos, "+famUse%d", &( inR->famUseDist ) );
+        }
+    }
+
+
+static void setupForcedBiome( ObjectRecord *inR ) {
+    inR->forceBiome = -1;
+
+    char *pos = strstr( inR->description, "+biomeSet" );
+
+    if( pos != NULL ) {
+        
+        sscanf( pos, "+biomeSet%d", &( inR->forceBiome ) );
+        }
+    }
+
+
+
+static void setupExpertFind( ObjectRecord *inR ) {
+    inR->expertFind = false;
+
+    char *pos = strstr( inR->description, "+expertFind" );
+
+    if( pos != NULL ) {
+        inR->expertFind = true;
+        }
+    }
+
+
+
 int getMaxSpeechPipeIndex() {
     return maxSpeechPipeIndex;
     }
@@ -802,6 +839,12 @@ float initObjectBankStep() {
 
                 setupAlcohol( r );
                 
+                setupFamHomeland( r );
+                
+                setupForcedBiome( r );
+                
+                setupExpertFind( r );
+
 
                 // do this later, after we parse floorHugging
                 // setupWall( r );
@@ -1609,6 +1652,75 @@ static int *parseNumberList( char *inString,
 
 
 
+// counts objects containing a sprite that is not used by any other object
+// (or the first object in the list to use the sprite)
+static void countVisuallyUniqueObjects() {
+    
+    int uniqueCount = 0;
+
+    SimpleVector<int> uniqueList;
+    
+    
+    for( int i=0; i<mapSize; i++ ) {
+        if( idMap[i] != NULL ) {
+            
+            ObjectRecord *rI = idMap[i];
+
+            int unique = false;
+            
+            for( int s=0; s < rI->numSprites; s++ ) {
+                int sID = rI->sprites[s];
+            
+                
+                unique = true;
+                
+                // look at objects that we've already checked
+                // is this sprite unique amoung them?
+                // if so, it's the first object to use this sprite
+                for( int j=0; j<i; j++ ) {
+                    if( idMap[j] != NULL ) {
+                        ObjectRecord *rJ = idMap[j];    
+                
+                        for( int sJ=0; sJ < rJ->numSprites; sJ++ ) {
+                            
+                            if( rJ->sprites[sJ] == sID ) {
+                                unique = false;
+                                break;
+                                }
+                            }
+                        if( !unique ) {
+                            break;
+                            }
+                        }
+                    if( !unique ) {
+                        break;
+                        }
+                    }
+                if( unique ) {
+                    break;
+                    }
+                }
+            
+            if( unique ) {
+                uniqueCount++;
+                
+                uniqueList.push_back( rI->id );
+                }            
+            }
+        }
+    
+
+    printf( "Objects that are the first on list to have a unique sprite: %d\n",
+            uniqueCount );
+    for( int i=0; i<uniqueList.size(); i++ ) {
+        printf( "%d: %s\n", uniqueList.getElementDirect( i ),
+                getObject( uniqueList.getElementDirect( i ) )->description );
+        }
+    }
+
+
+
+
 void initObjectBankFinish() {
   
     freeFolderCache( cache );
@@ -2124,20 +2236,29 @@ void initObjectBankFinish() {
                 char *vertKey = autoSprintf( "+vertical%s", label );
                 char *cornerKey = autoSprintf( "+corner%s", label );
                 
+                int vertKeyLen = strlen( vertKey );
+                int cornerKeyLen = strlen( cornerKey );
+
                 for( int j=0; j<mapSize; j++ ) {
                     // consider self too, because horizontal and vertical
                     // might be the same
                     if( idMap[j] != NULL ) {
                         ObjectRecord *oOther = idMap[j];
                         
-                        if( strstr( oOther->description, vertKey ) ) {
+                        char *keyPos = strstr( oOther->description, vertKey );
+                        if( keyPos != NULL &&
+                            ( keyPos[ vertKeyLen ] == ' ' ||
+                              keyPos[ vertKeyLen ] == '\0' ) ) {
                             o->verticalVersionID = oOther->id;
                             }
                         // not else if
                         // vert and corner might be the same
                         // (in case of door, which doesn't have a corner
                         //  version)
-                        if( strstr( oOther->description, cornerKey ) ) {
+                        keyPos = strstr( oOther->description, cornerKey );
+                        if( keyPos != NULL &&
+                            ( keyPos[ cornerKeyLen ] == ' ' ||
+                              keyPos[ cornerKeyLen ] == '\0' ) ) {
                             o->cornerVersionID = oOther->id;
                             }
                         }
@@ -2269,6 +2390,11 @@ void initObjectBankFinish() {
             }
         }
     
+
+    
+    if( false ) {
+        countVisuallyUniqueObjects();
+        }
     }
 
 
@@ -3553,6 +3679,12 @@ int addObject( const char *inDescription,
     setupNoBackAccess( r );            
 
     setupAlcohol( r );
+
+    setupFamHomeland( r );
+    
+    setupForcedBiome( r );
+
+    setupExpertFind( r );
 
     setupWall( r );
 
