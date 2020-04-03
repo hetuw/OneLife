@@ -450,6 +450,7 @@ void Phex::drawInputRec() {
 }
 
 void Phex::sendInputStr() {
+	if (inputText.str.length() < 1) return;
 	tcp.send("SAY global "+inputText.str);
 }
 
