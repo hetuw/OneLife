@@ -7,6 +7,7 @@
 
 #include "hetuwmod.h"
 #include "LivingLifePage.h"
+#include "accountHmac.h"
 #include "hetuwFont.h"
 
 TCPConnection Phex::tcp;
@@ -582,13 +583,14 @@ void Phex::maximize() {
 }
 
 string Phex::getSecretHash() {
-	if (!userEmail) return "";
-	int emailLength = sizeof(userEmail)+5;
-	char email[emailLength];
-	sprintf(email, "%sphex", userEmail);
-	char *hash = hmac_sha1("phex", email);
+	char *accKey = getPureAccountKey();
+	int keyLength = sizeof(accKey)+5;
+	char key[keyLength];
+	sprintf(key, "%sphex", accKey);
+	char *hash = hmac_sha1("phex", key);
 	string strHash(hash);
 	delete[] hash;
+	delete[] accKey;
 	return strHash;
 }
 
