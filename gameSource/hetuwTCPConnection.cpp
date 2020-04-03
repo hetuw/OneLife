@@ -44,6 +44,7 @@ void TCPConnection::step() {
 	}
 	readAllMessagesFromServer();
 	sendAllBufferedMessages();
+	if (status == ONLINE && HetuwMod::curStepTime-timeLastMessage > 15) sendC("KA"); // keep connection alive
 }
 
 // --------------- private ---------------
@@ -88,7 +89,6 @@ std::string TCPConnection::readFromServer() {
 	} else if (result.length() > 0) {
 		if (verbose) printf("%s received server msg: %s\n", logTag.c_str(), result.c_str());
 		updateStatus(ONLINE);
-		timeLastMessage = HetuwMod::curStepTime;
 	}
 	return result;
 }
