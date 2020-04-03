@@ -13,7 +13,7 @@
 TCPConnection Phex::tcp;
 bool Phex::bSendFirstMsg = false;
 
-bool Phex::hasFocus = true;
+bool Phex::hasFocus = false;
 bool Phex::isMinimized = false;
 bool Phex::bDrawRecInput = true;
 
@@ -86,7 +86,7 @@ void Phex::init() {
 	mainChatWindow.rec[3] -= textInRecPaddingY;
 	mainChatWindow.onZoom();
 
-	inputText.bDrawCursor = true;
+	inputText.bDrawCursor = false;
 
 	initFont();
 
