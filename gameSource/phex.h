@@ -232,9 +232,6 @@ public:
 	static Text textHotKeyInfo;
 	static double recLineBelowHotKey[4];
 
-	static HetuwMod::IntervalTimed intervalStep;
-	static HetuwMod::IntervalTimed intervalRead;
-
 	static HetuwFont *mainFont;
 	static double mainFontScaleFactor;
 

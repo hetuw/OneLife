@@ -253,6 +253,7 @@ public:
 		string drawStr;
 		doublePair drawStartPos;
 		doublePair drawEndPos;
+		int personID = -1;
 	} HomePos;
 
 	static constexpr int languageArraySize1 = 460;
@@ -496,7 +497,7 @@ public:
 	static int playersInRangeNum;
 
 	static std::vector<HomePos*> homePosStack;
-	static void addHomeLocation( int x, int y, homePosType type, char c = 0 );
+	static void addHomeLocation( int x, int y, homePosType type, char c = 0, int personID = -1 );
 	static void setHomeLocationText(int x, int y, homePosType type, char *text);
 	static void setMapText(char *message, int mapX, int mapY);
 	static void logHomeLocation(HomePos* hp);

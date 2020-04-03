@@ -1700,7 +1700,18 @@ void HetuwMod::logHomeLocation(HomePos* hp) {
 	writeLineToLogs("coord", data);
 }
 
-void HetuwMod::addHomeLocation( int x, int y, homePosType type, char c ) {
+void HetuwMod::addHomeLocation( int x, int y, homePosType type, char c, int personID ) {
+	printf("hetuw personId: %d\n", personID);
+	if (personID >= 0) {
+		for (unsigned i=0; i<homePosStack.size(); i++) {
+			if (homePosStack[i]->personID == personID) {
+				homePosStack[i]->x = x;
+				homePosStack[i]->y = y;
+				return;
+			}
+		}
+	}
+
 	int id = -1;
 	if (type == hpt_custom) {
 		bool cordsAlreadyExist = false;
@@ -1733,6 +1744,7 @@ void HetuwMod::addHomeLocation( int x, int y, homePosType type, char c ) {
 	p->y = y;
 	p->type = type;
 	p->c = c;
+	p->personID = personID;
 	homePosStack.push_back(p);
 	logHomeLocation(p);
 }

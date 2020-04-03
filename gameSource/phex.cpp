@@ -49,9 +49,6 @@ double Phex::recLineBelowTitle[4];
 Phex::Text Phex::textHotKeyInfo;
 double Phex::recLineBelowHotKey[4];
 
-HetuwMod::IntervalTimed Phex::intervalStep(0.5);
-HetuwMod::IntervalTimed Phex::intervalRead(2.0);
-
 HetuwFont *Phex::mainFont = NULL;
 double Phex::mainFontScaleFactor = 16;
 
@@ -478,7 +475,8 @@ void Phex::sendFirstMessage() {
 	string phexVersionNumber = to_string(PHEX_VERSION);
 	string secretHash = getSecretHash();
 	string jasonsOneLifeVersion = to_string(versionNumber);
-	tcp.send("FIRST "+clientName+" "+phexVersionNumber+" "+secretHash+" "+jasonsOneLifeVersion);
+	string msg = "FIRST "+clientName+" "+phexVersionNumber+" "+secretHash+" "+jasonsOneLifeVersion;
+	tcp.send(msg);
 
 	tcp.send("JOIN global");
 	mainChatWindow.clear();
@@ -584,7 +582,7 @@ void Phex::maximize() {
 
 string Phex::getSecretHash() {
 	char *accKey = getPureAccountKey();
-	int keyLength = sizeof(accKey)+5;
+	int keyLength = strlen(accKey)+5;
 	char key[keyLength];
 	sprintf(key, "%sphex", accKey);
 	char *hash = hmac_sha1("phex", key);
