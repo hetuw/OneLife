@@ -682,11 +682,13 @@ bool Phex::onMouseDown(float x, float y) {
 		onUpdateFocus(false);
 		return false;
 	}
-	onUpdateFocus(true);
 	for(unsigned k=0; k<buttons.size(); k++) {
 		if (buttons[k]->onMouseDown(x, y)) return true;
 	}
-	return true;
+	if (!butPhex.visible) {
+		onUpdateFocus(true);
+		return true;
+	} else return false;
 }
 
 bool Phex::onMouseUp(float x, float y) {
