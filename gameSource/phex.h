@@ -283,6 +283,7 @@ public:
 	static void onClickTurnOff();
 	static void onServerJoin();
 	static void onPhexKeyPressed();
+	static void onPhexKeyPressed2();
 	static bool onUpdateFocus(bool focus);
 
 	static void onMouseEvent(float x, float y);

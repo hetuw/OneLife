@@ -666,6 +666,16 @@ void Phex::onPhexKeyPressed() {
 	onUpdateFocus(false);
 }
 
+void Phex::onPhexKeyPressed2() {
+	if (isMinimized) {
+		maximize();
+		onUpdateFocus(true);
+		return;
+	}
+	minimize();
+	onUpdateFocus(false);
+}
+
 bool Phex::onUpdateFocus(bool focus) {
 	if (hasFocus == focus) return false;
 	hasFocus = focus;
@@ -715,7 +725,8 @@ void Phex::onKey(unsigned char inASCII) {
 bool Phex::onKeyDown(unsigned char inASCII) {
 	if (!HetuwMod::phexIsEnabled) return false;
 	if (HetuwMod::isCharKey(inASCII, HetuwMod::charKey_Phex)) {
-		onPhexKeyPressed();
+		if (isCommandKeyDown()) onPhexKeyPressed2();
+		else onPhexKeyPressed();
 		return true;
 	}
 	keyHandler.onKeyDown(inASCII);
