@@ -359,6 +359,7 @@ void Phex::ChatWindow::draw(bool bDraw) {
 	topMinimum = 0;
 	if (bDraw) setDrawColor(1.0f, 1.0f, 1.0f, 1.0f);
 	for(int i=(int)elements.size()-1; i>=0; i--) {
+		if ((int)elements.size()-i > drawMaxElements) break;
 		if (msgDisplayDur > 0)
 			if (elements[i].unixTimeStamp+msgDisplayDur < HetuwMod::curStepSecondsSince1970) break;
 		y += elements[i].textHeight;
@@ -524,8 +525,12 @@ void Phex::drawMinimized() {
 	if (bDrawRecInput) {
 		setInputRecDrawData();
 		mainChatWindow.rec[1] = recInput[3] + textInRecPaddingY;
+		mainChatWindow.msgDisplayDur = -1;
+		mainChatWindow.drawMaxElements = 4;
 	} else {
 		mainChatWindow.rec[1] = textInRecPaddingY;
+		mainChatWindow.msgDisplayDur = ChatWindow::messageDisplayDurationInSec;
+		mainChatWindow.drawMaxElements = 4;
 	}
 
 	double chatTop = mainChatWindow.getTopMinimum();
@@ -564,7 +569,6 @@ void Phex::minimize() {
 	if (isMinimized) return;
 	isMinimized = true;
 
-	mainChatWindow.msgDisplayDur = ChatWindow::messageDisplayDurationInSec;
 	butTurnOff.visible = false;
 	butMinimize.visible = false;
 	onUpdateFocus(false);
@@ -575,6 +579,7 @@ void Phex::maximize() {
 	isMinimized = false;
 
 	mainChatWindow.msgDisplayDur = -1;
+	mainChatWindow.drawMaxElements = 99999;
 	setArray(recBckgr, recBckgrBig, 4);
 	butTurnOff.visible = true;
 	butMinimize.visible = true;

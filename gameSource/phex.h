@@ -132,6 +132,7 @@ public:
 		doublePair textDrawPos;
 		std::vector<ChatElement> elements;
 		int msgDisplayDur = -1;
+		int drawMaxElements = 9999;
 		double topMinimum;
 
 		void init(double inRec[4]) { for(int i=0; i<4; i++) rec[i] = inRec[i]; }
