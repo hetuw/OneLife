@@ -15,7 +15,7 @@ bool Phex::bSendFirstMsg = false;
 
 bool Phex::hasFocus = false;
 bool Phex::isMinimized = false;
-bool Phex::bDrawRecInput = true;
+bool Phex::bDrawRecInput = false;
 
 double Phex::textScale = 0.6;
 
@@ -124,6 +124,8 @@ void Phex::init() {
 	recLineBelowHotKey[3] = recHotKeyInfo[1];
 
 	mainChatWindow.rec[3] = recLineBelowHotKey[3] - textInRecPaddingY;
+
+	minimize();
 }
 
 void Phex::initFont() {
