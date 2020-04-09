@@ -217,11 +217,39 @@ void Phex::initButtons() {
 void Phex::initServerCommands() {
 	serverCommands["VERSION"].func = &serverCmdVERSION;
 	serverCommands["VERSION"].minWords = 2;
+	serverCommands["HASH"].func = serverCmdHASH;
+	serverCommands["HASH"].minWords = 2;
+	serverCommands["USERNAME"].func = serverCmdUSERNAME;
+	serverCommands["USERNAME"].minWords = 2;
+	serverCommands["USERNAME_ERR"].func = serverCmdUSERNAME_ERR;
+	serverCommands["USERNAME_ERR"].minWords = 2;
 	serverCommands["SAY"].func = &serverCmdSAY;
 	serverCommands["SAY"].minWords = 5;
+	serverCommands["HASH_USERNAME"].func = serverCmdHASH_USERNAME;
+	serverCommands["HASH_USERNAME"].minWords = 2;
+	serverCommands["ONLINE"].func = serverCmdONLINE;
+	serverCommands["ONLINE"].minWords = 2;
+	serverCommands["OFFLINE"].func = serverCmdOFFLINE;
+	serverCommands["OFFLINE"].minWords = 2;
+	serverCommands["JOINED_CHANNEL"].func = serverCmdJOINED_CHANNEL;
+	serverCommands["JOINED_CHANNEL"].minWords = 3;
+	serverCommands["LEFT_CHANNEL"].func = serverCmdLEFT_CHANNEL;
+	serverCommands["LEFT_CHANNEL"].minWords = 3;
 }
 
 void Phex::serverCmdVERSION(std::vector<std::string> input) {
+
+}
+
+void Phex::serverCmdHASH(std::vector<std::string> input) {
+
+}
+
+void Phex::serverCmdUSERNAME(std::vector<std::string> input) {
+
+}
+
+void Phex::serverCmdUSERNAME_ERR(std::vector<std::string> input) {
 
 }
 
@@ -241,6 +269,26 @@ void Phex::serverCmdSAY(std::vector<std::string> input) {
 		chatElement.name = chatElement.name.substr(0, ChatElement::maxHashDisplayLength);
 
 	mainChatWindow.addElement(chatElement);
+}
+
+void Phex::serverCmdHASH_USERNAME(std::vector<std::string> input) {
+
+}
+
+void Phex::serverCmdONLINE(std::vector<std::string> input) {
+
+}
+
+void Phex::serverCmdOFFLINE(std::vector<std::string> input) {
+
+}
+
+void Phex::serverCmdJOINED_CHANNEL(std::vector<std::string> input) {
+
+}
+
+void Phex::serverCmdLEFT_CHANNEL(std::vector<std::string> input) {
+
 }
 
 void Phex::setArray(float arrDst[], const float arrSrc[], int size) {

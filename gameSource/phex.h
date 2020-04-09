@@ -1,7 +1,7 @@
 #ifndef PHEX_H
 #define PHEX_H
 
-#define PHEX_VERSION 1
+#define PHEX_VERSION 2
 #define PHEX_CHAR_END 4
 #define PHEX_MAX_INPUT_STR_LENGTH 127
 
@@ -256,7 +256,15 @@ public:
 	static void setButtonStyle(Button *but);
 
 	static void serverCmdVERSION(std::vector<std::string> input);
+	static void serverCmdHASH(std::vector<std::string> input);
+	static void serverCmdUSERNAME(std::vector<std::string> input);
+	static void serverCmdUSERNAME_ERR(std::vector<std::string> input);
 	static void serverCmdSAY(std::vector<std::string> input);
+	static void serverCmdHASH_USERNAME(std::vector<std::string> input);
+	static void serverCmdONLINE(std::vector<std::string> input);
+	static void serverCmdOFFLINE(std::vector<std::string> input);
+	static void serverCmdJOINED_CHANNEL(std::vector<std::string> input);
+	static void serverCmdLEFT_CHANNEL(std::vector<std::string> input);
 
 	static void setArray(float arrDst[], const float arrSrc[], int size);
 	static void setArray(double arrDst[], const double arrSrc[], int size);
