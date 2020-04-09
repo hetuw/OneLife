@@ -120,7 +120,7 @@ public:
 		static constexpr int maxHashDisplayLength = 8;
 		std::string text;
 		std::string hash;
-		std::string name;
+		std::string name = "";
 		time_t unixTimeStamp;
 		double textHeight;
 		double textHeightScaled;
@@ -198,10 +198,18 @@ public:
 		int minWords = 1;
 	};
 
+	struct User {
+		std::string name = "";
+		bool online = false;
+	};
+
 	static TCPConnection tcp;
 	static bool bSendFirstMsg;
 
 	static std::unordered_map<std::string, ServerCommand> serverCommands;
+
+	static std::string publicHash;
+	static std::unordered_map<std::string, User> users;
 	
 	static bool hasFocus;
 	static bool isMinimized;
@@ -271,6 +279,7 @@ public:
 	static void multipleArray(double arr[], double factor, int size);
 
 	static bool strEquals(std::string strA, std::string strB);
+	static std::string joinStr(std::vector<std::string> strVector, std::string seperator=" ", int offset=0);
 	static doublePair getStringWidthHeight(doublePair startPos, std::string str);
 	static double getLineHeight(HetuwFont *font);
 	static void drawString(std::string str, doublePair startPos);

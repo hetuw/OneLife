@@ -16,6 +16,9 @@ bool Phex::bSendFirstMsg = false;
 
 std::unordered_map<std::string, Phex::ServerCommand> Phex::serverCommands;
 
+std::string Phex::publicHash = "";
+std::unordered_map<std::string, Phex::User> Phex::users;
+
 bool Phex::hasFocus = false;
 bool Phex::isMinimized = false;
 bool Phex::bDrawRecInput = false;
@@ -242,11 +245,17 @@ void Phex::serverCmdVERSION(std::vector<std::string> input) {
 }
 
 void Phex::serverCmdHASH(std::vector<std::string> input) {
-
+	publicHash = input[1];
+	users[input[1]].online = true;
 }
 
 void Phex::serverCmdUSERNAME(std::vector<std::string> input) {
-
+	if (publicHash.length() < 1) {
+		printf("Phex Error received our username but we dont have our hash");
+		printf("Phex Error message: %s\n", joinStr(input).c_str());
+		return;
+	}
+	users[publicHash].name = input[1];
 }
 
 void Phex::serverCmdUSERNAME_ERR(std::vector<std::string> input) {
@@ -256,31 +265,34 @@ void Phex::serverCmdUSERNAME_ERR(std::vector<std::string> input) {
 void Phex::serverCmdSAY(std::vector<std::string> input) {
 	ChatElement chatElement;
 	chatElement.hash = input[2];
-	chatElement.unixTimeStamp = strToTimeT(input[3]);
-
-	chatElement.text = "";
-	for (unsigned i=4; i<input.size(); i++) {
-		chatElement.text += input[i];
-		if (i+1 != input.size()) chatElement.text += ' ';
+	if (users.find(chatElement.hash) != users.end()) {
+		chatElement.name = users[chatElement.hash].name;
+	} else {
+		printf("Phex Error received message but cant find hash in users\n");
+		printf("Phex Error message: %s\n", joinStr(input).c_str());
 	}
+	chatElement.unixTimeStamp = strToTimeT(input[3]);
+	chatElement.text = joinStr(input, " ", 4);
 
-	chatElement.name = chatElement.hash;
-	if (chatElement.name.length() > ChatElement::maxHashDisplayLength)
-		chatElement.name = chatElement.name.substr(0, ChatElement::maxHashDisplayLength);
+	if (chatElement.name.length() < 1) {
+		chatElement.name = chatElement.hash;
+		if (chatElement.name.length() > ChatElement::maxHashDisplayLength)
+			chatElement.name = chatElement.name.substr(0, ChatElement::maxHashDisplayLength);
+	}
 
 	mainChatWindow.addElement(chatElement);
 }
 
 void Phex::serverCmdHASH_USERNAME(std::vector<std::string> input) {
-
+	users[input[1]].name = input[2];
 }
 
 void Phex::serverCmdONLINE(std::vector<std::string> input) {
-
+	users[input[1]].online = true;
 }
 
 void Phex::serverCmdOFFLINE(std::vector<std::string> input) {
-
+	users[input[1]].online = false;
 }
 
 void Phex::serverCmdJOINED_CHANNEL(std::vector<std::string> input) {
@@ -305,6 +317,15 @@ void Phex::multipleArray(double arr[], double factor, int size) {
 
 bool Phex::strEquals(std::string strA, std::string strB) {
 	return strA.compare(strB) == 0;
+}
+
+std::string Phex::joinStr(std::vector<std::string> strVector, string seperator, int offset) {
+	std::string str = "";
+	for (unsigned i=offset; i<strVector.size(); i++) {
+		str += strVector[i];
+		if (i+1 != strVector.size()) str += seperator;
+	}
+	return str;
 }
 
 doublePair Phex::getStringWidthHeight(doublePair startPos, string str) {
