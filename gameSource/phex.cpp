@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "minorGems/crypto/hashes/sha1.h"
 
@@ -12,6 +13,8 @@
 
 TCPConnection Phex::tcp;
 bool Phex::bSendFirstMsg = false;
+
+std::unordered_map<std::string, Phex::ServerCommand> Phex::serverCommands;
 
 bool Phex::hasFocus = false;
 bool Phex::isMinimized = false;
@@ -62,6 +65,9 @@ extern int versionNumber;
 
 void Phex::init() {
 	if (!HetuwMod::phexIsEnabled) return;
+
+	initServerCommands();
+
 	tcp.init(HetuwMod::phexIp, HetuwMod::phexPort, &onReceivedMessage, &onConnectionStatusChanged);
 	tcp.logTag = "Phex";
 	tcp.charEnd = PHEX_CHAR_END;
@@ -208,6 +214,35 @@ void Phex::initButtons() {
 	buttons.push_back(&butMaximize);
 }
 
+void Phex::initServerCommands() {
+	serverCommands["VERSION"].func = &serverCmdVERSION;
+	serverCommands["VERSION"].minWords = 2;
+	serverCommands["SAY"].func = &serverCmdSAY;
+	serverCommands["SAY"].minWords = 5;
+}
+
+void Phex::serverCmdVERSION(std::vector<std::string> input) {
+
+}
+
+void Phex::serverCmdSAY(std::vector<std::string> input) {
+	ChatElement chatElement;
+	chatElement.hash = input[2];
+	chatElement.unixTimeStamp = strToTimeT(input[3]);
+
+	chatElement.text = "";
+	for (unsigned i=4; i<input.size(); i++) {
+		chatElement.text += input[i];
+		if (i+1 != input.size()) chatElement.text += ' ';
+	}
+
+	chatElement.name = chatElement.hash;
+	if (chatElement.name.length() > ChatElement::maxHashDisplayLength)
+		chatElement.name = chatElement.name.substr(0, ChatElement::maxHashDisplayLength);
+
+	mainChatWindow.addElement(chatElement);
+}
+
 void Phex::setArray(float arrDst[], const float arrSrc[], int size) {
 	for (int i=0; i<size; i++) arrDst[i] = arrSrc[i];
 }
@@ -311,28 +346,6 @@ time_t Phex::strToTimeT(std::string str) {
 void Phex::onZoom() {
 	setMainFontScale();
 	mainChatWindow.onZoom();
-}
-
-void Phex::recvPong() {
-	//printf("Phex recvPong\n");
-}
-
-void Phex::recvSay(std::string msg) {
-	std::vector<std::string> splittedMsg = HetuwMod::splitStrXTimes(msg, ' ', 3);
-	if (splittedMsg.size() != 4) {
-		printf("Phex: recvSay invalid message[%d]: %s\n", (int)splittedMsg.size(), msg.c_str());
-		return;
-	}
-	ChatElement chatElement;
-	chatElement.hash = splittedMsg[1];
-	chatElement.unixTimeStamp = strToTimeT(splittedMsg[2]);
-	chatElement.text = splittedMsg[3];
-
-	chatElement.name = chatElement.hash;
-	if (chatElement.name.length() > ChatElement::maxHashDisplayLength)
-		chatElement.name = chatElement.name.substr(0, ChatElement::maxHashDisplayLength);
-
-	mainChatWindow.addElement(chatElement);
 }
 
 void Phex::ChatWindow::addElement(ChatElement element) {
@@ -600,20 +613,27 @@ string Phex::getSecretHash() {
 }
 
 void Phex::onReceivedMessage(std::string msg) {
-
-	std::vector<std::string> splittedMsg = HetuwMod::splitStrXTimes(msg, ' ', 1);
-	std::string command = splittedMsg[0];
-	std::string messageWithoutCommand = "";
-	if (splittedMsg.size() > 1) messageWithoutCommand = splittedMsg[1];
-
-	if (strEquals(command, "PONG")) {
-		recvPong();
-	} else if (strEquals(command, "SAY")) {
-		recvSay(messageWithoutCommand);
-	} else {
-		printf("Phex recieved unknown command from server: %s\n", command.c_str());
-		printf("Phex unknown command msg: %s\n", msg.c_str());
+	if (msg.length() <= 0) {
+		printf("Phex Error: received empty message from server\n");
+		return;
 	}
+	std::vector<std::string> splittedMsg = HetuwMod::splitStrXTimes(msg, ' ', 99);
+	std::string command = splittedMsg[0];
+	if (command.length() <= 0) {
+		printf("Phex Error: received empty command from server\n");
+		return;
+	}
+	if (serverCommands.find(command) == serverCommands.end()) {
+		printf("Phex Error: unknown command '%s'\n", command.c_str());
+		printf("Phex Error: message: '%s'\n", msg.c_str());
+		return;
+	}
+	if (serverCommands[command].minWords > (int)splittedMsg.size()) {
+		printf("Phex Error: server message to short, expected atleast %d words, but got %d\n", serverCommands[command].minWords, (int)splittedMsg.size());
+		printf("Phex Error: message: '%s'\n", msg.c_str());
+		return;
+	}
+	serverCommands[command].func(splittedMsg);
 }
 
 void Phex::onConnectionStatusChanged(TCPConnection::statusType status) {

@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "hetuwmod.h"
 #include "hetuwFont.h"
@@ -192,8 +193,15 @@ public:
 		}
 	};
 
+	struct ServerCommand {
+		void (*func)(std::vector<std::string>);
+		int minWords = 1;
+	};
+
 	static TCPConnection tcp;
 	static bool bSendFirstMsg;
+
+	static std::unordered_map<std::string, ServerCommand> serverCommands;
 	
 	static bool hasFocus;
 	static bool isMinimized;
@@ -241,10 +249,14 @@ public:
 	static HetuwMod::KeyHandler keyHandler;
 
 	static void init();
+	static void initServerCommands();
 	static void initFont();
 	static void setMainFontScale();
 	static void onGuiScaleChange();
 	static void setButtonStyle(Button *but);
+
+	static void serverCmdVERSION(std::vector<std::string> input);
+	static void serverCmdSAY(std::vector<std::string> input);
 
 	static void setArray(float arrDst[], const float arrSrc[], int size);
 	static void setArray(double arrDst[], const double arrSrc[], int size);
@@ -260,9 +272,6 @@ public:
 	static void onZoom();
 
 	static void sendFirstMessage();
-
-	static void recvPong();
-	static void recvSay(std::string msg);
 
 	static void setInputRecDrawData();
 	static void drawInputRec();
