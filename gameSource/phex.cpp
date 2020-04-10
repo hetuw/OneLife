@@ -15,6 +15,9 @@ TCPConnection Phex::tcp;
 bool Phex::bSendFirstMsg = false;
 
 std::unordered_map<std::string, Phex::ServerCommand> Phex::serverCommands;
+std::unordered_map<std::string, Phex::ChatCommand> Phex::chatCommands;
+
+char Phex::chatCmdChar = '/';
 
 std::string Phex::publicHash = "";
 std::unordered_map<std::string, Phex::User> Phex::users;
@@ -39,8 +42,15 @@ Phex::Text Phex::inputText;
 
 float Phex::colorWhite[4];
 float Phex::colorNamesInChat[4];
-string Phex::colorCodeWhite;
-string Phex::colorCodeNamesInChat;
+float Phex::colorCmdMessage[4];
+float Phex::colorCmdMessageError[4];
+std::string Phex::colorCodeWhite;
+std::string Phex::colorCodeNamesInChat;
+std::string Phex::colorCodeCmdMessage;
+std::string Phex::colorCodeCmdMessageError;
+
+constexpr int Phex::CMD_MSG_ERROR;
+bool Phex::userNameWasChanged = false;
 
 double Phex::butHeight = 0.04;
 double Phex::butBorderSize = 0.004;
@@ -70,6 +80,7 @@ void Phex::init() {
 	if (!HetuwMod::phexIsEnabled) return;
 
 	initServerCommands();
+	initChatCommands();
 
 	tcp.init(HetuwMod::phexIp, HetuwMod::phexPort, &onReceivedMessage, &onConnectionStatusChanged);
 	tcp.logTag = "Phex";
@@ -87,6 +98,8 @@ void Phex::init() {
 	setArray(colorWhite, (const float[]){ 1.0f, 1.0f, 1.0f, 1.0f }, 4);
 	setArray(colorRecInput, (const float[]){ 0.0f, 0.0f, 0.0f, 0.6 }, 4);
 	setArray(colorNamesInChat, (const float[]){ 0.2f, 0.7f, 1.0f, 1.0f }, 4);
+	setArray(colorCmdMessage, (const float[]){ 0.2f, 1.0f, 0.5f, 1.0f }, 4);
+	setArray(colorCmdMessageError, (const float[]){ 1.0f, 0.7f, 0.4f, 1.0f }, 4);
 
 	mainChatWindow.init(recBckgr);
 	mainChatWindow.rec[0] += textInRecPaddingX;
@@ -101,6 +114,8 @@ void Phex::init() {
 
 	colorCodeWhite = mainFont->hetuwGetColorCode(colorWhite);
 	colorCodeNamesInChat = mainFont->hetuwGetColorCode(colorNamesInChat);
+	colorCodeCmdMessage = mainFont->hetuwGetColorCode(colorCmdMessage);
+	colorCodeCmdMessageError = mainFont->hetuwGetColorCode(colorCmdMessageError);
 
 	initButtons();
 
@@ -256,10 +271,15 @@ void Phex::serverCmdUSERNAME(std::vector<std::string> input) {
 		return;
 	}
 	users[publicHash].name = input[1];
+	if (userNameWasChanged) {
+		addCmdMessageToChatWindow("name set to: "+input[1]);
+		userNameWasChanged = false;
+	}
 }
 
 void Phex::serverCmdUSERNAME_ERR(std::vector<std::string> input) {
-
+	std::string msg = joinStr(input, " ", 1);
+	addCmdMessageToChatWindow(msg, CMD_MSG_ERROR);
 }
 
 void Phex::serverCmdSAY(std::vector<std::string> input) {
@@ -280,6 +300,7 @@ void Phex::serverCmdSAY(std::vector<std::string> input) {
 			chatElement.name = chatElement.name.substr(0, ChatElement::maxHashDisplayLength);
 	}
 
+	chatElement.textToDraw = colorCodeNamesInChat+chatElement.name+": "+colorCodeWhite+chatElement.text;
 	mainChatWindow.addElement(chatElement);
 }
 
@@ -303,6 +324,23 @@ void Phex::serverCmdLEFT_CHANNEL(std::vector<std::string> input) {
 
 }
 
+void Phex::initChatCommands() {
+	chatCommands["HELP"].func = chatCmdHELP;
+	chatCommands["HELP"].minWords = 1;
+	chatCommands["NAME"].func = chatCmdNAME;
+	chatCommands["NAME"].minWords = 2;
+	chatCommands["NAME"].helpStr = "You can change your name by typing:\n"+to_string(chatCmdChar)+"name [newName]";
+}
+
+void Phex::chatCmdHELP(std::vector<std::string> input) {
+
+}
+
+void Phex::chatCmdNAME(std::vector<std::string> input) {
+	tcp.send("USERNAME "+input[1]);
+	userNameWasChanged = true;
+}
+
 void Phex::setArray(float arrDst[], const float arrSrc[], int size) {
 	for (int i=0; i<size; i++) arrDst[i] = arrSrc[i];
 }
@@ -317,6 +355,10 @@ void Phex::multipleArray(double arr[], double factor, int size) {
 
 bool Phex::strEquals(std::string strA, std::string strB) {
 	return strA.compare(strB) == 0;
+}
+
+void Phex::strToUpper(std::string &str) {
+	for (size_t i=0; i < str.length(); i++) str[i] = toupper(str[i]);
 }
 
 std::string Phex::joinStr(std::vector<std::string> strVector, string seperator, int offset) {
@@ -418,7 +460,6 @@ void Phex::onZoom() {
 }
 
 void Phex::ChatWindow::addElement(ChatElement element) {
-	element.textToDraw = colorCodeNamesInChat+element.name+": "+colorCodeWhite+element.text;
 	doublePair pos = {rec[0], rec[1]};
 	doublePair widthHeight = getStringWidthHeight(pos, element.textToDraw);
 	element.textHeight = widthHeight.y;
@@ -454,6 +495,17 @@ void Phex::ChatWindow::draw(bool bDraw) {
 double Phex::ChatWindow::getTopMinimum() {
 	draw(false);
 	return topMinimum;
+}
+
+void Phex::addCmdMessageToChatWindow(std::string msg, int type) {
+	std::string colorCode = "";
+	if (type == CMD_MSG_ERROR) colorCode = colorCodeCmdMessageError;
+	else colorCode = colorCodeCmdMessage;
+
+	ChatElement element;
+	element.unixTimeStamp = time(NULL);
+	element.textToDraw = colorCode + msg + colorCodeWhite;
+	mainChatWindow.addElement(element);
 }
 
 void Phex::Button::draw() {
@@ -532,8 +584,32 @@ void Phex::drawInputRec() {
 	inputText.draw();
 }
 
+void Phex::handleChatCommand(std::string input) {
+	std::vector<std::string> splittedMsg = HetuwMod::splitStrXTimes(input, ' ', 99);
+	std::string command = splittedMsg[0];
+	command = command.substr(1, command.length());
+	strToUpper(command);
+	if (command.length() <= 0) {
+		//addCmdMessageToChatWindow("invalid command", CMD_MSG_ERROR);
+		return;
+	}
+	if (chatCommands.find(command) == chatCommands.end()) {
+		addCmdMessageToChatWindow("unknown command "+command, CMD_MSG_ERROR);
+		return;
+	}
+	if (chatCommands[command].minWords > (int)splittedMsg.size()) {
+		addCmdMessageToChatWindow("command needs atleast "+to_string(chatCommands[command].minWords-1)+" arguments", CMD_MSG_ERROR);
+		return;
+	}
+	chatCommands[command].func(splittedMsg);
+}
+
 void Phex::sendInputStr() {
 	if (inputText.str.length() < 1) return;
+	if (inputText.str[0] == chatCmdChar) {
+		handleChatCommand(inputText.str);
+		return;
+	}
 	tcp.send("SAY global "+inputText.str);
 }
 

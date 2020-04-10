@@ -198,6 +198,12 @@ public:
 		int minWords = 1;
 	};
 
+	struct ChatCommand {
+		void (*func)(std::vector<std::string>);
+		int minWords = 1;
+		std::string helpStr = "";
+	};
+
 	struct User {
 		std::string name = "";
 		bool online = false;
@@ -207,6 +213,9 @@ public:
 	static bool bSendFirstMsg;
 
 	static std::unordered_map<std::string, ServerCommand> serverCommands;
+	static std::unordered_map<std::string, ChatCommand> chatCommands;
+
+	static char chatCmdChar;
 
 	static std::string publicHash;
 	static std::unordered_map<std::string, User> users;
@@ -227,14 +236,22 @@ public:
 
 	static double recInput[4];
 	static float colorRecInput[4];
+	static void handleChatCommand(std::string input);
 	static void sendInputStr();
 	static bool addToInputStr(unsigned char c);
 	static Text inputText;
 
 	static float colorWhite[4];
 	static float colorNamesInChat[4];
+	static float colorCmdMessage[4];
+	static float colorCmdMessageError[4];
 	static std::string colorCodeWhite;
 	static std::string colorCodeNamesInChat;
+	static std::string colorCodeCmdMessage;
+	static std::string colorCodeCmdMessageError;
+
+	static constexpr int CMD_MSG_ERROR = 2;
+	static bool userNameWasChanged;
 
 	static double butHeight;
 	static double butBorderSize;
@@ -258,6 +275,7 @@ public:
 
 	static void init();
 	static void initServerCommands();
+	static void initChatCommands();
 	static void initFont();
 	static void setMainFontScale();
 	static void onGuiScaleChange();
@@ -274,17 +292,22 @@ public:
 	static void serverCmdJOINED_CHANNEL(std::vector<std::string> input);
 	static void serverCmdLEFT_CHANNEL(std::vector<std::string> input);
 
+	static void chatCmdHELP(std::vector<std::string> input);
+	static void chatCmdNAME(std::vector<std::string> input);
+
 	static void setArray(float arrDst[], const float arrSrc[], int size);
 	static void setArray(double arrDst[], const double arrSrc[], int size);
 	static void multipleArray(double arr[], double factor, int size);
 
 	static bool strEquals(std::string strA, std::string strB);
+	static void strToUpper(std::string &str);
 	static std::string joinStr(std::vector<std::string> strVector, std::string seperator=" ", int offset=0);
 	static doublePair getStringWidthHeight(doublePair startPos, std::string str);
 	static double getLineHeight(HetuwFont *font);
 	static void drawString(std::string str, doublePair startPos);
 
 	static time_t strToTimeT(std::string str);
+	static void addCmdMessageToChatWindow(std::string msg, int type = 1);
 
 	static void onZoom();
 
