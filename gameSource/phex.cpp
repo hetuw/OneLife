@@ -138,6 +138,8 @@ void Phex::init() {
 	recHotKeyInfo[3] = recLineBelowTitle[1];
 	textHotKeyInfo.str = "press ";
 	textHotKeyInfo.str += (char)HetuwMod::charKey_Phex;
+	textHotKeyInfo.str += " or CTRL+";
+	textHotKeyInfo.str += (char)HetuwMod::charKey_Phex;
 	textHotKeyInfo.str += " to toggle";
 	textHotKeyInfo.getWidthHeight();
 	textHotKeyInfo.setTextPosToCenter(recHotKeyInfo);
