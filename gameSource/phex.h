@@ -216,6 +216,7 @@ public:
 	static std::unordered_map<std::string, ChatCommand> chatCommands;
 
 	static char chatCmdChar;
+	static std::string strCmdChar;
 
 	static std::string publicHash;
 	static std::unordered_map<std::string, User> users;
@@ -294,6 +295,7 @@ public:
 
 	static void chatCmdHELP(std::vector<std::string> input);
 	static void chatCmdNAME(std::vector<std::string> input);
+	static void chatCmdLIST(std::vector<std::string> input);
 
 	static void setArray(float arrDst[], const float arrSrc[], int size);
 	static void setArray(double arrDst[], const double arrSrc[], int size);
@@ -301,6 +303,7 @@ public:
 
 	static bool strEquals(std::string strA, std::string strB);
 	static void strToUpper(std::string &str);
+	static void strToLower(std::string &str);
 	static std::string joinStr(std::vector<std::string> strVector, std::string seperator=" ", int offset=0);
 	static doublePair getStringWidthHeight(doublePair startPos, std::string str);
 	static double getLineHeight(HetuwFont *font);

@@ -18,6 +18,7 @@ std::unordered_map<std::string, Phex::ServerCommand> Phex::serverCommands;
 std::unordered_map<std::string, Phex::ChatCommand> Phex::chatCommands;
 
 char Phex::chatCmdChar = '/';
+std::string Phex::strCmdChar;
 
 std::string Phex::publicHash = "";
 std::unordered_map<std::string, Phex::User> Phex::users;
@@ -78,6 +79,8 @@ extern int versionNumber;
 
 void Phex::init() {
 	if (!HetuwMod::phexIsEnabled) return;
+
+	strCmdChar = ""; strCmdChar += chatCmdChar;
 
 	initServerCommands();
 	initChatCommands();
@@ -329,18 +332,40 @@ void Phex::serverCmdLEFT_CHANNEL(std::vector<std::string> input) {
 void Phex::initChatCommands() {
 	chatCommands["HELP"].func = chatCmdHELP;
 	chatCommands["HELP"].minWords = 1;
+	chatCommands["HELP"].helpStr = "Lists all commands";
 	chatCommands["NAME"].func = chatCmdNAME;
 	chatCommands["NAME"].minWords = 2;
-	chatCommands["NAME"].helpStr = "You can change your name by typing:\n"+to_string(chatCmdChar)+"name [newName]";
+	chatCommands["NAME"].helpStr = "You can change your name by typing:\n"+strCmdChar+"name [newName]";
+	chatCommands["LIST"].func = chatCmdLIST;
+	chatCommands["LIST"].minWords = 1;
+	chatCommands["LIST"].helpStr = "Lists all online players";
 }
 
 void Phex::chatCmdHELP(std::vector<std::string> input) {
-
+	for (std::pair<std::string, ChatCommand> element : chatCommands) {
+		strToLower(element.first);
+		addCmdMessageToChatWindow(strCmdChar+element.first);
+		addCmdMessageToChatWindow(element.second.helpStr);
+	}
 }
 
 void Phex::chatCmdNAME(std::vector<std::string> input) {
 	tcp.send("USERNAME "+input[1]);
 	userNameWasChanged = true;
+}
+
+void Phex::chatCmdLIST(std::vector<std::string> input) {
+	for (std::pair<std::string, User> element : users) {
+		if (!element.second.online) continue;
+		std::string str = "";
+		if (element.first.length() > ChatElement::maxHashDisplayLength) {
+			str += element.first.substr(0, ChatElement::maxHashDisplayLength);
+		} else {
+			str += element.first;
+		}
+		if (element.second.name.length() > 0) str += " "+element.second.name;
+		addCmdMessageToChatWindow(str);
+	}
 }
 
 void Phex::setArray(float arrDst[], const float arrSrc[], int size) {
@@ -361,6 +386,10 @@ bool Phex::strEquals(std::string strA, std::string strB) {
 
 void Phex::strToUpper(std::string &str) {
 	for (size_t i=0; i < str.length(); i++) str[i] = toupper(str[i]);
+}
+
+void Phex::strToLower(std::string &str) {
+	for (size_t i=0; i < str.length(); i++) str[i] = tolower(str[i]);
 }
 
 std::string Phex::joinStr(std::vector<std::string> strVector, string seperator, int offset) {
@@ -484,9 +513,9 @@ void Phex::ChatWindow::draw(bool bDraw) {
 	topMinimum = 0;
 	if (bDraw) setDrawColor(1.0f, 1.0f, 1.0f, 1.0f);
 	for(int i=(int)elements.size()-1; i>=0; i--) {
-		if ((int)elements.size()-i > drawMaxElements) break;
 		if (msgDisplayDur > 0)
-			if (elements[i].unixTimeStamp+msgDisplayDur < HetuwMod::curStepSecondsSince1970) break;
+			if ((int)elements.size()-i > drawMaxElements)
+				if (elements[i].unixTimeStamp+msgDisplayDur < HetuwMod::curStepSecondsSince1970) break;
 		y += elements[i].textHeight;
 		if (y > rec[3]) break;
 		topMinimum = y;
@@ -685,12 +714,12 @@ void Phex::drawMinimized() {
 	if (bDrawRecInput) {
 		setInputRecDrawData();
 		mainChatWindow.rec[1] = recInput[3] + textInRecPaddingY;
-		mainChatWindow.msgDisplayDur = -1;
+		mainChatWindow.msgDisplayDur = ChatWindow::messageDisplayDurationInSec;
 		mainChatWindow.drawMaxElements = 4;
 	} else {
 		mainChatWindow.rec[1] = textInRecPaddingY;
 		mainChatWindow.msgDisplayDur = ChatWindow::messageDisplayDurationInSec;
-		mainChatWindow.drawMaxElements = 4;
+		mainChatWindow.drawMaxElements = 0;
 	}
 
 	double chatTop = mainChatWindow.getTopMinimum();
