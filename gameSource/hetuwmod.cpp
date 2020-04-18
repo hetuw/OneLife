@@ -119,7 +119,7 @@ time_t HetuwMod::stopAutoRoadRunTime;
 bool HetuwMod::activateAutoRoadRun;
 
 int HetuwMod::iDrawNames;
-bool HetuwMod::bDrawSelectedPlayerInfo = true;
+bool HetuwMod::bDrawSelectedPlayerInfo = false;
 float HetuwMod::playerNameColor[3];
 doublePair HetuwMod::playerNamePos;
 
@@ -986,7 +986,7 @@ void HetuwMod::initSettings() {
 	writeCharKeyToStream( ofs, "key_takephoto", charKey_MakePhoto );
 	ofs << endl;
 	ofs << "init_show_names = " << (char)(iDrawNames+48) << " // 0 = dont show names, 1 = show first name, 2 = show first and last name" << endl;
-	ofs << "init_show_selectedplayerinfo = " << (char)(bDrawSelectedPlayerInfo+48) << endl;
+	ofs << "init_show_selectedplayerinfo = " << (char)(bDrawSelectedPlayerInfo+48) << " // 1 = draw names bigger and show age when hovering over a player" << endl;
 	ofs << "init_show_cords = " << (char)(bDrawCords+48) << endl;
 	ofs << "init_show_playersinrange = " << (char)(iDrawPlayersInRangePanel+48) << endl;
 	ofs << "init_show_deathmessages = " << (char)(bDrawDeathMessages+48) << endl;
