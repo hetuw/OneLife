@@ -68,6 +68,9 @@ static SimpleVector<int> allPossibleDeathMarkerIDs;
 static SimpleVector<TapoutRecord> tapoutRecords;
 
 
+static int maxFoodValue = 0;
+
+
 
 
 typedef struct GlobalTrigger {
@@ -1104,7 +1107,11 @@ float initObjectBankStep() {
                             
                 sscanf( lines[next], "foodValue=%d", 
                         &( r->foodValue ) );
-                            
+                
+                if( r->foodValue > maxFoodValue ) {
+                    maxFoodValue = r->foodValue;
+                    }
+                
                 next++;
                             
                             
@@ -6511,6 +6518,10 @@ char canBuildInBiome( ObjectRecord *inObj, int inTargetBiome ) {
     }
 
 
+
+int getMaxFoodValue() {
+    return maxFoodValue;
+    }
 
     
 
