@@ -260,6 +260,8 @@ bool HetuwMod::phexIsEnabled = true;
 std::string HetuwMod::phexIp = "phexonelife.duckdns.org";
 int HetuwMod::phexPort = 6567;
 
+extern doublePair lastScreenViewCenter;
+
 void HetuwMod::init() {
 	mouseRelativeToView = {0, 0};
 
@@ -452,7 +454,7 @@ void HetuwMod::logRec(string desc, double rec[]) {
 }
 
 doublePair HetuwMod::getFromMapToViewCoordsVec() {
-	doublePair screenCenter = livingLifePage->hetuwGetLastScreenViewCenter();
+	doublePair screenCenter = lastScreenViewCenter;
 	screenCenter.x -= viewWidth/2;
 	screenCenter.y -= viewHeight/2;
 	screenCenter.x = -screenCenter.x;
@@ -461,7 +463,7 @@ doublePair HetuwMod::getFromMapToViewCoordsVec() {
 }
 
 doublePair HetuwMod::getFromViewToMapCoordsVec() {
-	doublePair screenCenter = livingLifePage->hetuwGetLastScreenViewCenter();
+	doublePair screenCenter = lastScreenViewCenter;
 	screenCenter.x -= viewWidth/2;
 	screenCenter.y -= viewHeight/2;
 	return screenCenter;
@@ -2193,7 +2195,7 @@ void HetuwMod::drawSearchTiles() {
 }
 
 void HetuwMod::drawInputString() {
-	doublePair drawPosA = livingLifePage->hetuwGetLastScreenViewCenter();
+	doublePair drawPosA = lastScreenViewCenter;
 	const char *sBufA = tempInputString.c_str();
 	float textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( sBufA, guiScale );
 	setDrawColor( 0, 0, 0, 0.8 );
@@ -2314,7 +2316,7 @@ void HetuwMod::drawHomeCords() {
 	
 	createCordsDrawStr();
 
-	doublePair drawPosA = livingLifePage->hetuwGetLastScreenViewCenter();
+	doublePair drawPosA = lastScreenViewCenter;
 	drawPosA.x -= HetuwMod::viewWidth/2 - (20*guiScale);
 	drawPosA.y += HetuwMod::viewHeight/2 - (40*guiScale);
 	drawPosA.y -= (40*guiScale);
@@ -3882,7 +3884,7 @@ void HetuwMod::drawDeathMessages() {
 
 	DeathMsg* dm = deathMessages[0];
 
-	doublePair drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	doublePair drawPos = lastScreenViewCenter;
 	drawPos.y += viewHeight/2;
 	drawPos.y -= 20*guiScale;
 	
@@ -3950,7 +3952,7 @@ void HetuwMod::drawDeathMessages() {
 
 void HetuwMod::drawMap() {
 	doublePair drawPos;
-	doublePair screenCenter = livingLifePage->hetuwGetLastScreenViewCenter();
+	doublePair screenCenter = lastScreenViewCenter;
 	int mouseX, mouseY;
 	livingLifePage->hetuwGetMouseXY( mouseX, mouseY );
 
@@ -4089,7 +4091,7 @@ void HetuwMod::drawPlayersInRangePanel() {
 	}
 
 	setDrawColor( 0, 0, 0, 0.8 );
-	doublePair bckgrRecPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	doublePair bckgrRecPos = lastScreenViewCenter;
 	int bckgrRecWidthHalf = 140*guiScale;
 	int bckgrRecHeightHalf = (int)(10 + listSize*12.5f + 12.5f)*guiScale;
 	bckgrRecPos.x += viewWidth/2;
@@ -4161,7 +4163,7 @@ void HetuwMod::drawSearchList() {
 	int bckgrRecWidthHalf = (int)(10)*guiScale+(biggestTextWidth/2);
 	int bckgrRecHeightHalf = (int)(10 + searchWordList.size()*12.5f)*guiScale;
 
-	doublePair bckgrRecPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	doublePair bckgrRecPos = lastScreenViewCenter;
 	if (iDrawPlayersInRangePanel > 0) {
 		bckgrRecPos.y = drawSearchListTopY;
 	} else {
@@ -4205,7 +4207,7 @@ void HetuwMod::drawAge() {
 	int ageDecimal = age - int(age*0.1)*10;
 	age = (int)((age-ageDecimal)*0.1);
 	sprintf(sBuf, "%c  %i.%i", ourGender, age, ageDecimal);
-	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	drawPos = lastScreenViewCenter;
 	drawPos.x += 290;
 	drawPos.y -= viewHeight/2 - 25;
 	livingLifePage->hetuwDrawWithHandwritingFont( sBuf, drawPos );
@@ -4222,7 +4224,7 @@ void HetuwMod::drawCords() {
 	sprintf(sBufB, "%d", y );
 	float textWidthB = livingLifePage->hetuwMeasureScaledHandwritingFont( sBufB, guiScale );
 
-	doublePair drawPosA = livingLifePage->hetuwGetLastScreenViewCenter();
+	doublePair drawPosA = lastScreenViewCenter;
 	doublePair drawPosB;
 	drawPosA.x -= HetuwMod::viewWidth/2 - (20*guiScale);
 	drawPosA.y += HetuwMod::viewHeight/2 - (40*guiScale);
@@ -4247,7 +4249,7 @@ void HetuwMod::drawCords() {
 
 void HetuwMod::drawGrid() {
 	setDrawColor( 0.0, 0.0, 0.0, 1.0 );
-	doublePair drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	doublePair drawPos = lastScreenViewCenter;
 	float recWidth = 1*guiScale;
 	float startX = drawPos.x - HetuwMod::viewWidth/2.0;
 	float endX = drawPos.x + HetuwMod::viewWidth/2.0;
@@ -4314,13 +4316,13 @@ void HetuwMod::drawHelp() {
 	float guiScale = (guiScaleRaw+0.1) * zoomScale;
 	char str[128];
 	setDrawColor( 0, 0, 0, 0.8 );
-	drawRect( livingLifePage->hetuwGetLastScreenViewCenter(), viewWidth/2, viewHeight/2 );
+	drawRect( lastScreenViewCenter, viewWidth/2, viewHeight/2 );
 
 	setHelpColorNormal();
 
 	double lineHeight = 30*guiScale;
 
-	doublePair drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	doublePair drawPos = lastScreenViewCenter;
 	drawPos.x -= viewWidth/2 - 20*guiScale;
 	drawPos.y += viewHeight/2 - 30*guiScale;
 	char serverIPupperCase[128];
@@ -4329,7 +4331,7 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 
 	// emotion words
-	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	drawPos = lastScreenViewCenter;
 	drawPos.x -= viewWidth/2 - 20*guiScale;
 	drawPos.y += viewHeight/2 - 80*guiScale;
 	SimpleVector<Emotion> emotions = hetuwGetEmotions();
@@ -4359,7 +4361,7 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 
-	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	drawPos = lastScreenViewCenter;
 	drawPos.x -= viewWidth/2 - 250*guiScale;
 	drawPos.y += viewHeight/2 - 80*guiScale;
 
@@ -4433,7 +4435,7 @@ void HetuwMod::drawHelp() {
 
 	setHelpColorNormal();
 
-	drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+	drawPos = lastScreenViewCenter;
 	drawPos.x -= viewWidth/2 - 640*guiScale;
 	drawPos.y += viewHeight/2 - 80*guiScale;
 
@@ -4506,7 +4508,7 @@ void HetuwMod::drawHelp() {
 	drawPos.y -= lineHeight;
 
 	if (connectedToMainServer && arcRunningSince > 0) {
-		drawPos = livingLifePage->hetuwGetLastScreenViewCenter();
+		drawPos = lastScreenViewCenter;
 		drawPos.x += viewWidth/2 - 440*guiScale;
 		drawPos.y += viewHeight/2 - 30*guiScale;
 		sprintf(str, "MAP RUNNING SINCE: %s", getArcTimeStr().c_str());
