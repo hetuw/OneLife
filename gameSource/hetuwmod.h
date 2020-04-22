@@ -350,6 +350,7 @@ public:
 	static RainbowColor *colorRainbow;
 
 	static LivingLifePage *livingLifePage;
+ 	static LiveObject *ourLiveObject;
 
 	static int stepCount;
 	static double ourAge;
@@ -599,8 +600,6 @@ public:
 	static IntervalTimed intervalVogMove;
 
 private:
-
- 	static LiveObject *ourLiveObject;
 
 	static void zoomCalc();
 

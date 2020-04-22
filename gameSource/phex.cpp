@@ -293,8 +293,8 @@ void Phex::serverCmdSAY(std::vector<std::string> input) {
 	if (users.find(chatElement.hash) != users.end()) {
 		chatElement.name = users[chatElement.hash].name;
 	} else {
-		printf("Phex Error received message but cant find hash in users\n");
-		printf("Phex Error message: %s\n", joinStr(input).c_str());
+		//printf("Phex Error received message but cant find hash in users\n");
+		//printf("Phex Error message: %s\n", joinStr(input).c_str());
 	}
 	chatElement.unixTimeStamp = strToTimeT(input[3]);
 	chatElement.text = joinStr(input, " ", 4);
@@ -848,6 +848,11 @@ void Phex::onClickTurnOff() {
 
 void Phex::onServerJoin() {
 	if (!HetuwMod::phexIsEnabled) return;
+
+	std::string msg = "LIFE_SERVER ";
+	msg += std::string(HetuwMod::serverIP)+" ";
+	msg += std::to_string(HetuwMod::ourLiveObject->id);
+	tcp.send(msg);
 }
 
 void Phex::onPhexKeyPressed() {
