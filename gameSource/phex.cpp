@@ -849,7 +849,7 @@ void Phex::onClickTurnOff() {
 void Phex::onServerJoin() {
 	if (!HetuwMod::phexIsEnabled) return;
 
-	std::string msg = "LIFE_SERVER ";
+	std::string msg = "SERVER_LIFE ";
 	msg += std::string(HetuwMod::serverIP)+" ";
 	msg += std::to_string(HetuwMod::ourLiveObject->id);
 	tcp.send(msg);
