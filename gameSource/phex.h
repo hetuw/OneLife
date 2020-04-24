@@ -315,6 +315,7 @@ public:
 	static void onZoom();
 
 	static void sendFirstMessage();
+	static void sendServerLife();
 
 	static void setInputRecDrawData();
 	static void drawInputRec();

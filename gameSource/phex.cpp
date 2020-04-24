@@ -12,7 +12,7 @@
 #include "hetuwFont.h"
 
 TCPConnection Phex::tcp;
-bool Phex::bSendFirstMsg = false;
+bool Phex::bSendFirstMsg = true;
 
 std::unordered_map<std::string, Phex::ServerCommand> Phex::serverCommands;
 std::unordered_map<std::string, Phex::ChatCommand> Phex::chatCommands;
@@ -88,6 +88,7 @@ void Phex::init() {
 	tcp.init(HetuwMod::phexIp, HetuwMod::phexPort, &onReceivedMessage, &onConnectionStatusChanged);
 	tcp.logTag = "Phex";
 	tcp.charEnd = PHEX_CHAR_END;
+	tcp.verbose = false;
 	tcp.connect();
 
 	textInRecPaddingX = 0.01;
@@ -673,6 +674,14 @@ void Phex::sendFirstMessage() {
 	tcp.send("JOIN global");
 	mainChatWindow.clear();
 	tcp.send("GETLAST global 30");
+	sendServerLife();
+}
+
+void Phex::sendServerLife() {
+	std::string msg = "SERVER_LIFE ";
+	msg += std::string(HetuwMod::serverIP)+" ";
+	msg += std::to_string(HetuwMod::ourLiveObject->id);
+	tcp.send(msg);
 }
 
 void Phex::draw() {
@@ -849,10 +858,9 @@ void Phex::onClickTurnOff() {
 void Phex::onServerJoin() {
 	if (!HetuwMod::phexIsEnabled) return;
 
-	std::string msg = "SERVER_LIFE ";
-	msg += std::string(HetuwMod::serverIP)+" ";
-	msg += std::to_string(HetuwMod::ourLiveObject->id);
-	tcp.send(msg);
+	if (tcp.status == TCPConnection::ONLINE) {
+		sendServerLife();
+	}
 }
 
 void Phex::onPhexKeyPressed() {
