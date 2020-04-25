@@ -37,20 +37,22 @@ void TCPConnection::step() {
 		return;
 	}
 
+	if (HetuwMod::curStepTime-timeConnectingSince < waitTimeBeforeReadingFirstMsgs) return;
 	if (!intervalSendRead.step()) return;
-	if (bSendFirstMessage) {
-		sendC("KA");
-		return;
-	}
+
 	readAllMessagesFromServer();
+
+	if (status != ONLINE) return;
+
 	sendAllBufferedMessages();
-	if (status == ONLINE && HetuwMod::curStepTime-timeLastMessage > 15) sendC("KA"); // keep connection alive
+	if (HetuwMod::curStepTime-timeLastMessage > 15) sendC("KA"); // keep connection alive
 }
 
 // --------------- private ---------------
 
 void TCPConnection::connectC() {
 	if (verbose) printf("%s connect - openSocketConnection\n", logTag.c_str());
+	timeConnectingSince = HetuwMod::curStepTime;
 	socket = openSocketConnection(ip.c_str(), port);
 	updateStatus(CONNECTING);
 }
@@ -85,7 +87,7 @@ std::string TCPConnection::readFromServer() {
 	}
 	if (numRead == -1) {
 		if (verbose) printf("%s failed to read message from server\n", logTag.c_str());
-		if (status != CONNECTING) disconnectC();
+		disconnectC();
 	} else if (result.length() > 0) {
 		if (verbose) printf("%s received server msg: %s\n", logTag.c_str(), result.c_str());
 		updateStatus(ONLINE);
@@ -103,12 +105,17 @@ void TCPConnection::sendAllBufferedMessages() {
 	}
 }
 bool TCPConnection::sendC(std::string str) {
+	if (socket < 0) {
+		printf("%s tried to send message but connection socket is invalid\n", logTag.c_str());
+		printf("%s message: %s\n", logTag.c_str(), str.c_str());
+		return false;
+	}
 	str += charEnd;
 	int len = str.length();
+	int numSent = 0;
 	if (verbose) printf("%s send message: %s\n", logTag.c_str(), str.c_str());
-	int numSent = sendToSocket(socket, (unsigned char*)str.c_str(), str.length());
+	numSent = sendToSocket(socket, (unsigned char*)str.c_str(), str.length());
 	if (len != numSent) {
-		if (status == CONNECTING) return false;
 		if (verbose) printf("%s failed to send message, tried to sent: %d, but sent: %d\n", logTag.c_str(), len, numSent);
 		disconnectC();
 		return false;

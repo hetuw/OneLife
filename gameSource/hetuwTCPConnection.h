@@ -28,6 +28,8 @@ public:
 	HetuwMod::IntervalTimed intervalSendRead = HetuwMod::IntervalTimed(0.3);
 	bool bSendFirstMessage = false;
 
+	double timeConnectingSince = 0;
+	double waitTimeBeforeReadingFirstMsgs = 3; // in seconds
 	double timeLastMessage = 0; // time of last sent or received message
 	double timeOfflineSince = 1000;
 	double waitTimeBeforeReconnect = 3; // change this to change how fast the client reconnects after it loses connection
