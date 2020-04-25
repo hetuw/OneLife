@@ -6,6 +6,9 @@
 #include "LivingLifePage.h"
 #include "hetuwmod.h"
 
+// After client calls TCPConnection::connect() it is waiting for the server to send the first message
+// The server needs to send the first message in order to let the client know it is connected
+
 void TCPConnection::init(std::string serverIp, int serverPort, void (*inOnReceivedMessage)(std::string), void (*inOnStatusChanged)(statusType)) {
 	ip = serverIp;
 	port = serverPort;
