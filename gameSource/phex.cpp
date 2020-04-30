@@ -259,6 +259,10 @@ void Phex::initServerCommands() {
 	serverCommands["JOINED_CHANNEL"].minWords = 3;
 	serverCommands["LEFT_CHANNEL"].func = serverCmdLEFT_CHANNEL;
 	serverCommands["LEFT_CHANNEL"].minWords = 3;
+	serverCommands["DISCONNECT"].func = serverCmdDISCONNECT;
+	serverCommands["DISCONNECT"].minWords = 1;
+	serverCommands["CLOSE"].func = serverCmdDISCONNECT;
+	serverCommands["CLOSE"].minWords = 1;
 }
 
 void Phex::serverCmdVERSION(std::vector<std::string> input) {
@@ -328,6 +332,10 @@ void Phex::serverCmdJOINED_CHANNEL(std::vector<std::string> input) {
 
 void Phex::serverCmdLEFT_CHANNEL(std::vector<std::string> input) {
 
+}
+
+void Phex::serverCmdDISCONNECT(std::vector<std::string> input) {
+	tcp.reconnect();
 }
 
 void Phex::initChatCommands() {

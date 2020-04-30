@@ -37,6 +37,7 @@ public:
 	void init(std::string serverIp, int serverPort, void (*inOnReceivedMessage)(std::string), void (*inOnStatusChanged)(statusType) = NULL);
 	void connect();
 	void disconnect();
+	void reconnect();
 	void send(std::string message);
 	void step();
 

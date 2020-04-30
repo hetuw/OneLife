@@ -24,6 +24,11 @@ void TCPConnection::disconnect() {
 	if (verbose) printf("%s set keepConnected to false\n", logTag.c_str());
 	keepConnected = false;
 }
+void TCPConnection::reconnect() {
+	if (verbose) printf("%s reconnect\n", logTag.c_str());
+	keepConnected = true;
+	disconnectC();
+}
 void TCPConnection::send(std::string message) {
 	if (verbose) printf("%s push to send buffer: %s\n", logTag.c_str(), message.c_str());
 	sendBuffer.push_back(message);
@@ -115,9 +120,8 @@ bool TCPConnection::sendC(std::string str) {
 	}
 	str += charEnd;
 	int len = str.length();
-	int numSent = 0;
 	if (verbose) printf("%s send message: %s\n", logTag.c_str(), str.c_str());
-	numSent = sendToSocket(socket, (unsigned char*)str.c_str(), str.length());
+	int numSent = sendToSocket(socket, (unsigned char*)str.c_str(), str.length());
 	if (len != numSent) {
 		if (verbose) printf("%s failed to send message, tried to sent: %d, but sent: %d\n", logTag.c_str(), len, numSent);
 		disconnectC();

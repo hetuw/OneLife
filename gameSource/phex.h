@@ -292,6 +292,7 @@ public:
 	static void serverCmdOFFLINE(std::vector<std::string> input);
 	static void serverCmdJOINED_CHANNEL(std::vector<std::string> input);
 	static void serverCmdLEFT_CHANNEL(std::vector<std::string> input);
+	static void serverCmdDISCONNECT(std::vector<std::string> input);
 
 	static void chatCmdHELP(std::vector<std::string> input);
 	static void chatCmdNAME(std::vector<std::string> input);
