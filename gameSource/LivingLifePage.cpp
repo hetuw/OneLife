@@ -24458,8 +24458,10 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
 			setSignal( "twinCancel" );
 		}
 	}
-	if (!vogMode) if (HetuwMod::livingLifeKeyDown(inASCII))
-		return;
+	if (!vogMode) {
+		if (Phex::hasFocus && mSayField.isFocused()) mSayField.unfocusAll();
+		if (HetuwMod::livingLifeKeyDown(inASCII)) return;
+	}
 
     switch( inASCII ) {
         /*
@@ -24676,7 +24678,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 mZKeyDown = false;
                 mXKeyDown = false;
 
-                mSayField.setText( "" );
+                //mSayField.setText( "" ); // hetuw mod - save the words last said - dont reset
                 mSayField.focus();
                 }
             else if( mSayField.isFocused() ) {
