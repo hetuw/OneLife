@@ -254,6 +254,8 @@ public:
 	static constexpr int CMD_MSG_ERROR = 2;
 	static bool userNameWasChanged;
 
+	static std::string channelName;
+
 	static double butHeight;
 	static double butBorderSize;
 	static std::vector<Button*> buttons;
@@ -316,6 +318,7 @@ public:
 	static void onZoom();
 
 	static void sendFirstMessage();
+	static void joinChannel(std::string inChannelName);
 	static void sendServerLife();
 
 	static void setInputRecDrawData();

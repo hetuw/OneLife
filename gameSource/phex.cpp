@@ -53,6 +53,8 @@ std::string Phex::colorCodeCmdMessageError;
 constexpr int Phex::CMD_MSG_ERROR;
 bool Phex::userNameWasChanged = false;
 
+std::string Phex::channelName = "";
+
 double Phex::butHeight = 0.04;
 double Phex::butBorderSize = 0.004;
 std::vector<Phex::Button*> Phex::buttons;
@@ -650,7 +652,7 @@ void Phex::sendInputStr() {
 		handleChatCommand(inputText.str);
 		return;
 	}
-	tcp.send("SAY global "+inputText.str);
+	tcp.send("SAY "+channelName+" "+inputText.str);
 }
 
 bool Phex::addToInputStr(unsigned char c) {
@@ -678,10 +680,14 @@ void Phex::sendFirstMessage() {
 	string jasonsOneLifeVersion = to_string(versionNumber);
 	string msg = "FIRST "+clientName+" "+phexVersionNumber+" "+secretHash+" "+jasonsOneLifeVersion;
 	tcp.send(msg);
+}
 
-	tcp.send("JOIN global");
+void Phex::joinChannel(std::string inChannelName) {
+	if (channelName.length() > 0) tcp.send("LEAVE "+channelName);
+	channelName = inChannelName;
+	tcp.send("JOIN "+channelName);
 	mainChatWindow.clear();
-	tcp.send("GETLAST global 30");
+	tcp.send("GETLAST "+channelName+" 30");
 	sendServerLife();
 }
 
@@ -840,10 +846,12 @@ void Phex::onConnectionStatusChanged(TCPConnection::statusType status) {
 			break;
 		case TCPConnection::ONLINE:
 			titleText.setToOnline();
+			channelName = "";
 			if (bSendFirstMsg) {
 				sendFirstMessage();
 				bSendFirstMsg = false;
 			}
+			joinChannel(string(HetuwMod::serverIP));
 			break;
 	}
 }
@@ -867,7 +875,7 @@ void Phex::onServerJoin() {
 	if (!HetuwMod::phexIsEnabled) return;
 
 	if (tcp.status == TCPConnection::ONLINE) {
-		sendServerLife();
+		//joinChannel(string(HetuwMod::serverIP));
 	}
 }
 
