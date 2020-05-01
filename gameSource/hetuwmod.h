@@ -202,13 +202,16 @@ public:
 		KeyHandler(void (*inOnKeyEvent)(unsigned char)) {
 			onKeyEvent = inOnKeyEvent;
 		}
+		void sendKeyEvent() {
+			lastKeyPressed.c = isShiftKeyDown() ? toupper(lastKeyPressed.c) : tolower(lastKeyPressed.c);
+			onKeyEvent(lastKeyPressed.c);
+		}
 		void onKeyDown(unsigned char c) {
 			lastKeyPressed.c = c;
 			lastKeyPressed.timePressedSince = curStepTime;
-			onKeyEvent(c);
+			sendKeyEvent();
 		}
 		void onKeyUp(unsigned char c) {
-			// if (lastKeyPressed.c != c || toupper(lastKeyPressed.c) != toupper(c)) return;
 			lastKeyPressed.timePressedSince = -1;
 			timeSinceLastSignal = -1;
 		}
@@ -216,12 +219,12 @@ public:
 			if (lastKeyPressed.timePressedSince < 0) return;
 			if (curStepTime - lastKeyPressed.timePressedSince < waitTimeUntilRepeatSignal) return;
 			if (timeSinceLastSignal < 0) {
-				onKeyEvent(lastKeyPressed.c);
+				sendKeyEvent();
 				timeSinceLastSignal = curStepTime;
 				return;
 			}
 			if (curStepTime - timeSinceLastSignal < repeatFrequency) return;
-			onKeyEvent(lastKeyPressed.c);
+			sendKeyEvent();
 			timeSinceLastSignal = curStepTime;
 		}
 	};
