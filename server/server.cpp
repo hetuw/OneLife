@@ -7613,6 +7613,25 @@ static char isExiled( LiveObject *inViewer, LiveObject *inTarget ) {
     }
 
 
+
+
+static int countFollowers( LiveObject *inLeader ) {
+    int count = 0;
+    for( int i=0; i<players.size(); i++ ) {
+        LiveObject *p = players.getElement( i );
+        
+        if( isLeader( p, inLeader->id ) &&
+            ! isExiled( inLeader, p ) ) {
+            count++;
+            }
+        }
+    
+    return count;
+    }
+
+
+
+
 // people under player's top leader who don't see player as exiled
 static int countAllies( LiveObject *inPlayer, 
                         GridPos inPos, double inRadius ) {    
@@ -12848,7 +12867,18 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
             KillState *s = activeKillStates.getElement( i );
             
             if( s->targetID == inTarget->id ) {
-                minPosseSizeForKill = s->minPosseSizeForKill;
+                
+                // don't copy small posse size from no-wait weapons
+                if( ! isNoWaitWeapon( s->killerWeaponID ) ) {
+                    
+                    minPosseSizeForKill = s->minPosseSizeForKill;
+                    }
+                else if( minPosseSizeForKill > 1 ) {
+                    // earlier kill state is no-wait weapon
+                    // override it's small posse size with this new size
+                    s->minPosseSizeForKill = minPosseSizeForKill;
+                    }
+                
                 joiningExisting = true;
                 break;
                 }
@@ -12901,6 +12931,23 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                                      psMessage, strlen( psMessage ) );
                 delete [] psMessage;
                 }
+            else if( topLeaderO == inTarget ) {
+                // we're targeting a leader
+                
+                pronoun = "HE";
+                if( getFemale( inTarget ) ) {
+                    pronoun = "SHE";
+                    }
+                
+                char *psMessage = 
+                    autoSprintf( "PS\n"
+                                 "%d/0 %s IS A TOP LEADER\n#",
+                                 inKiller->id, pronoun );
+                
+                sendMessageToPlayer( inKiller, 
+                                     psMessage, strlen( psMessage ) );
+                delete [] psMessage;
+                }
             else if( topLeaderO != NULL ) {
 
                 char *topLeaderName = getLeadershipName( topLeaderO );
@@ -12939,7 +12986,7 @@ char addKillState( LiveObject *inKiller, LiveObject *inTarget,
                         minPosseSizeForKill,
                         fullForceSoloPosse };
         
-        if( isNoWaitWeapon( inKiller->holdingID ) ) {
+        if( ! joiningExisting && isNoWaitWeapon( inKiller->holdingID ) ) {
                 // allow it to happen right now
             s.killStartTime -= killDelayTime;
             }
@@ -14995,6 +15042,8 @@ static void leaderDied( LiveObject *inLeader ) {
 
 
     SimpleVector<LiveObject*> oldFollowers;
+    SimpleVector<LiveObject*> directFollowers;
+
     for( int i=0; i<players.size(); i++ ) {
         LiveObject *otherPlayer = players.getElement( i );
         if( otherPlayer != inLeader &&
@@ -15003,22 +15052,25 @@ static void leaderDied( LiveObject *inLeader ) {
             if( isFollower( inLeader, otherPlayer ) ) {
                 oldFollowers.push_back( otherPlayer );
                 }
+            if( otherPlayer->followingID == inLeader->id ) {
+                directFollowers.push_back( otherPlayer );
+                }
             }
         }
 
 
 
     // if leader is following no one (they haven't picked an heir to take over)
-    // have them follow their oldest follower now automatically
+    // have them follow their oldest direct follower now automatically
     
     if( inLeader->followingID == -1 &&
-        oldFollowers.size() > 0 ) {
+        directFollowers.size() > 0 ) {
         
         LiveObject *oldestFollower = NULL;
         double oldestAge = 0;
         
-        for( int i=0; i<oldFollowers.size(); i++ ) {
-            LiveObject *otherPlayer = oldFollowers.getElementDirect( i );
+        for( int i=0; i<directFollowers.size(); i++ ) {
+            LiveObject *otherPlayer = directFollowers.getElementDirect( i );
             
             double age = computeAge( otherPlayer );
             
@@ -15032,7 +15084,7 @@ static void leaderDied( LiveObject *inLeader ) {
         
         // they become top of tree, following no one
         oldestFollower->followingID = -1;
-        
+        oldestFollower->followingUpdate = true;
 
         // inform them differently, instead of as part of
         // group of followers below
@@ -15210,7 +15262,8 @@ static LiveObject *getClosestFollower( LiveObject *inLeader ) {
         if( otherPlayer != inLeader &&
             ! otherPlayer->error ) {
             
-            if( isFollower( inLeader, otherPlayer ) ) {
+            if( isFollower( inLeader, otherPlayer ) &&
+                ! isExiled( inLeader, otherPlayer ) ) {
                 
                 GridPos fPos = getPlayerPos( otherPlayer );
                 
@@ -19624,10 +19677,7 @@ int main() {
                                     }
                                 
                                 if( s->posseSize == 1 &&
-                                    strstr( 
-                                        getObject( s->killerWeaponID )->
-                                        description,
-                                        "+noWait" ) != NULL ) {
+                                    isNoWaitWeapon( s->killerWeaponID ) ) {
                                     // single-person posse, where leader
                                     // not holding a deadly weapon
                                     // (snowball or tattoo needle)
@@ -19863,10 +19913,22 @@ int main() {
                                 char *selfLeadershipName = 
                                     getLeadershipName( nextPlayer, true );
                                 
+                                int followerCount = 
+                                    countFollowers( nextPlayer );
+                                
+                                const char *followerWord = "FOLLOWERS";
+                                
+                                if( followerCount == 1 ) {
+                                    followerWord = "FOLLOWER";
+                                    }
+
                                 char *confirmMessage =
                                     autoSprintf( "AS %s, "
-                                                 "YOU ISSUED AN ORDER:**%s",
+                                                 "YOU ISSUED AN ORDER "
+                                                 "TO YOUR %d %s:**%s",
                                                  selfLeadershipName,
+                                                 followerCount,
+                                                 followerWord,
                                                  order );
                                 
                                 delete [] selfLeadershipName;
@@ -22996,6 +23058,7 @@ int main() {
                 // still not close enough
                 // see if we need to renew emote
                 
+                if( ! isNoWaitWeapon( s->killerWeaponID ) )
                 if( curTime - s->emotStartTime > s->emotRefreshSeconds ||
                     ( s->posseSize >= s->minPosseSizeForKill &&
                       target->emotFrozenIndex != 
