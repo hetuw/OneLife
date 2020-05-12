@@ -13790,9 +13790,10 @@ void LivingLifePage::step() {
                     "%199s\n"
                     "%d\n", &currentPlayers, &maxPlayers, challengeString, 
                     &mRequiredVersion );
-            if( mRequiredVersion > versionNumber ) HetuwMod::onInvalidVersionDetected(versionNumber, mRequiredVersion);
-			versionNumber = mRequiredVersion; // hetuw mod - ignore client version check - join server even if client is outdated
-            
+			if (mRequiredVersion > versionNumber) { // hetuw mod
+				HetuwMod::onInvalidVersionDetected(versionNumber, mRequiredVersion);
+				versionNumber = mRequiredVersion; // hetuw mod - ignore client version check - join server even if client is outdated
+			}
 
             if( mRequiredVersion > versionNumber ||
                 ( mRequiredVersion < versionNumber &&
