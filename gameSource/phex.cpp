@@ -111,6 +111,7 @@ void Phex::init() {
 	setArray(colorCmdMessage, (const float[]){ 0.2f, 1.0f, 0.5f, 1.0f }, 4);
 	setArray(colorCmdMessageError, (const float[]){ 1.0f, 0.7f, 0.4f, 1.0f }, 4);
 
+	mainChatWindow.init(recBckgr);
 	setArray(colorButPhexOffline, (const float[]){0.6, 0.0, 0.0, 0.6}, 4);
 	setArray(colorButPhexConnecting, (const float[]){0.3, 0.3, 0.0, 0.6}, 4);
 	setArray(colorButPhexOnline, (const float[]){0.0, 0.6, 0.0, 0.6}, 4);
