@@ -50,6 +50,10 @@ std::string Phex::colorCodeNamesInChat;
 std::string Phex::colorCodeCmdMessage;
 std::string Phex::colorCodeCmdMessageError;
 
+float Phex::colorButPhexOffline[4];
+float Phex::colorButPhexConnecting[4];
+float Phex::colorButPhexOnline[4];
+
 constexpr int Phex::CMD_MSG_ERROR;
 bool Phex::userNameWasChanged = false;
 
@@ -107,7 +111,10 @@ void Phex::init() {
 	setArray(colorCmdMessage, (const float[]){ 0.2f, 1.0f, 0.5f, 1.0f }, 4);
 	setArray(colorCmdMessageError, (const float[]){ 1.0f, 0.7f, 0.4f, 1.0f }, 4);
 
-	mainChatWindow.init(recBckgr);
+	setArray(colorButPhexOffline, (const float[]){0.6, 0.0, 0.0, 0.6}, 4);
+	setArray(colorButPhexConnecting, (const float[]){0.3, 0.3, 0.0, 0.6}, 4);
+	setArray(colorButPhexOnline, (const float[]){0.0, 0.6, 0.0, 0.6}, 4);
+
 	mainChatWindow.rec[0] += textInRecPaddingX;
 	mainChatWindow.rec[1] += textInRecPaddingY;
 	mainChatWindow.rec[2] -= textInRecPaddingX;
@@ -207,7 +214,7 @@ void Phex::initButtons() {
 	butPhex.setPosition(1.0-butPhexWidth-butPhexPaddingX, butPhexPaddingY);
 	butPhex.setWidth(butPhexWidth);
 	butPhex.setHeight(butPhexHeight);
-	setArray(butPhex.colorBckgr, colorRecBckgr, 4);
+	setArray(butPhex.colorBckgr, colorButPhexOffline, 4);
 	butPhex.text.scale = 1.2;
 	butPhex.setDrawData();
 	butPhex.visible = false;
@@ -839,13 +846,16 @@ void Phex::onConnectionStatusChanged(TCPConnection::statusType status) {
 	switch (status) {
 		case TCPConnection::OFFLINE:
 			titleText.setToOffline();
+			setArray(butPhex.colorBckgr, colorButPhexOffline, 4);
 			break;
 		case TCPConnection::CONNECTING:
 			titleText.setToConnecting();
+			setArray(butPhex.colorBckgr, colorButPhexConnecting, 4);
 			bSendFirstMsg = true;
 			break;
 		case TCPConnection::ONLINE:
 			titleText.setToOnline();
+			setArray(butPhex.colorBckgr, colorButPhexOnline, 4);
 			channelName = "";
 			if (bSendFirstMsg) {
 				sendFirstMessage();

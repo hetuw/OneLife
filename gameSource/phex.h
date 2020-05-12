@@ -251,6 +251,10 @@ public:
 	static std::string colorCodeCmdMessage;
 	static std::string colorCodeCmdMessageError;
 
+	static float colorButPhexOffline[4];
+	static float colorButPhexConnecting[4];
+	static float colorButPhexOnline[4];
+
 	static constexpr int CMD_MSG_ERROR = 2;
 	static bool userNameWasChanged;
 
