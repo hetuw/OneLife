@@ -868,6 +868,7 @@ float initObjectBankStep() {
                 
 
                 r->isAutoOrienting = false;
+                r->causeAutoOrientHOnly = false;
                 r->horizontalVersionID = -1;
                 r->verticalVersionID = -1;
                 r->cornerVersionID = -1;
@@ -2312,6 +2313,10 @@ void initObjectBankFinish() {
                 // but doesn't have orientation versions defined
                 // (example:  horizontal wall with shelf installed)
                 o->isAutoOrienting = true;
+                
+                if( strstr( o->description, "+causeAutoOrientH" ) ) {
+                    o->causeAutoOrientHOnly = true;
+                    }
                 }
             }
         }
@@ -3720,6 +3725,7 @@ int addObject( const char *inDescription,
     r->permittedBiomeMap = NULL;
 
     r->isAutoOrienting = false;
+    r->causeAutoOrientHOnly = false;
     r->horizontalVersionID = -1;
     r->verticalVersionID = -1;
     r->cornerVersionID = -1;
