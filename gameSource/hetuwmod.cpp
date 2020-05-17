@@ -1703,7 +1703,6 @@ void HetuwMod::logHomeLocation(HomePos* hp) {
 }
 
 void HetuwMod::addHomeLocation( int x, int y, homePosType type, char c, int personID ) {
-	printf("hetuw personId: %d\n", personID);
 	if (personID >= 0) {
 		for (unsigned i=0; i<homePosStack.size(); i++) {
 			if (homePosStack[i]->personID == personID) {
@@ -1741,6 +1740,7 @@ void HetuwMod::addHomeLocation( int x, int y, homePosType type, char c, int pers
 		}
 	}
 	if (id >= 0) return; // home already exists
+
 	HomePos *p = new HomePos();
 	p->x = x;
 	p->y = y;
@@ -1749,6 +1749,9 @@ void HetuwMod::addHomeLocation( int x, int y, homePosType type, char c, int pers
 	p->personID = personID;
 	homePosStack.push_back(p);
 	logHomeLocation(p);
+
+	if (type == hpt_bell) Phex::onRingBell(x, y);
+	if (type == hpt_apoc) Phex::onRingApoc(x, y);
 }
 
 void HetuwMod::setHomeLocationText(int x, int y, homePosType type, char *text) {

@@ -354,6 +354,9 @@ public:
 	static bool onKeyDown(unsigned char inASCII);
 	static bool onKeyUp(unsigned char inASCII);
 
+	static void onRingBell(int x, int y);
+	static void onRingApoc(int x, int y);
+
 private:
 
 	static void fontSetMaxX();
