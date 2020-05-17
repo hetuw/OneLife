@@ -838,6 +838,10 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 		phexPort = atoi(value);
 		return true;
 	}
+	if (strstr(name, "phex_coords")) {
+		Phex::allowServerCoords = bool(value[0]-48);
+		return true;
+	}
 
 	if (strstr(name, "keep_button_pressed_to_fixcamera")) {
 		bHoldDownTo_FixCamera = bool(value[0]-48);
@@ -998,6 +1002,7 @@ void HetuwMod::initSettings() {
 	ofs << "phex_enabled = " << (char)(phexIsEnabled+48) << endl;
 	ofs << "phex_ip = " << phexIp << endl;
 	ofs << "phex_port = " << phexPort << endl;
+	ofs << "phex_coords = " << (char)(Phex::allowServerCoords+48) << endl;
 	ofs << endl;
 	ofs << "keep_button_pressed_to_fixcamera = " << (char)(bHoldDownTo_FixCamera+48) << endl;
 	ofs << "keep_button_pressed_to_findyum = " << (char)(bHoldDownTo_FindYum+48) << endl;
@@ -1675,6 +1680,7 @@ void HetuwMod::logHomeLocation(HomePos* hp) {
 			break;
 		case hpt_map:
 			typeName = "map";
+			if (hp->text.length() > 0) typeName += " "+hp->text;
 			break;
 		case hpt_baby:
 			typeName = "baby";
@@ -1688,6 +1694,10 @@ void HetuwMod::logHomeLocation(HomePos* hp) {
 		case hpt_expert:
 			typeName = "expert";
 			break;
+		case hpt_phex:
+			typeName = "phex";
+			if (hp->text.length() > 0) typeName += " "+hp->text;
+			break;
 		default:
 			typeName = "unknowntype";
 	}
@@ -1700,6 +1710,22 @@ void HetuwMod::logHomeLocation(HomePos* hp) {
 	if (hp->text.length() > 0) data = data + hetuwLogSeperator + hp->text;
 
 	writeLineToLogs("coord", data);
+}
+
+void HetuwMod::addHomeLocation(HomePos *p) {
+	if (p->text.length() > 0) {
+		for (unsigned i=0; i<homePosStack.size(); i++) {
+			if (homePosStack[i]->type != p->type) continue;
+			if (!Phex::strEquals(homePosStack[i]->text, p->text)) continue;
+			homePosStack[i]->x = p->x;
+			homePosStack[i]->y = p->y;
+			delete p;
+			return;
+		}
+	}
+
+	homePosStack.push_back(p);
+	logHomeLocation(p);
 }
 
 void HetuwMod::addHomeLocation( int x, int y, homePosType type, char c, int personID ) {
@@ -2217,6 +2243,7 @@ void HetuwMod::createCordsDrawStr() {
 	int mapCount = 0;
 	int babyCount = 0;
 	int expertCount = 0;
+	int phexCount = 0;
 	for (unsigned i=0; i<homePosStack.size(); i++) {
 		switch (homePosStack[i]->type) {
 			case hpt_custom:
@@ -2268,6 +2295,16 @@ void HetuwMod::createCordsDrawStr() {
 				sprintf( sBufA, "EXPERT %c %d %d", (char)(expertCount+65), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
 				expertCount++;
 				break;
+			case hpt_phex: {
+				string str = "PHEX "+(char)(phexCount+65);
+				if (homePosStack[i]->text.length() > 0) {
+					if (homePosStack[i]->text.length() > 12) {
+						str = homePosStack[i]->text.substr(0, 12);
+					} else str = homePosStack[i]->text;
+				}
+				sprintf( sBufA, "%s %d %d", str.c_str(), homePosStack[i]->x+cordOffset.x, homePosStack[i]->y+cordOffset.y );
+				phexCount++;
+				break; }
 		}
 		homePosStack[i]->drawStr = string(sBufA);
 
@@ -2308,6 +2345,9 @@ void HetuwMod::setDrawColorToCoordType(homePosType type) {
 		case hpt_expert:
 			setDrawColor( 0.6, 0.6, 0.7, 1.0 );
 			break;
+		case hpt_phex:
+			setDrawColor( 0.5, 0.5, 0.5, 1.0 );
+			break;
 	}
 }
 
@@ -2333,8 +2373,11 @@ void HetuwMod::drawHomeCords() {
 	drawRect( drawPosB, recWidth + 6*guiScale, recHeight + 14*guiScale );
 
 	for (unsigned i=0; i<homePosStack.size(); i++) {
-		setDrawColorToCoordType(homePosStack[i]->type);
+		if (homePosStack[i]->hasCustomColor) hSetDrawColor(homePosStack[i]->rgba);
+		else setDrawColorToCoordType(homePosStack[i]->type);
+
 		livingLifePage->hetuwDrawScaledHandwritingFont( homePosStack[i]->drawStr.c_str(), drawPosA, guiScale );
+
 		homePosStack[i]->drawStartPos.x = drawPosB.x-recWidth-6*guiScale;
 		homePosStack[i]->drawEndPos.x = drawPosB.x+recWidth+6*guiScale;
 		homePosStack[i]->drawEndPos.y = drawPosA.y+14*guiScale;

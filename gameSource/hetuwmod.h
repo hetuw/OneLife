@@ -244,19 +244,21 @@ public:
 	};
 
 	enum homePosType {
-		hpt_custom, hpt_birth, hpt_home, hpt_bell, hpt_apoc, hpt_tarr, hpt_map, hpt_baby, hpt_babyboy, hpt_babygirl, hpt_expert,
+		hpt_custom, hpt_birth, hpt_home, hpt_bell, hpt_apoc, hpt_tarr, hpt_map, hpt_baby, hpt_babyboy, hpt_babygirl, hpt_expert, hpt_phex,
 	};
 
 	typedef struct {
 		int x;
 		int y;
-		char c;
-		string text;
+		char c = 0;
+		string text = "";
 		homePosType type;
 		string drawStr;
 		doublePair drawStartPos;
 		doublePair drawEndPos;
 		int personID = -1;
+		bool hasCustomColor = false; // set it to true if you want rgb to be used
+		float rgba[4];
 	} HomePos;
 
 	static constexpr int languageArraySize1 = 460;
@@ -501,6 +503,7 @@ public:
 	static int playersInRangeNum;
 
 	static std::vector<HomePos*> homePosStack;
+	static void addHomeLocation(HomePos *p);
 	static void addHomeLocation( int x, int y, homePosType type, char c = 0, int personID = -1 );
 	static void setHomeLocationText(int x, int y, homePosType type, char *text);
 	static void setMapText(char *message, int mapX, int mapY);

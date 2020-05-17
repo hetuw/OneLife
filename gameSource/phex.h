@@ -280,6 +280,8 @@ public:
 
 	static HetuwMod::KeyHandler keyHandler;
 
+	static bool allowServerCoords;
+
 	static void init();
 	static void initServerCommands();
 	static void initChatCommands();
@@ -299,14 +301,17 @@ public:
 	static void serverCmdJOINED_CHANNEL(std::vector<std::string> input);
 	static void serverCmdLEFT_CHANNEL(std::vector<std::string> input);
 	static void serverCmdDISCONNECT(std::vector<std::string> input);
+	static void serverCmdCOORD(std::vector<std::string> input);
 
 	static void chatCmdHELP(std::vector<std::string> input);
 	static void chatCmdNAME(std::vector<std::string> input);
 	static void chatCmdLIST(std::vector<std::string> input);
+	static void chatCmdTEST(std::vector<std::string> input);
 
 	static void setArray(float arrDst[], const float arrSrc[], int size);
 	static void setArray(double arrDst[], const double arrSrc[], int size);
 	static void multipleArray(double arr[], double factor, int size);
+	static void hexToColors(std::string& hex, float rgba[], int size);
 
 	static bool strEquals(std::string strA, std::string strB);
 	static void strToUpper(std::string &str);

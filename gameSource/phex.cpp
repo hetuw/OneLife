@@ -79,6 +79,8 @@ Phex::ChatWindow Phex::mainChatWindow;
 
 HetuwMod::KeyHandler Phex::keyHandler(&onKey);
 
+bool Phex::allowServerCoords = false;
+
 extern doublePair lastScreenViewCenter;
 extern char *userEmail;
 extern int versionNumber;
@@ -273,6 +275,8 @@ void Phex::initServerCommands() {
 	serverCommands["DISCONNECT"].minWords = 1;
 	serverCommands["CLOSE"].func = serverCmdDISCONNECT;
 	serverCommands["CLOSE"].minWords = 1;
+	serverCommands["COORD"].func = serverCmdCOORD;
+	serverCommands["COORD"].minWords = 5;
 }
 
 void Phex::serverCmdVERSION(std::vector<std::string> input) {
@@ -348,6 +352,28 @@ void Phex::serverCmdDISCONNECT(std::vector<std::string> input) {
 	tcp.reconnect();
 }
 
+void Phex::serverCmdCOORD(std::vector<std::string> input) {
+	if (!allowServerCoords) return;
+	//COORD x y color name
+	HetuwMod::HomePos *coord = new HetuwMod::HomePos();
+	try {
+		coord->x = stoi(input[1]);
+		coord->y = stoi(input[2]);
+		hexToColors(input[3], coord->rgba, 3);
+		coord->rgba[3] = 1.0f;
+		coord->hasCustomColor = true;
+		coord->text = joinStr(input, " ", 4);
+		strToUpper(coord->text);
+		coord->type = HetuwMod::hpt_phex;
+		HetuwMod::addHomeLocation(coord);
+	} catch(std::exception const & ex) {
+		printf("Phex EXCEPTION when receiving COORD command\n");
+		printf("Phex command: %s\n", joinStr(input, " ", 0).c_str());
+		printf("Phex EXCEPTION: %s\n", ex.what());
+		return;
+	}
+}
+
 void Phex::initChatCommands() {
 	chatCommands["HELP"].func = chatCmdHELP;
 	chatCommands["HELP"].minWords = 1;
@@ -358,11 +384,15 @@ void Phex::initChatCommands() {
 	chatCommands["LIST"].func = chatCmdLIST;
 	chatCommands["LIST"].minWords = 1;
 	chatCommands["LIST"].helpStr = "Lists all online players";
+	chatCommands["TEST"].func = chatCmdTEST;
+	chatCommands["TEST"].minWords = 1;
+	chatCommands["TEST"].helpStr = "For testing - dont use";
 }
 
 void Phex::chatCmdHELP(std::vector<std::string> input) {
 	for (std::pair<std::string, ChatCommand> element : chatCommands) {
 		strToLower(element.first);
+		if (strEquals(element.first, "test")) continue;
 		addCmdMessageToChatWindow(strCmdChar+element.first);
 		addCmdMessageToChatWindow(element.second.helpStr);
 	}
@@ -387,6 +417,10 @@ void Phex::chatCmdLIST(std::vector<std::string> input) {
 	}
 }
 
+void Phex::chatCmdTEST(std::vector<std::string> input) {
+	onReceivedMessage("COORD 10 43 11faab testCoord");
+}
+
 void Phex::setArray(float arrDst[], const float arrSrc[], int size) {
 	for (int i=0; i<size; i++) arrDst[i] = arrSrc[i];
 }
@@ -397,6 +431,15 @@ void Phex::setArray(double arrDst[], const double arrSrc[], int size) {
 
 void Phex::multipleArray(double arr[], double factor, int size) {
 	for (int i=0; i<size; i++) arr[i] *= factor;
+}
+
+void Phex::hexToColors(std::string& hex, float rgba[], int size) {
+	if (size < 0) size = hex.length()/2;
+	for (int i=0; i<size; i++) {
+		std::string s = "0x"+hex.substr(i*2, 2);
+		unsigned int x = std::stoul(s, nullptr, 16);
+		rgba[i] = x / 255.0f;
+	}
 }
 
 bool Phex::strEquals(std::string strA, std::string strB) {
