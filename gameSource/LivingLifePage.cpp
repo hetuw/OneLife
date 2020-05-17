@@ -13805,9 +13805,10 @@ void LivingLifePage::step() {
 				versionNumber = mRequiredVersion; // hetuw mod - ignore client version check - join server even if client is outdated
 			}
 
-            if( mRequiredVersion > versionNumber ||
-                ( mRequiredVersion < versionNumber &&
-                  mRequiredVersion < dataVersionNumber ) ) {
+            //if( mRequiredVersion > versionNumber ||
+            //    ( mRequiredVersion < versionNumber &&
+            //      mRequiredVersion < dataVersionNumber ) ) {
+            if( mRequiredVersion > versionNumber ) { // hetuw mod - commented out 3 lines above to allow joining outdated / custom servers
                 
                 // if server is using a newer version than us, we must upgrade
                 // our client
