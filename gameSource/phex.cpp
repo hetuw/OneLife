@@ -979,10 +979,10 @@ bool Phex::onKeyUp(unsigned char inASCII) {
 
 void Phex::onRingBell(int x, int y) {
 	if (!HetuwMod::phexIsEnabled) return;
-	tcp.send("BELL "+to_string(x)+" "+to_string(y));
+	tcp.send("BELL "+to_string(x)+" "+to_string(y)+" "+string(HetuwMod::serverIP));
 }
 
 void Phex::onRingApoc(int x, int y) {
 	if (!HetuwMod::phexIsEnabled) return;
-	tcp.send("APOC "+to_string(x)+" "+to_string(y));
+	tcp.send("APOC "+to_string(x)+" "+to_string(y)+" "+string(HetuwMod::serverIP));
 }
