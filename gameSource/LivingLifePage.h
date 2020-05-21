@@ -613,10 +613,10 @@ class LivingLifePage : public GamePage, public ActionListener {
         // conversion function for received coordinates into local coords
         void applyReceiveOffset( int *inX, int *inY );
 		public: // hetuw mod
+		bool hetuwUsesGlobalOffset();
         // converts local coors for sending back to server
         int sendX( int inX );
         int sendY( int inY );
-		protected: // hetuw mod
 
 
         int mMapD;
@@ -625,6 +625,7 @@ class LivingLifePage : public GamePage, public ActionListener {
         
         int *mMapBiomes;
         int *mMapFloors;
+		protected: // hetuw mod
 
         char *mMapCellDrawnFlags;
 

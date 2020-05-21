@@ -10992,6 +10992,9 @@ void dropPendingReceivedMessagesRegardingID( LiveObject *inPlayer,
     }
 
 
+bool LivingLifePage::hetuwUsesGlobalOffset() {
+	return mMapGlobalOffsetSet && (mMapGlobalOffset.x != 0 || mMapGlobalOffset.y != 0);
+}
 
 
 void LivingLifePage::applyReceiveOffset( int *inX, int *inY ) {

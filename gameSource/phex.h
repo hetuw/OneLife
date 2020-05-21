@@ -302,6 +302,7 @@ public:
 	static void serverCmdLEFT_CHANNEL(std::vector<std::string> input);
 	static void serverCmdDISCONNECT(std::vector<std::string> input);
 	static void serverCmdCOORD(std::vector<std::string> input);
+	static void serverCmdSENDBIOMES(std::vector<std::string> input);
 
 	static void chatCmdHELP(std::vector<std::string> input);
 	static void chatCmdNAME(std::vector<std::string> input);
@@ -359,10 +360,23 @@ public:
 	static bool onKeyDown(unsigned char inASCII);
 	static bool onKeyUp(unsigned char inASCII);
 
+	static void onBirth();
 	static void onRingBell(int x, int y);
 	static void onRingApoc(int x, int y);
 
 private:
+
+	static bool sendBiomeDataActive;
+	static constexpr int biomeChunkSize = 12;
+	static constexpr int biomeChunksPerInterval = 3;
+	static constexpr int biomeChunksSentSize = 256;
+	static constexpr int biomeChunksSentSizeHalf = biomeChunksSentSize/2;
+	static char biomeChunksSent[biomeChunksSentSize][biomeChunksSentSize];
+	static HetuwMod::IntervalTimed intervalSendBiomeData;
+	static std::vector<float*> biomeChunksDrawRecs;
+	static void loopBiomeChunks();
+	static void sendBiomeChunk(int chunkX, int chunkY);
+	static void testDrawBiomeChunks();
 
 	static void fontSetMaxX();
 	static void initButtons();

@@ -81,6 +81,11 @@ HetuwMod::KeyHandler Phex::keyHandler(&onKey);
 
 bool Phex::allowServerCoords = false;
 
+bool Phex::sendBiomeDataActive = false;
+char Phex::biomeChunksSent[biomeChunksSentSize][biomeChunksSentSize];
+HetuwMod::IntervalTimed Phex::intervalSendBiomeData = HetuwMod::IntervalTimed(1.0);
+std::vector<float*> Phex::biomeChunksDrawRecs;
+
 extern doublePair lastScreenViewCenter;
 extern char *userEmail;
 extern int versionNumber;
@@ -277,6 +282,8 @@ void Phex::initServerCommands() {
 	serverCommands["CLOSE"].minWords = 1;
 	serverCommands["COORD"].func = serverCmdCOORD;
 	serverCommands["COORD"].minWords = 5;
+	serverCommands["SENDBIOMES"].func = serverCmdSENDBIOMES;
+	serverCommands["SENDBIOMES"].minWords = 2;
 }
 
 void Phex::serverCmdVERSION(std::vector<std::string> input) {
@@ -371,6 +378,19 @@ void Phex::serverCmdCOORD(std::vector<std::string> input) {
 		printf("Phex command: %s\n", joinStr(input, " ", 0).c_str());
 		printf("Phex EXCEPTION: %s\n", ex.what());
 		return;
+	}
+}
+
+void Phex::serverCmdSENDBIOMES(std::vector<std::string> input) {
+	if (strEquals(input[1], "0")) {
+		sendBiomeDataActive = false;
+		if (HetuwMod::bDrawBiomeInfo) printf("Phex turned sending biome info OFF\n");
+	} else if (strEquals(input[1], "1")) {
+		sendBiomeDataActive = true;
+		if (HetuwMod::bDrawBiomeInfo) printf("Phex turned sending biome info ON\n");
+	} else {
+		printf("Phex unknown argument '%s' for command SENDBIOMES\n", input[1].c_str());
+		printf("Phex argument can be 0 or 1");
 	}
 }
 
@@ -751,9 +771,11 @@ void Phex::sendServerLife() {
 
 void Phex::draw() {
 	if (!HetuwMod::phexIsEnabled) return;
+	if (HetuwMod::bDrawBiomeInfo) testDrawBiomeChunks();
 	fontSetMaxX();
 	tcp.step();
 	keyHandler.step();
+	if (sendBiomeDataActive && intervalSendBiomeData.step()) loopBiomeChunks();
 
 	if (isMinimized) drawMinimized();
 	else drawNormal();
@@ -1028,4 +1050,81 @@ void Phex::onRingBell(int x, int y) {
 void Phex::onRingApoc(int x, int y) {
 	if (!HetuwMod::phexIsEnabled) return;
 	tcp.send("APOC "+to_string(x)+" "+to_string(y)+" "+string(HetuwMod::serverIP));
+}
+
+void Phex::onBirth() {
+	for (int x=0; x<biomeChunksSentSize; x++) {
+		for (int y=0; y<biomeChunksSentSize; y++) {
+			biomeChunksSent[x][y] = 0;
+		}
+	}
+}
+
+void Phex::sendBiomeChunk(int chunkX, int chunkY) {
+	int tileX = chunkX * biomeChunkSize;
+	int tileY = chunkY * biomeChunkSize;
+	chunkX += biomeChunksSentSize;
+	chunkY += biomeChunksSentSize;
+	if (chunkX < 0 || chunkY < 0) return;
+
+	unsigned int bitPos = (unsigned int)( (chunkX%2)+(chunkY%2)*2 );
+	
+	int arrX = chunkX / 2; // each char can hold the information for 4 chunks
+	int arrY = chunkY / 2;
+	if (arrX >= biomeChunksSentSize || arrY >= biomeChunksSentSize) return;
+	char *c = &biomeChunksSent[arrX][arrY];
+
+	if (*c & (1U << bitPos)) return; // bit is already set
+
+	std::string sendStr = "BIOME ";
+	sendStr += to_string(tileX) + " ";
+	sendStr += to_string(tileY) + " ";
+	for (int y=tileY; y < tileY+biomeChunkSize; y++) {
+		for (int x=tileX; x < tileX+biomeChunkSize; x++) {
+			int mapI = HetuwMod::livingLifePage->hetuwGetMapI(x, y);
+			if (mapI < 0) return; // out of range
+			int biomeType = HetuwMod::livingLifePage->mMapBiomes[mapI];
+			if (biomeType < 0) return; // chunk contains unloaded areas
+			sendStr += to_string(biomeType);
+		}
+	}
+	
+	if (HetuwMod::bDrawBiomeInfo) { // for debugging
+		float *r = new float[4];
+		r[0] = tileX * 128 - 64; // 128 == CELL_D
+		r[1] = tileY * 128 - 64;
+		r[2] = r[0] + biomeChunkSize*128;
+		r[3] = r[1] + biomeChunkSize*128;
+		biomeChunksDrawRecs.push_back(r);
+		printf("Phex %s\n", sendStr.c_str());
+	}
+
+	tcp.send(sendStr);
+	*c |= (1U << bitPos); // set bit
+}
+
+void Phex::loopBiomeChunks() {
+	if (HetuwMod::livingLifePage->hetuwUsesGlobalOffset()) return;
+
+	int chunkX = HetuwMod::ourLiveObject->xd / biomeChunkSize;
+	int chunkY = HetuwMod::ourLiveObject->yd / biomeChunkSize;
+	chunkX -= biomeChunksPerInterval/2;
+	chunkY -= biomeChunksPerInterval/2;
+
+	for (int x=chunkX; x < (chunkX+biomeChunksPerInterval); x++) {
+		for (int y=chunkY; y < (chunkY+biomeChunksPerInterval); y++) {
+			sendBiomeChunk(x, y);
+		}
+	}
+}
+
+void Phex::testDrawBiomeChunks() {
+	for(unsigned k=0; k<biomeChunksDrawRecs.size(); k++) {
+		if (k%4 == 0) setDrawColor(1.0, 0.0, 1.0, 0.5);
+		else if (k%4 == 1) setDrawColor(0.0, 1.0, 1.0, 0.5);
+		else if (k%4 == 2) setDrawColor(1.0, 1.0, 0.0, 0.5);
+		else if (k%4 == 3) setDrawColor(0.0, 1.0, 0.0, 0.5);
+		float *r = biomeChunksDrawRecs[k];
+		HetuwMod::hDrawRect(r[0], r[1], r[2], r[3]);
+	}
 }

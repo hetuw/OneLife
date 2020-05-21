@@ -260,6 +260,8 @@ bool HetuwMod::phexIsEnabled = true;
 std::string HetuwMod::phexIp = "phexonelife.duckdns.org";
 int HetuwMod::phexPort = 6567;
 
+bool HetuwMod::bDrawBiomeInfo = false;
+
 extern doublePair lastScreenViewCenter;
 
 void HetuwMod::init() {
@@ -840,6 +842,10 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	}
 	if (strstr(name, "phex_coords")) {
 		Phex::allowServerCoords = bool(value[0]-48);
+		return true;
+	}
+	if (strstr(name, "drawbiomeinfo")) {
+		bDrawBiomeInfo = bool(value[0]-48);
 		return true;
 	}
 
@@ -1958,6 +1964,28 @@ void HetuwMod::livingLifeDraw() {
 	//drawRect( debugRecPos, 10, 10 );
 	//setDrawColor( 0.0, 1.0, 0, 1.0 );
 	//drawRect( debugRecPos2, 10, 10 );
+
+	if (bDrawBiomeInfo) drawBiomeIDs();
+}
+
+void HetuwMod::drawBiomeIDs() {
+	int radius = 32;
+	int startX = ourLiveObject->xd - radius;
+	int endX = ourLiveObject->xd + radius;
+	int startY = ourLiveObject->yd - radius;
+	int endY = ourLiveObject->yd + radius;
+	for (int x = startX; x < endX; x++) {
+		for (int y = startY; y < endY; y++) {
+			int mapI = livingLifePage->hetuwGetMapI(x, y);
+			if (mapI < 0) continue; // out of range
+			doublePair startPos = { (double)x, (double)y };
+			startPos.x *= CELL_D;
+			startPos.y *= CELL_D;
+			string str = to_string(livingLifePage->mMapBiomes[mapI]);
+			setDrawColor(0.0f,0.0f,0.0f,1.0f);
+			livingLifePage->hetuwDrawScaledHandwritingFont( str.c_str(), startPos, guiScale );
+		}
+	}
 }
 
 void HetuwMod::drawTextWithBckgr( doublePair pos, const char* text ) {

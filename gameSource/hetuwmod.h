@@ -605,6 +605,8 @@ public:
 	static bool isMovingInVog;
 	static IntervalTimed intervalVogMove;
 
+	static bool bDrawBiomeInfo;
+
 private:
 
 	static void zoomCalc();
@@ -734,6 +736,8 @@ private:
 	static string getArcTimeStr();
 
 	static void moveInVogMode();
+
+	static void drawBiomeIDs();
 };
 
 
