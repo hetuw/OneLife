@@ -86,6 +86,11 @@ char Phex::biomeChunksSent[biomeChunksSentSize][biomeChunksSentSize];
 HetuwMod::IntervalTimed Phex::intervalSendBiomeData = HetuwMod::IntervalTimed(1.0);
 std::vector<float*> Phex::biomeChunksDrawRecs;
 
+bool Phex::sendPositionActive = false;
+HetuwMod::IntervalTimed Phex::intervalSendPosition = HetuwMod::IntervalTimed(3.0);
+int Phex::lastPositionSentX = -9999;
+int Phex::lastPositionSentY = -9999;
+
 extern doublePair lastScreenViewCenter;
 extern char *userEmail;
 extern int versionNumber;
@@ -282,8 +287,10 @@ void Phex::initServerCommands() {
 	serverCommands["CLOSE"].minWords = 1;
 	serverCommands["COORD"].func = serverCmdCOORD;
 	serverCommands["COORD"].minWords = 5;
-	serverCommands["SENDBIOMES"].func = serverCmdSENDBIOMES;
-	serverCommands["SENDBIOMES"].minWords = 2;
+	serverCommands["SEND_BIOMES"].func = serverCmdSEND_BIOMES;
+	serverCommands["SEND_BIOMES"].minWords = 2;
+	serverCommands["SEND_POSITION"].func = serverCmdSEND_POSITION;
+	serverCommands["SEND_POSITION"].minWords = 2;
 }
 
 void Phex::serverCmdVERSION(std::vector<std::string> input) {
@@ -381,7 +388,7 @@ void Phex::serverCmdCOORD(std::vector<std::string> input) {
 	}
 }
 
-void Phex::serverCmdSENDBIOMES(std::vector<std::string> input) {
+void Phex::serverCmdSEND_BIOMES(std::vector<std::string> input) {
 	if (strEquals(input[1], "0")) {
 		sendBiomeDataActive = false;
 		if (HetuwMod::bDrawBiomeInfo) printf("Phex turned sending biome info OFF\n");
@@ -389,7 +396,18 @@ void Phex::serverCmdSENDBIOMES(std::vector<std::string> input) {
 		sendBiomeDataActive = true;
 		if (HetuwMod::bDrawBiomeInfo) printf("Phex turned sending biome info ON\n");
 	} else {
-		printf("Phex unknown argument '%s' for command SENDBIOMES\n", input[1].c_str());
+		printf("Phex unknown argument '%s' for command %s\n", input[1].c_str(), input[0].c_str());
+		printf("Phex argument can be 0 or 1");
+	}
+}
+
+void Phex::serverCmdSEND_POSITION(std::vector<std::string> input) {
+	if (strEquals(input[1], "0")) {
+		sendPositionActive = false;
+	} else if (strEquals(input[1], "1")) {
+		sendPositionActive = true;
+	} else {
+		printf("Phex unknown argument '%s' for command %s\n", input[1].c_str(), input[0].c_str());
 		printf("Phex argument can be 0 or 1");
 	}
 }
@@ -776,6 +794,7 @@ void Phex::draw() {
 	tcp.step();
 	keyHandler.step();
 	if (sendBiomeDataActive && intervalSendBiomeData.step()) loopBiomeChunks();
+	if (sendPositionActive && intervalSendPosition.step()) sendPosition();
 
 	if (isMinimized) drawMinimized();
 	else drawNormal();
@@ -1104,6 +1123,7 @@ void Phex::sendBiomeChunk(int chunkX, int chunkY) {
 }
 
 void Phex::loopBiomeChunks() {
+	if (!HetuwMod::ourLiveObject) return;
 	if (HetuwMod::livingLifePage->hetuwUsesGlobalOffset()) return;
 
 	int chunkX = HetuwMod::ourLiveObject->xd / biomeChunkSize;
@@ -1127,4 +1147,15 @@ void Phex::testDrawBiomeChunks() {
 		float *r = biomeChunksDrawRecs[k];
 		HetuwMod::hDrawRect(r[0], r[1], r[2], r[3]);
 	}
+}
+
+void Phex::sendPosition() {
+	if (!HetuwMod::ourLiveObject) return;
+
+	int posX = HetuwMod::ourLiveObject->xd;
+	int posY = HetuwMod::ourLiveObject->yd;
+	if (posX == lastPositionSentX && posY == lastPositionSentY) return;
+	lastPositionSentX = posX; lastPositionSentY = posY;
+	std::string str = "POSITION "+to_string(posX)+" "+to_string(posY);
+	tcp.send(str);
 }

@@ -302,7 +302,8 @@ public:
 	static void serverCmdLEFT_CHANNEL(std::vector<std::string> input);
 	static void serverCmdDISCONNECT(std::vector<std::string> input);
 	static void serverCmdCOORD(std::vector<std::string> input);
-	static void serverCmdSENDBIOMES(std::vector<std::string> input);
+	static void serverCmdSEND_BIOMES(std::vector<std::string> input);
+	static void serverCmdSEND_POSITION(std::vector<std::string> input);
 
 	static void chatCmdHELP(std::vector<std::string> input);
 	static void chatCmdNAME(std::vector<std::string> input);
@@ -366,6 +367,9 @@ public:
 
 private:
 
+	static void fontSetMaxX();
+	static void initButtons();
+
 	static bool sendBiomeDataActive;
 	static constexpr int biomeChunkSize = 12;
 	static constexpr int biomeChunksPerInterval = 3;
@@ -378,8 +382,11 @@ private:
 	static void sendBiomeChunk(int chunkX, int chunkY);
 	static void testDrawBiomeChunks();
 
-	static void fontSetMaxX();
-	static void initButtons();
+	static bool sendPositionActive;
+	static HetuwMod::IntervalTimed intervalSendPosition;
+	static int lastPositionSentX;
+	static int lastPositionSentY;
+	static void sendPosition();
 
 };
 
