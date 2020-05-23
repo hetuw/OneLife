@@ -23,6 +23,8 @@
 #include "liveAnimationTriggers.h"
 
 #include "../commonSource/fractalNoise.h"
+#include "../commonSource/sayLimit.h"
+
 
 #include "minorGems/util/SimpleVector.h"
 #include "minorGems/util/MinPriorityQueue.h"
@@ -20204,12 +20206,8 @@ void LivingLifePage::step() {
         // current age
         double age = computeCurrentAge( ourLiveObject );
 
-        int sayCap = (int)( floor( age ) + 1 );
-        
-        if( ourLiveObject->lineage.size() == 0  && sayCap < 30 ) {
-            // eve has a larger say limit
-            sayCap = 30;
-            }
+        int sayCap = getSayLimit( age );
+
         if( vogMode ) {
             sayCap = 200;
             }
@@ -25069,6 +25067,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                     
                                     showPlayerLabel( leadO, leaderLabel, eta );
                                     }
+                                sendToServerSocket( (char*)"LEAD 0 0#" );
                                 }
                             else if( strstr( typedText,
                                              translate( "followerCommand" ) ) 
@@ -25171,6 +25170,11 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 
                                 displayGlobalMessage( message );
                                 delete [] message;
+                                }
+                            else if( strstr( typedText,
+                                             translate( "unfollowCommand" ) ) 
+                                     == typedText ) {
+                                sendToServerSocket( (char*)"UNFOL 0 0#" );
                                 }
                             else {
                                 // filter hints
