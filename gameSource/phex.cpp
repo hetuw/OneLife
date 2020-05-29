@@ -300,7 +300,7 @@ void Phex::serverCmdVERSION(std::vector<std::string> input) {
 }
 
 void Phex::serverCmdHASH(std::vector<std::string> input) {
-	createUserIfNotExist(input[1]);
+	createUser(input[1]);
 	publicHash = input[1];
 	users[input[1]].online = true;
 }
@@ -311,8 +311,9 @@ void Phex::serverCmdUSERNAME(std::vector<std::string> input) {
 		printf("Phex Error message: %s\n", joinStr(input).c_str());
 		return;
 	}
-	createUserIfNotExist(input[1]);
+	createUser(input[1]);
 	users[publicHash].name = input[1];
+	users[publicHash].displayName = users[publicHash].name;
 	if (userNameWasChanged) {
 		addCmdMessageToChatWindow("name set to: "+input[1]);
 		userNameWasChanged = false;
@@ -327,11 +328,12 @@ void Phex::serverCmdUSERNAME_ERR(std::vector<std::string> input) {
 void Phex::serverCmdSAY(std::vector<std::string> input) {
 	ChatElement chatElement;
 	chatElement.hash = input[2];
+	createUser(chatElement.hash);
 
 	chatElement.unixTimeStamp = strToTimeT(input[3]);
 	chatElement.text = joinStr(input, " ", 4);
 
-	createUserIfNotExist(chatElement.hash);
+	createUser(chatElement.hash);
 	chatElement.name = string(*getUserDisplayName(users[chatElement.hash]));
 
 	chatElement.textToDraw = colorCodeNamesInChat+chatElement.name+": "+colorCodeWhite+chatElement.text;
@@ -339,17 +341,18 @@ void Phex::serverCmdSAY(std::vector<std::string> input) {
 }
 
 void Phex::serverCmdHASH_USERNAME(std::vector<std::string> input) {
-	createUserIfNotExist(input[1]);
+	createUser(input[1]);
 	users[input[1]].name = input[2];
+	users[input[1]].displayName = input[2];
 }
 
 void Phex::serverCmdONLINE(std::vector<std::string> input) {
-	createUserIfNotExist(input[1]);
+	createUser(input[1]);
 	users[input[1]].online = true;
 }
 
 void Phex::serverCmdOFFLINE(std::vector<std::string> input) {
-	createUserIfNotExist(input[1]);
+	createUser(input[1]);
 	users[input[1]].online = false;
 }
 
@@ -600,9 +603,9 @@ void Phex::Text::draw() {
 	HetuwMod::hDrawRecFromPercent(drawRec);
 }
 
-void Phex::createUserIfNotExist(std::string hash) {
-	if (users.find(hash) == users.end()) return; 
+void Phex::createUser(std::string hash) {
 	users[hash].hash = hash;
+	//if (users.find(hash) == users.end()) return; 
 }
 
 std::string* Phex::getUserDisplayName(User &user) {
@@ -777,6 +780,10 @@ void Phex::sendInputStr() {
 		return;
 	}
 	tcp.send("SAY "+channelName+" "+inputText.str);
+
+	if (users[publicHash].name.length() < 1) {
+		addCmdMessageToChatWindow("to set your name type: /name yourName");
+	}
 }
 
 bool Phex::addToInputStr(unsigned char c) {

@@ -2533,7 +2533,7 @@ void HetuwMod::drawPlayerNames( LiveObject* player ) {
 	getRelationNameColor( player->relationName, playerNameColor );
 
 	setDrawColor( 0.0, 0.0, 0.0, 0.8 );
-	if ( iDrawNames != 0 && itsTimeToDrawPhexName() && player->phexHash.length() > 0) {
+	if ( itsTimeToDrawPhexName() && player->phexHash.length() > 0) {
 		std::string* name = Phex::getUserDisplayName(Phex::users[player->phexHash]);
 		float textWidth = customFont->measureString( name->c_str() );
 		drawRect( playerNamePos, textWidth/2 + 6, 16 );

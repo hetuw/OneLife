@@ -326,7 +326,7 @@ public:
 	static double getLineHeight(HetuwFont *font);
 	static void drawString(std::string str, doublePair startPos);
 
-	static void createUserIfNotExist(std::string hash);
+	static void createUser(std::string hash);
 	static std::string* getUserDisplayName(User &user);
 
 	static time_t strToTimeT(std::string str);
