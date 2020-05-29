@@ -205,7 +205,9 @@ public:
 	};
 
 	struct User {
+		std::string hash = "";
 		std::string name = "";
+		std::string displayName = "";
 		bool online = false;
 	};
 
@@ -304,6 +306,7 @@ public:
 	static void serverCmdCOORD(std::vector<std::string> input);
 	static void serverCmdSEND_BIOMES(std::vector<std::string> input);
 	static void serverCmdSEND_POSITION(std::vector<std::string> input);
+	static void serverCmdHASH_SERVER_LIFE(std::vector<std::string> input);
 
 	static void chatCmdHELP(std::vector<std::string> input);
 	static void chatCmdNAME(std::vector<std::string> input);
@@ -322,6 +325,9 @@ public:
 	static doublePair getStringWidthHeight(doublePair startPos, std::string str);
 	static double getLineHeight(HetuwFont *font);
 	static void drawString(std::string str, doublePair startPos);
+
+	static void createUserIfNotExist(std::string hash);
+	static std::string* getUserDisplayName(User &user);
 
 	static time_t strToTimeT(std::string str);
 	static void addCmdMessageToChatWindow(std::string msg, int type = 1);

@@ -16,6 +16,7 @@
 #include "groundSprites.h"
 #include "photos.h"
 #include "phex.h"
+#include "hetuwFont.h"
 
 using namespace std;
 
@@ -261,6 +262,8 @@ std::string HetuwMod::phexIp = "phexonelife.duckdns.org";
 int HetuwMod::phexPort = 6567;
 
 bool HetuwMod::bDrawBiomeInfo = false;
+
+HetuwFont *HetuwMod::customFont = NULL;
 
 extern doublePair lastScreenViewCenter;
 
@@ -1169,6 +1172,17 @@ void HetuwMod::setLivingLifePage(LivingLifePage *inLivingLifePage, SimpleVector<
 		objectDefaultColors[k+1] = o->spriteColor->g;
 		objectDefaultColors[k+2] = o->spriteColor->b;
 	}
+
+	initCustomFont();
+}
+
+void HetuwMod::initCustomFont() {
+	int fontCharSpacing = 3; // vanilla main font is 6
+	int fontSpaceWidth = 8; // vanilla main font is 16
+	char fontFixedWidth = false;
+	double fontScaleFactor = 16.0;
+	customFont = new HetuwFont("font_32_64.tga", fontCharSpacing, fontSpaceWidth, fontFixedWidth, fontScaleFactor);
+	customFont->setMinimumPositionPrecision( 1 );
 }
 
 bool HetuwMod::charArrEqualsCharArr(const char *a, const char *b) {
@@ -2496,6 +2510,10 @@ void HetuwMod::getRelationNameColor( const char* name, float* color ) {
 	}
 }
 
+bool HetuwMod::itsTimeToDrawPhexName() {
+	return stepCount%200 < 130;
+}
+
 void HetuwMod::drawPlayerNames( LiveObject* player ) {
 	if ( bHidePlayers ) return;
 	if ( !player->name ) return;
@@ -2515,7 +2533,13 @@ void HetuwMod::drawPlayerNames( LiveObject* player ) {
 	getRelationNameColor( player->relationName, playerNameColor );
 
 	setDrawColor( 0.0, 0.0, 0.0, 0.8 );
-	if ( iDrawNames == 2 ) {
+	if ( iDrawNames != 0 && itsTimeToDrawPhexName() && player->phexHash.length() > 0) {
+		std::string* name = Phex::getUserDisplayName(Phex::users[player->phexHash]);
+		float textWidth = customFont->measureString( name->c_str() );
+		drawRect( playerNamePos, textWidth/2 + 6, 16 );
+		setDrawColor( playerNameColor[0], playerNameColor[1], playerNameColor[2], 1 );
+		customFont->drawString( name->c_str(), playerNamePos, alignCenter );
+	} else if ( iDrawNames == 2 ) {
 		float textWidth = livingLifePage->hetuwMeasureStringHandwritingFont( player->name );
 		drawRect( playerNamePos, textWidth/2 + 6, 16 );
 		setDrawColor( playerNameColor[0], playerNameColor[1], playerNameColor[2], 1 );
@@ -2553,7 +2577,18 @@ void HetuwMod::drawHighlightedPlayer() {
 		livingLifePage->hetuwDrawScaledHandwritingFont( player->curseName, playerNamePos, guiScale, alignCenter );
 		playerNamePos.y -= 32*guiScale;
 	}
-	if (player->name && strlen(player->name) > 1) {
+	if ( itsTimeToDrawPhexName() && player->phexHash.length() > 0) {
+		double scale = customFont->hetuwGetScaleFactor();
+		customFont->hetuwSetScaleFactor(scale * guiScale);
+		std::string* name = Phex::getUserDisplayName(Phex::users[player->phexHash]);
+		textWidth = customFont->measureString( name->c_str() );
+		setDrawColor( 0.0, 0.0, 0.0, 0.8 );
+		drawRect( playerNamePos, textWidth/2 + 6*guiScale, 16*guiScale );
+		setDrawColor( playerNameColor[0], playerNameColor[1], playerNameColor[2], 1 );
+		customFont->drawString( name->c_str(), playerNamePos, alignCenter );
+		customFont->hetuwSetScaleFactor(scale);
+		playerNamePos.y -= 32*guiScale;
+	} else if (player->name && strlen(player->name) > 1) {
 		textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( player->name, guiScale );
 		setDrawColor( 0.0, 0.0, 0.0, 0.8 );
 		drawRect( playerNamePos, textWidth/2 + 6*guiScale, 16*guiScale );

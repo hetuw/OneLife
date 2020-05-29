@@ -17,6 +17,7 @@
 #include <string>
 
 #include "LivingLifePage.h"
+#include "hetuwFont.h"
 
 using namespace std;
                             
@@ -364,6 +365,8 @@ public:
 	static std::string phexIp;
 	static int phexPort;
 
+	static HetuwFont *customFont;
+
 	static SimpleVector<LiveObject> *gameObjects;
 	static std::vector<PlayerInMap*> playersInMap;
 	static SimpleVector<int> *mMapContainedStacks;
@@ -454,6 +457,7 @@ public:
 	static void getOurFamilyName();
 	static bool isRelated( LiveObject* player );
 	static void getRelationNameColor( const char* name, float* color );
+	static bool itsTimeToDrawPhexName();
 	static void drawPlayerNames( LiveObject* player );
 	static void drawHighlightedPlayer();
 
@@ -738,6 +742,8 @@ private:
 	static void moveInVogMode();
 
 	static void drawBiomeIDs();
+
+	static void initCustomFont();
 };
 
 

@@ -24,6 +24,7 @@
 
 #include "TextField.h"
 
+#include <string>
 
 #define NUM_HUNGER_BOX_SPRITES 20
 
@@ -306,6 +307,7 @@ typedef struct LiveObject {
         char shouldDrawPathMarks;
         double pathMarkFade;
         
+		std::string phexHash;
 
         // messages that arrive while we're still showing our current
         // movement animation
