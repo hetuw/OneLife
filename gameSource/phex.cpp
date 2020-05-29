@@ -44,10 +44,12 @@ Phex::Text Phex::inputText;
 float Phex::colorWhite[4];
 float Phex::colorNamesInChat[4];
 float Phex::colorCmdMessage[4];
+float Phex::colorCmdInGameNames[4];
 float Phex::colorCmdMessageError[4];
 std::string Phex::colorCodeWhite;
 std::string Phex::colorCodeNamesInChat;
 std::string Phex::colorCodeCmdMessage;
+std::string Phex::colorCodeCmdInGameNames;
 std::string Phex::colorCodeCmdMessageError;
 
 float Phex::colorButPhexOffline[4];
@@ -121,6 +123,7 @@ void Phex::init() {
 	setArray(colorRecInput, (const float[]){ 0.0f, 0.0f, 0.0f, 0.6 }, 4);
 	setArray(colorNamesInChat, (const float[]){ 0.2f, 0.7f, 1.0f, 1.0f }, 4);
 	setArray(colorCmdMessage, (const float[]){ 0.2f, 1.0f, 0.5f, 1.0f }, 4);
+	setArray(colorCmdInGameNames, (const float[]){ 0.6f, 1.0f, 0.2f, 1.0f }, 4);
 	setArray(colorCmdMessageError, (const float[]){ 1.0f, 0.7f, 0.4f, 1.0f }, 4);
 
 	mainChatWindow.init(recBckgr);
@@ -141,6 +144,7 @@ void Phex::init() {
 	colorCodeWhite = mainFont->hetuwGetColorCode(colorWhite);
 	colorCodeNamesInChat = mainFont->hetuwGetColorCode(colorNamesInChat);
 	colorCodeCmdMessage = mainFont->hetuwGetColorCode(colorCmdMessage);
+	colorCodeCmdInGameNames = mainFont->hetuwGetColorCode(colorCmdInGameNames);
 	colorCodeCmdMessageError = mainFont->hetuwGetColorCode(colorCmdMessageError);
 
 	initButtons();
@@ -426,6 +430,8 @@ void Phex::serverCmdHASH_SERVER_LIFE(std::vector<std::string> input) {
 			return;
 		}
 		player->phexHash = string(input[1]);
+		createUser(input[1]);
+		users[input[1]].inGameServerPlayerID = playerID;
 	} catch(std::exception const & ex) {
 		printf("Phex EXCEPTION when receiving HASH_SERVER_LIFE command\n");
 		printf("Phex command: %s\n", joinStr(input, " ", 0).c_str());
@@ -465,14 +471,21 @@ void Phex::chatCmdNAME(std::vector<std::string> input) {
 
 void Phex::chatCmdLIST(std::vector<std::string> input) {
 	for (std::pair<std::string, User> element : users) {
-		if (!element.second.online) continue;
+		User *user = &element.second;
+		if (!user->online) continue;
 		std::string str = "";
 		if (element.first.length() > ChatElement::maxHashDisplayLength) {
 			str += element.first.substr(0, ChatElement::maxHashDisplayLength);
 		} else {
 			str += element.first;
 		}
-		if (element.second.name.length() > 0) str += " "+element.second.name;
+		if (user->name.length() > 0) str += " "+colorCodeNamesInChat+user->name;
+		
+		if (user->inGameServerPlayerID >= 0) {
+			LiveObject *player = HetuwMod::livingLifePage->getLiveObject(user->inGameServerPlayerID);
+			if (player && player->name) str += " "+colorCodeCmdInGameNames+string(player->name);
+		}
+
 		addCmdMessageToChatWindow(str);
 	}
 }

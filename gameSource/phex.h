@@ -206,9 +206,10 @@ public:
 
 	struct User {
 		std::string hash = "";
-		std::string name = "";
-		std::string displayName = "";
+		std::string name = ""; // might be empty
+		std::string displayName = ""; // to read call getUserDisplayName(User user), might be hash or name
 		bool online = false;
+		int inGameServerPlayerID = -1;
 	};
 
 	static TCPConnection tcp;
@@ -247,10 +248,12 @@ public:
 	static float colorWhite[4];
 	static float colorNamesInChat[4];
 	static float colorCmdMessage[4];
+	static float colorCmdInGameNames[4];
 	static float colorCmdMessageError[4];
 	static std::string colorCodeWhite;
 	static std::string colorCodeNamesInChat;
 	static std::string colorCodeCmdMessage;
+	static std::string colorCodeCmdInGameNames;
 	static std::string colorCodeCmdMessageError;
 
 	static float colorButPhexOffline[4];
