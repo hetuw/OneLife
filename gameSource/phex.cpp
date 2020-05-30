@@ -93,6 +93,8 @@ HetuwMod::IntervalTimed Phex::intervalSendPosition = HetuwMod::IntervalTimed(3.0
 int Phex::lastPositionSentX = -9999;
 int Phex::lastPositionSentY = -9999;
 
+constexpr char Phex::hexDigits[];
+
 extern doublePair lastScreenViewCenter;
 extern char *userEmail;
 extern int versionNumber;
@@ -297,6 +299,8 @@ void Phex::initServerCommands() {
 	serverCommands["SEND_POSITION"].minWords = 2;
 	serverCommands["HASH_SERVER_LIFE"].func = serverCmdHASH_SERVER_LIFE;
 	serverCommands["HASH_SERVER_LIFE"].minWords = 4;
+	serverCommands["GET_ALL_PLAYERS"].func = serverCmdGET_ALL_PLAYERS;
+	serverCommands["GET_ALL_PLAYERS"].minWords = 1;
 }
 
 void Phex::serverCmdVERSION(std::vector<std::string> input) {
@@ -440,6 +444,40 @@ void Phex::serverCmdHASH_SERVER_LIFE(std::vector<std::string> input) {
 	}
 }
 
+void Phex::serverCmdGET_ALL_PLAYERS(std::vector<std::string> input) {
+	if (!HetuwMod::gameObjects) return;
+
+	std::string str = "";
+	str += "ALL_PLAYERS ";
+	str += string(HetuwMod::serverIP)+" ";
+	for(int i=0; i<HetuwMod::gameObjects->size(); i++) {
+		LiveObject *o = HetuwMod::gameObjects->getElement( i );
+		if (!o) continue;
+		ObjectRecord* obj = getObject(o->displayID);
+		if (!obj) continue;
+
+		str += to_string(o->id);
+		string inRange = o->outOfRange ? "0" : "1";
+		str += " "+inRange;
+		string alive = o->finalAgeSet ? "D" : "A";
+		str += " "+alive;
+		// a85e3d brown, f2cac1 ginger, ddaf93 white, 3f2a2a black
+		float skinColor[4];
+		HetuwMod::getSkinColor(skinColor, obj);
+		str += " "+colorsToHex(skinColor, 3);
+		string gender = obj->male ? "M" : "F";
+		str += " "+gender;
+		str += " "+to_string((int)HetuwMod::livingLifePage->hetuwGetAge(o));
+		str += " "+to_string(o->xd)+" "+to_string(o->yd);
+
+		if (o->name) str += " "+string(o->name);
+
+		str += ",";
+	}
+	//printf("Phex %s\n", str.c_str());
+	tcp.send(str);
+}
+
 void Phex::initChatCommands() {
 	chatCommands["HELP"].func = chatCmdHELP;
 	chatCommands["HELP"].minWords = 1;
@@ -491,7 +529,19 @@ void Phex::chatCmdLIST(std::vector<std::string> input) {
 }
 
 void Phex::chatCmdTEST(std::vector<std::string> input) {
-	onReceivedMessage("COORD 10 43 11faab testCoord");
+	if (true) return;
+	serverCmdGET_ALL_PLAYERS(input);
+	LiveObject *o = HetuwMod::ourLiveObject;
+	ObjectRecord* obj = getObject(o->displayID);
+	printf("Phex numSprites: %d", obj->numSprites);
+	std::string str = "";
+	for (int i=0; i< obj->numSprites; i++) {
+		str = "";
+		str += " "+to_string((int)(obj->spriteColor[i].r*255));
+		str += " "+to_string((int)(obj->spriteColor[i].g*255));
+		str += " "+to_string((int)(obj->spriteColor[i].b*255));
+		printf("Phex %d: %s\n", i, str.c_str());
+	}
 }
 
 void Phex::setArray(float arrDst[], const float arrSrc[], int size) {
@@ -513,6 +563,27 @@ void Phex::hexToColors(std::string& hex, float rgba[], int size) {
 		unsigned int x = std::stoul(s, nullptr, 16);
 		rgba[i] = x / 255.0f;
 	}
+}
+
+std::string Phex::colorToHex(float f) {
+	if (f > 1.0f) f = 1.0f;
+	if (f < 0.0f) f = 0.0f;
+	float a = f*255;
+	float b = a/16;
+	float c = b-(int)b;
+	int digitA = (int)b;
+	int digitB = (int)(c*16);
+	//printf("Phex f:%f, a:%f, b:%f, c:%f, dA %d %c dB %d %c\n", f, a, b, c, digitA, hexDigits[digitA], digitB, hexDigits[digitB]);
+	string str = ""; str += hexDigits[digitA]; str += hexDigits[digitB];
+	return str;
+}
+
+std::string Phex::colorsToHex(float rgba[], int size) {
+	std::string str="";
+	for (int i=0; i<size; i++) {
+		str += colorToHex(rgba[i]);
+	}
+	return str;
 }
 
 bool Phex::strEquals(std::string strA, std::string strB) {

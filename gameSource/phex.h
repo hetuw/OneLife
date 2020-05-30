@@ -287,6 +287,8 @@ public:
 
 	static bool allowServerCoords;
 
+	static constexpr char hexDigits[16] = { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' };
+
 	static void init();
 	static void initServerCommands();
 	static void initChatCommands();
@@ -310,6 +312,7 @@ public:
 	static void serverCmdSEND_BIOMES(std::vector<std::string> input);
 	static void serverCmdSEND_POSITION(std::vector<std::string> input);
 	static void serverCmdHASH_SERVER_LIFE(std::vector<std::string> input);
+	static void serverCmdGET_ALL_PLAYERS(std::vector<std::string> input);
 
 	static void chatCmdHELP(std::vector<std::string> input);
 	static void chatCmdNAME(std::vector<std::string> input);
@@ -319,7 +322,9 @@ public:
 	static void setArray(float arrDst[], const float arrSrc[], int size);
 	static void setArray(double arrDst[], const double arrSrc[], int size);
 	static void multipleArray(double arr[], double factor, int size);
-	static void hexToColors(std::string& hex, float rgba[], int size);
+	static void hexToColors(std::string& hex, float rgba[], int size=4);
+	static std::string colorToHex(float f);
+	static std::string colorsToHex(float rgba[], int size=4);
 
 	static bool strEquals(std::string strA, std::string strB);
 	static void strToUpper(std::string &str);

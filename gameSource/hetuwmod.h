@@ -277,13 +277,15 @@ public:
 
 	static constexpr int OBJID_TarrMonument = 3112;
 
-	static int maxObjects;
-
 	static const int defaultViewWidth = 1280;
 	static const int defaultViewHeight = 720;
 
 	static constexpr float zoomValueKey = 0.25f;
 	static constexpr float zoomValueScroll = 0.15f;
+
+	static constexpr int skinSpriteColorID = 40;
+
+	static int maxObjects;
 
 	static int dangerousAnimalsLength;
 	static int* dangerousAnimals;
@@ -610,6 +612,8 @@ public:
 	static IntervalTimed intervalVogMove;
 
 	static bool bDrawBiomeInfo;
+
+	static void getSkinColor(float *rgba, ObjectRecord *obj);
 
 private:
 

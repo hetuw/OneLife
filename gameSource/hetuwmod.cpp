@@ -3728,6 +3728,17 @@ void HetuwMod::setLastNameColor( const char* lastName, float alpha ) {
 		alpha );
 }
 
+void HetuwMod::getSkinColor(float *rgba, ObjectRecord *obj) {
+	if (!obj || obj->numSprites < skinSpriteColorID) {
+		for (int i=0; i<4; i++) rgba[i] = 1.0f;
+		return;
+	}
+	rgba[0] = obj->spriteColor[skinSpriteColorID].r;
+	rgba[1] = obj->spriteColor[skinSpriteColorID].g;
+	rgba[2] = obj->spriteColor[skinSpriteColorID].b;
+	rgba[3] = 1.0f;
+}
+
 void HetuwMod::updatePlayerToMap(LiveObject *o, bool deathMsg) {
 	if (!o) return;
 	int p = -1;
