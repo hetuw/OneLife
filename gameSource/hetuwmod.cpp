@@ -2119,7 +2119,8 @@ void HetuwMod::strToUpper(const char* src, char* dest, int maxSize) {
 			dest[i-1] = 0;
 			break;
 		}
-		dest[i] = toupper(src[i]);
+		dest[i] = src[i];
+		dest[i] = toupper(dest[i]);
 	}
 	dest[i] = 0;
 }
