@@ -217,6 +217,10 @@ static SimpleVector<char*> cursingPhrases;
 char *curseYouPhrase = NULL;
 char *curseBabyPhrase = NULL;
 
+static SimpleVector<char*> forgivingPhrases;
+static SimpleVector<char*> youForgivingPhrases;
+
+
 static SimpleVector<char*> youGivingPhrases;
 static SimpleVector<char*> namedGivingPhrases;
 
@@ -792,6 +796,10 @@ typedef struct LiveObject {
         char waitingForForceResponse;
         
         int lastMoveSequenceNumber;
+
+
+        int facingLeft;
+        double lastFlipTime;
         
 
         int pathLength;
@@ -2167,6 +2175,10 @@ void quitCleanup() {
     familyNameGivingPhrases.deallocateStringElements();
     eveNameGivingPhrases.deallocateStringElements();
     cursingPhrases.deallocateStringElements();
+    
+    forgivingPhrases.deallocateStringElements();
+    youForgivingPhrases.deallocateStringElements();
+    
     youGivingPhrases.deallocateStringElements();
     namedGivingPhrases.deallocateStringElements();
     
@@ -2481,6 +2493,7 @@ typedef enum messageType {
     PHOTO,
     LEAD,
     UNFOL,
+    FLIP,
     UNKNOWN
     } messageType;
 
@@ -2898,6 +2911,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "UNFOL" ) == 0 ) {
         m.type = UNFOL;
+        }
+    else if( strcmp( nameBuffer, "FLIP" ) == 0 ) {
+        m.type = FLIP;
         }
     else {
         m.type = UNKNOWN;
@@ -9008,6 +9024,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         newObject.foodStore -= 6;
         }
     
+    double currentTime = Time::getCurrentTime();
+    
 
     newObject.envHeat = targetHeat;
     newObject.bodyHeat = targetHeat;
@@ -9015,7 +9033,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.lastBiomeHeat = targetHeat;
     newObject.heat = 0.5;
     newObject.heatUpdate = false;
-    newObject.lastHeatUpdate = Time::getCurrentTime();
+    newObject.lastHeatUpdate = currentTime;
     newObject.isIndoors = false;
     
     newObject.foodDrainTime = 0;
@@ -9024,7 +9042,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
 
     newObject.foodDecrementETASeconds =
-        Time::getCurrentTime() + 
+        currentTime + 
         computeFoodDecrementTimeSeconds( &newObject );
                 
     newObject.foodUpdate = true;
@@ -9048,6 +9066,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.xd = 0;
     newObject.yd = 0;
     
+    newObject.facingLeft = 0;
+    newObject.lastFlipTime = currentTime;
+    
+
     newObject.mapChunkPathCheckedDest.x = 0;
     newObject.mapChunkPathCheckedDest.y = 0;
     
@@ -11701,9 +11723,7 @@ static char isWildcardGivingSay( char *inSaidString,
     for( int i=0; i<inPhrases->size(); i++ ) {
         char *testString = inPhrases->getElementDirect( i );
         
-        char *hitLoc = strstr( inSaidString, testString );
-
-        if( hitLoc == inSaidString ) {
+        if( strcmp( inSaidString, testString ) == 0 ) {
             return true;
             }
         }
@@ -11781,6 +11801,16 @@ char *isNamedKillSay( char *inSaidString ) {
         }
     
     return NULL;
+    }
+
+
+char isYouForgivingSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &youForgivingPhrases );
+    }
+
+// returns pointer into inSaidString
+char *isNamedForgivingSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &forgivingPhrases );
     }
 
 
@@ -12762,6 +12792,7 @@ static SimpleVector<int> newEmotIndices;
 static SimpleVector<int> newEmotTTLs;
 
 
+// inEatenID = 0 for nursing
 static void checkForFoodEatingEmot( LiveObject *inPlayer,
                                     int inEatenID ) {
     
@@ -12769,25 +12800,28 @@ static void checkForFoodEatingEmot( LiveObject *inPlayer,
     inPlayer->starving = false;
 
     
-    ObjectRecord *o = getObject( inEatenID );
-    
-    if( o != NULL ) {
-        char *emotPos = strstr( o->description, "emotEat_" );
+    if( inEatenID > 0 ) {
         
-        if( emotPos != NULL ) {
-            int e, t;
-            int numRead = sscanf( emotPos, "emotEat_%d_%d", &e, &t );
-
-            if( numRead == 2 ) {
-                inPlayer->emotFrozen = true;
-                inPlayer->emotFrozenIndex = e;
-                            
-                inPlayer->emotUnfreezeETA = Time::getCurrentTime() + t;
-                            
-                newEmotPlayerIDs.push_back( inPlayer->id );
-                newEmotIndices.push_back( e );
-                newEmotTTLs.push_back( t );
-                return;
+        ObjectRecord *o = getObject( inEatenID );
+        
+        if( o != NULL ) {
+            char *emotPos = strstr( o->description, "emotEat_" );
+            
+            if( emotPos != NULL ) {
+                int e, t;
+                int numRead = sscanf( emotPos, "emotEat_%d_%d", &e, &t );
+                
+                if( numRead == 2 ) {
+                    inPlayer->emotFrozen = true;
+                    inPlayer->emotFrozenIndex = e;
+                    
+                    inPlayer->emotUnfreezeETA = Time::getCurrentTime() + t;
+                    
+                    newEmotPlayerIDs.push_back( inPlayer->id );
+                    newEmotIndices.push_back( e );
+                    newEmotTTLs.push_back( t );
+                    return;
+                    }
                 }
             }
         }
@@ -16053,6 +16087,9 @@ int main() {
 
     readPhrases( "cursingPhrases", &cursingPhrases );
 
+    readPhrases( "forgivingPhrases", &forgivingPhrases );
+    readPhrases( "forgiveYouPhrases", &youForgivingPhrases );
+
     
     readPhrases( "youGivingPhrases", &youGivingPhrases );
     readPhrases( "namedGivingPhrases", &namedGivingPhrases );
@@ -17583,6 +17620,10 @@ int main() {
         SimpleVector<ChangePosition> newUpdatesPos;
         SimpleVector<int> newUpdatePlayerIDs;
 
+        SimpleVector<int> newFlipPlayerIDs;
+        SimpleVector<int> newFlipFacingLeft;
+        SimpleVector<GridPos> newFlipPositions;
+
 
         // these are global, so they're not tagged with positions for
         // spatial filtering
@@ -17900,12 +17941,6 @@ int main() {
                 
                 delete [] message;
                 
-                if( m.type == UNKNOWN ) {
-                    AppLog::info( "Client error, unknown message type." );
-                    
-                    setPlayerDisconnected( nextPlayer, 
-                                           "Unknown message type" );
-                    }
 
                 //Thread::staticSleep( 
                 //    testRandSource.getRandomBoundedInt( 0, 450 ) );
@@ -17915,7 +17950,17 @@ int main() {
                 // as a different type
                 RESTART_MESSAGE_ACTION:
                 
-                if( m.type == BUG ) {
+                if( m.type == UNKNOWN ) {
+                    AppLog::info( "Client error, unknown message type." );
+                    
+                    //setPlayerDisconnected( nextPlayer, 
+                    //                       "Unknown message type" );
+                    
+                    // do not disconnect client here
+                    // keep server flexible, so client can be updated
+                    // with a protocol change before the server gets updated
+                    }
+                else if( m.type == BUG ) {
                     int allow = 
                         SettingsManager::getIntSetting( "allowBugReports", 0 );
 
@@ -18714,6 +18759,31 @@ int main() {
                     sendMessageToPlayer( nextPlayer, 
                                          psMessage, strlen( psMessage ) );
                     delete [] psMessage;
+                    }
+                else if( m.type == FLIP ) {
+                    
+                    if( currentTime - nextPlayer->lastFlipTime > 1.75 ) {
+                        // client should send at most one flip ever 2 seconds
+                        // allow some wiggle room
+                        GridPos p = getPlayerPos( nextPlayer );
+                        
+                        int oldFacingLeft = nextPlayer->facingLeft;
+                        
+                        if( m.x > p.x ) {
+                            nextPlayer-> facingLeft = 0;
+                            }
+                        else if( m.x < p.x ) {
+                            nextPlayer->facingLeft = 1;
+                            }
+                        
+                        if( oldFacingLeft != nextPlayer->facingLeft ) {
+                            nextPlayer->lastFlipTime = currentTime;
+                            newFlipPlayerIDs.push_back( nextPlayer->id );
+                            newFlipFacingLeft.push_back( 
+                                nextPlayer->facingLeft );
+                            newFlipPositions.push_back( p );
+                            }
+                        }
                     }
                 else if( m.type != SAY && m.type != EMOT &&
                          nextPlayer->waitingForForceResponse ) {
@@ -19896,7 +19966,41 @@ int main() {
                                     }
                                 }
                             }
+                        
 
+                        
+                        LiveObject *otherToForgive = NULL;
+                        
+                        if( isYouForgivingSay( m.saidText ) ) {
+                            otherToForgive = 
+                                getClosestOtherPlayer( nextPlayer );
+                            }
+                        else {
+                            char *forgiveName = isNamedForgivingSay( m.saidText );
+                            if( forgiveName != NULL ) {
+                                otherToForgive =
+                                    getPlayerByName( forgiveName, nextPlayer );
+                                
+                                }
+                            }
+                        
+                        if( otherToForgive != NULL ) {
+                            clearDBCurse( nextPlayer->email, 
+                                          otherToForgive->email );
+                            
+                            char *message = 
+                                autoSprintf( 
+                                    "CU\n%d 0 %s_%s\n#", 
+                                    otherToForgive->id,
+                                    getCurseWord( nextPlayer->email,
+                                                  otherToForgive->email, 0 ),
+                                    getCurseWord( nextPlayer->email,
+                                                  otherToForgive->email, 1 ) );
+                            sendMessageToPlayer( nextPlayer,
+                                                 message, strlen( message ) );
+                            delete [] message;
+                            }
+                        
                         
                         LiveObject *otherToFollow = NULL;
                         LiveObject *otherToExile = NULL;
@@ -21804,6 +21908,9 @@ int main() {
                                                 Time::getCurrentTime() +
                                                 computeFoodDecrementTimeSeconds(
                                                     hitPlayer );
+                                            
+                                            checkForFoodEatingEmot( hitPlayer,
+                                                                    0 );
                                             }
                                         else {
                                             setRefuseFoodEmote( hitPlayer );
@@ -26271,6 +26378,8 @@ int main() {
                 
                 // everyone gets all owner change messages
                 if( newOwnerPos.size() > 0 ) {
+
+                    GridPos nextPlayerPos = getPlayerPos( nextPlayer );
                     
                     // compose OW messages for this player
                     for( int u=0; u<newOwnerPos.size(); u++ ) {
@@ -26285,7 +26394,7 @@ int main() {
                         char known = isKnownOwned( nextPlayer, p );
                         
                         if( known ||
-                            distance( p, getPlayerPos( nextPlayer ) )
+                            distance( p, nextPlayerPos )
                             < maxDist2 
                             ||
                             isOwned( nextPlayer, p ) ) {
@@ -26308,6 +26417,50 @@ int main() {
                                                  strlen( ownerMessage ) );
                             delete [] ownerMessage;
                             }
+                        }
+                    }
+
+
+
+                if( newFlipPlayerIDs.size() > 0 ) {
+
+                    GridPos nextPlayerPos = getPlayerPos( nextPlayer );
+
+                    // compose FL messages for this player
+                    // only for in-range players that flipped
+                    SimpleVector<char> messageWorking;
+                    
+                    char firstLine = true;
+                    
+                    for( int u=0; u<newFlipPlayerIDs.size(); u++ ) {
+                        GridPos p = newFlipPositions.getElementDirect( u );
+                        
+                        if( distance( p, nextPlayerPos ) < maxDist2 ) {
+
+                            if( firstLine ) {
+                                messageWorking.appendElementString( "FL\n" );
+                                firstLine = false;
+                                }
+
+                            char *line = 
+                                autoSprintf( 
+                                    "%d %d\n",
+                                    newFlipPlayerIDs.getElementDirect( u ),
+                                    newFlipFacingLeft.getElementDirect( u ) );
+                            
+                            messageWorking.appendElementString( line );
+                            
+                            delete [] line;
+                            }
+                        }
+                    if( messageWorking.size() > 0 ) {
+                        messageWorking.push_back( '#' );
+                            
+                        char *message = messageWorking.getElementString();
+                        
+                        sendMessageToPlayer( nextPlayer, message,
+                                             strlen( message ) );
+                        delete [] message;
                         }
                     }
 
