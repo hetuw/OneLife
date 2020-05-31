@@ -1813,9 +1813,8 @@ void HetuwMod::setHomeLocationText(int x, int y, homePosType type, char *text) {
 }
 
 void HetuwMod::setMapText(char *message, int mapX, int mapY) {
-	char mapName[64];
-	sscanf( message, ":%[^\t\n*]", mapName );
-	setHomeLocationText(mapX, mapY, hpt_map, mapName);
+	if (!message) return;
+	setHomeLocationText(mapX, mapY, hpt_map, message);
 }
 
 void HetuwMod::addPersonHomeLocation(int x, int y, int personID ) {
