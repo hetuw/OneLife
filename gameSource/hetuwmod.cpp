@@ -1749,9 +1749,9 @@ void HetuwMod::addHomeLocation(HomePos *p) {
 }
 
 void HetuwMod::addHomeLocation( int x, int y, homePosType type, char c, int personID ) {
-	if (personID >= 0) {
+	if (personID >= 0 && type != hpt_expert) {
 		for (unsigned i=0; i<homePosStack.size(); i++) {
-			if (homePosStack[i]->personID == personID) {
+			if (homePosStack[i]->personID == personID && homePosStack[i]->type == type) {
 				homePosStack[i]->x = x;
 				homePosStack[i]->y = y;
 				return;
