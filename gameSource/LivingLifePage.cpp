@@ -16268,7 +16268,7 @@ void LivingLifePage::step() {
                                 getObject( o.holdingID )->foodValue > 0 ) {
                                 // MEH
                                 slipIndexToShow = 3;
-								HetuwMod::foodIsMeh(o.holdingID);
+								HetuwMod::foodIsMeh(getObject(o.holdingID));
                                 }
                             }
                         
@@ -20073,12 +20073,7 @@ void LivingLifePage::step() {
                 
                     if( lastAteID != 0 ) {
                         ObjectRecord *lastAteObj = getObject( lastAteID );
-                        if( lastAteObj->isUseDummy ) { // hetuw mod
-                            HetuwMod::yummyFoodChain.push_back( lastAteObj->useDummyParent ); // hetuw mod
-                            } // hetuw mod
-                        else { // hetuw mod
-                            HetuwMod::yummyFoodChain.push_back( lastAteID ); // hetuw mod
-                            } // hetuw mod
+                        HetuwMod::onJustAteFood(lastAteObj);
                         char *strUpper = stringToUpperCase(
                             lastAteObj->description );
 

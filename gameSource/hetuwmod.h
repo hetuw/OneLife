@@ -565,12 +565,14 @@ public:
 	static float colorRainbowFast[3];
 	static void stepColorRainbowFast();
 
+	static int getObjYumID(ObjectRecord *obj);
 	static void initBecomesFood();
 	static int becomesFood( int objectID, int depth );
 	static int *becomesFoodID;
 	static SimpleVector<int> yummyFoodChain;
 	static bool isYummy(int objID);
-	static void foodIsMeh(int objID);
+	static void foodIsMeh(ObjectRecord *obj);
+	static void onJustAteFood(ObjectRecord *food);
 	static bool bDrawYum;
 	static void setYumObjectsColor();
 	static void resetObjectsColor();

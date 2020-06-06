@@ -1833,6 +1833,17 @@ void HetuwMod::addPersonHomeLocation(int x, int y, int personID ) {
 	}
 }
 
+int HetuwMod::getObjYumID(ObjectRecord *obj) {
+	if (obj->yumParentID > -1) {
+		//printf("hetuw obj->id: %d yumParentID: %d\n", obj->id, obj->yumParentID);
+		return obj->yumParentID;
+	} else {
+		//printf("hetuw obj->id: %d\n", obj->id);
+		return obj->id;
+	}
+}
+
+
 // thanks to https://raw.githubusercontent.com/JustinLove/onelife-client-patches/master/yum-hover
 void HetuwMod::initBecomesFood() {
     becomesFoodID = new int[maxObjects];
@@ -1864,7 +1875,7 @@ int HetuwMod::becomesFood( int objectID, int depth ) {
 	if (objectID == OBJID_HotCoals) return -1;
 
     if( obj->foodValue > 0 ) {
-        return objectID;
+		return getObjYumID(obj);
         }
 
     if( depth < 1) return -1;
@@ -1935,18 +1946,26 @@ bool HetuwMod::isYummy(int objID) {
 	int objectID = becomesFoodID[objID];
 	if( objectID < 0 ) return false;
 
-	ObjectRecord *o = getObject( objectID );
-	if (!o) return false;
-
 	for( int i=0; i<yummyFoodChain.size(); i++ ) {
 		if( objectID == yummyFoodChain.getElementDirect(i) ) return false;
 	}
 	return true;
 }
 
-void HetuwMod::foodIsMeh(int objID) {
+void HetuwMod::foodIsMeh(ObjectRecord *obj) {
+	if (!obj) return;
+	int objID = getObjYumID(obj);
 	if (!isYummy(objID)) return;
 	yummyFoodChain.push_back(objID);
+}
+
+void HetuwMod::onJustAteFood(ObjectRecord *food) {
+	if (!food) return;
+	if (food->isUseDummy) {
+		yummyFoodChain.push_back( getObjYumID(getObject(food->useDummyParent)) );
+	} else {
+		yummyFoodChain.push_back( HetuwMod::getObjYumID(food) );
+	}
 }
 
 void HetuwMod::livingLifeDraw() {
