@@ -235,7 +235,7 @@ bool HetuwMod::bHoldDownTo_ShowGrid = true;
 bool HetuwMod::b_drawYumColor = false;
 bool HetuwMod::b_drawYumPulsate = true;
 bool HetuwMod::b_drawSearchText = true;
-bool HetuwMod::b_drawSearchTileRec = true;
+bool HetuwMod::b_drawSearchTileRec = false;
 bool HetuwMod::b_drawSearchPulsate = true;
 
 bool HetuwMod::bAutoDataUpdate = true;
@@ -1961,7 +1961,7 @@ void HetuwMod::foodIsMeh(ObjectRecord *obj) {
 
 void HetuwMod::onJustAteFood(ObjectRecord *food) {
 	if (!food) return;
-	if (food->isUseDummy) {
+	if(food->isUseDummy) {
 		yummyFoodChain.push_back( getObjYumID(getObject(food->useDummyParent)) );
 	} else {
 		yummyFoodChain.push_back( HetuwMod::getObjYumID(food) );
