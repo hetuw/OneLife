@@ -2147,7 +2147,8 @@ void HetuwMod::objDescrToUpper(const char* arr, char* output, int maxSize) {
 	for (int i=0; arr[i] != 0; i++) {
 		if (i >= maxSize) break;
 		if (arr[i] == '#') break;
-		output[i] = toupper(arr[i]);
+		output[i] = arr[i];
+		output[i] = toupper(output[i]);
 	}
 }
 
@@ -2160,6 +2161,9 @@ void HetuwMod::drawSearchTilesLoop(bool drawText) {
 
 	doublePair textPos;
 	bool drawRec = true;
+
+	int descrSize = 32;
+	char descr[descrSize];
 
 	for (int x = startX; x < endX; x++) {
 		for (int y = startY; y < endY; y++) {
@@ -2176,9 +2180,8 @@ void HetuwMod::drawSearchTilesLoop(bool drawText) {
 				else {
 					ObjectRecord *obj = getObject(objId);
 					if (obj && obj->description) {
-						char descr[32];
-						objDescrToUpper(obj->description, descr, 32);
-						livingLifePage->hetuwDrawScaledMainFont( obj->description, textPos, 1.2, alignCenter );
+						objDescrToUpper(obj->description, descr, descrSize);
+						livingLifePage->hetuwDrawScaledMainFont( descr, textPos, 1.2, alignCenter );
 						textPos.y += 24;
 					}
 				}
@@ -2201,7 +2204,8 @@ void HetuwMod::drawSearchTilesLoop(bool drawText) {
 						} else {
 							ObjectRecord *obj = getObject(objId);
 							if (obj && obj->description) {
-								livingLifePage->hetuwDrawMainFont( obj->description, textPos,  alignCenter );
+								objDescrToUpper(obj->description, descr, descrSize);
+								livingLifePage->hetuwDrawMainFont( descr, textPos, alignCenter );
 								textPos.y += 24;
 							}
 						}
@@ -2232,7 +2236,8 @@ void HetuwMod::drawSearchTilesLoop(bool drawText) {
 							} else {
 								ObjectRecord *obj = getObject(objId);
 								if (obj && obj->description) {
-									livingLifePage->hetuwDrawMainFont( obj->description, textPos,  alignCenter );
+									objDescrToUpper(obj->description, descr, descrSize);
+									livingLifePage->hetuwDrawMainFont( descr, textPos, alignCenter );
 									textPos.y += 24;
 								}
 							}
