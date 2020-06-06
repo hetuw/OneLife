@@ -2143,13 +2143,32 @@ void HetuwMod::strToUpper(const char* src, char* dest, int maxSize) {
 	dest[i] = 0;
 }
 
+// also removes text after #
 void HetuwMod::objDescrToUpper(const char* arr, char* output, int maxSize) {
-	for (int i=0; arr[i] != 0; i++) {
-		if (i >= maxSize) break;
+	int i=0;
+	for (; arr[i] != 0; i++) {
+		if (i >= maxSize) {
+			output[i] = 0;
+			break;
+		}
 		if (arr[i] == '#') break;
 		output[i] = arr[i];
 		output[i] = toupper(output[i]);
 	}
+	output[i] = 0;
+}
+
+void HetuwMod::objGetDescrWithoutHashtag(const char* arr, char* output, int maxSize) {
+	int i=0;
+	for (; arr[i] != 0; i++) {
+		if (i >= maxSize) {
+			output[i] = 0;
+			break;
+		}
+		if (arr[i] == '#') break;
+		output[i] = arr[i];
+	}
+	output[i] = 0;
 }
 
 void HetuwMod::drawSearchTilesLoop(bool drawText) {
@@ -2180,8 +2199,9 @@ void HetuwMod::drawSearchTilesLoop(bool drawText) {
 				else {
 					ObjectRecord *obj = getObject(objId);
 					if (obj && obj->description) {
-						objDescrToUpper(obj->description, descr, descrSize);
+						objGetDescrWithoutHashtag(obj->description, descr, descrSize);
 						livingLifePage->hetuwDrawScaledMainFont( descr, textPos, 1.2, alignCenter );
+						//customFont->drawString( descr, textPos, alignCenter );
 						textPos.y += 24;
 					}
 				}
@@ -2204,8 +2224,9 @@ void HetuwMod::drawSearchTilesLoop(bool drawText) {
 						} else {
 							ObjectRecord *obj = getObject(objId);
 							if (obj && obj->description) {
-								objDescrToUpper(obj->description, descr, descrSize);
+								objGetDescrWithoutHashtag(obj->description, descr, descrSize);
 								livingLifePage->hetuwDrawMainFont( descr, textPos, alignCenter );
+								//customFont->drawString( descr, textPos, alignCenter );
 								textPos.y += 24;
 							}
 						}
@@ -2236,8 +2257,9 @@ void HetuwMod::drawSearchTilesLoop(bool drawText) {
 							} else {
 								ObjectRecord *obj = getObject(objId);
 								if (obj && obj->description) {
-									objDescrToUpper(obj->description, descr, descrSize);
+									objGetDescrWithoutHashtag(obj->description, descr, descrSize);
 									livingLifePage->hetuwDrawMainFont( descr, textPos, alignCenter );
+									//customFont->drawString( descr, textPos, alignCenter );
 									textPos.y += 24;
 								}
 							}
