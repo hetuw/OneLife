@@ -1196,6 +1196,8 @@ bool HetuwMod::charArrEqualsCharArr(const char *a, const char *b) {
 }
 
 void HetuwMod::setSearchArray() {
+	int descrSize = 32;
+	char descr[descrSize];
 	for (int i=0; i<maxObjects; i++) {
 		objIsBeingSearched[i] = false;
 		ObjectRecord *o = getObject( i );
@@ -1214,12 +1216,13 @@ void HetuwMod::setSearchArray() {
 					break;
 				}
 			}
+			objGetDescrWithoutHashtag(o->description, descr, descrSize);
 			if (exactSearch) {
-				if (charArrEqualsCharArr(o->description, exactSearchArr)) {
+				if (charArrEqualsCharArr(descr, exactSearchArr)) {
 					objIsBeingSearched[i] = true;
 					break;
 				}
-			} else if (charArrContainsCharArr(o->description, searchWordList[k])) {
+			} else if (charArrContainsCharArr(descr, searchWordList[k])) {
 				//printf("hetuw search for id: %i, desc: %s\n", i, o->description);
 				objIsBeingSearched[i] = true;
 				break;
