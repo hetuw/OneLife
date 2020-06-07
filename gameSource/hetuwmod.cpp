@@ -265,6 +265,9 @@ bool HetuwMod::bDrawBiomeInfo = false;
 
 HetuwFont *HetuwMod::customFont = NULL;
 
+std::string HetuwMod::helpTextSearch[6];
+std::string HetuwMod::helpTextCustomCoord[5];
+
 extern doublePair lastScreenViewCenter;
 
 void HetuwMod::init() {
@@ -350,6 +353,33 @@ void HetuwMod::init() {
 	lastLoggedId = getLastIdFromLogs();
 
 	Phex::init();
+
+	initHelpText();
+}
+
+void HetuwMod::initHelpText() {
+	helpTextSearch[0] = "You pressed ";
+	helpTextSearch[0] += toupper(charKey_Search);
+	helpTextSearch[0] += " and activated SEARCH";
+
+	helpTextSearch[1] = "Abort with ESC";
+	helpTextSearch[2] = "Type in the name of the object you want to find";
+	helpTextSearch[3] = "Put a . at the end for an exact search";
+
+	helpTextSearch[4] = "Remove the last search term with CTRL + ";
+	helpTextSearch[4] += toupper(charKey_Search);
+
+	helpTextSearch[5] = "Or click on it in the list";
+
+
+	helpTextCustomCoord[0] = "You pressed ";
+	helpTextCustomCoord[0] += toupper(charKey_CreateHome);
+	helpTextCustomCoord[0] += " to create a new coord";
+
+	helpTextCustomCoord[1] += "Abort with ESC";
+	helpTextCustomCoord[2] += "Press any letter key to create a custom coord";
+	helpTextCustomCoord[3] += "Left click a coord in the list to make it your 0,0 position";
+	helpTextCustomCoord[4] += "Remove a coord by left clicking it while holding CTRL";
 }
 
 void HetuwMod::splitLogLine(string* lineElements, string line) { // lineElements should be a string array with size 16
@@ -1992,7 +2022,14 @@ void HetuwMod::livingLifeDraw() {
 	if (bDrawPhotoRec) drawPhotoRec(recTakePhoto);
 	if (bDrawMap) drawMap();
 	Phex::draw();
-	if (bDrawInputString) drawInputString();
+	if (getCustomCords == 1) drawCoordsHelpA();
+	if (bDrawInputString) {
+		if (getSearchInput > 0) drawSearchHelpText();
+		if (getCustomCords == 2) drawCoordsHelpB();
+		if (getCustomCords == 3) drawCoordsHelpC();
+		drawInputString();
+	}
+	if (bNextCharForHome) drawCustomCoordHelpText();
 	if (bDrawHelp) drawHelp();
 
 	//setDrawColor( 1.0, 0, 0, 1.0 );
@@ -2001,6 +2038,79 @@ void HetuwMod::livingLifeDraw() {
 	//drawRect( debugRecPos2, 10, 10 );
 
 	if (bDrawBiomeInfo) drawBiomeIDs();
+}
+
+void HetuwMod::drawCoordsHelpA() {
+	double scale = customFont->hetuwGetScaleFactor();
+	customFont->hetuwSetScaleFactor(scale * guiScale);
+
+	doublePair drawPos = lastScreenViewCenter;
+	drawPos.y += customFont->getFontHeight()*1.1;
+	drawPos = drawCustomTextWithBckgr(drawPos, "Press any letter key to create new coord");
+	drawPos = drawCustomTextWithBckgr(drawPos, "Press ESC to abort");
+
+	customFont->hetuwSetScaleFactor(scale);
+}
+
+void HetuwMod::drawCoordsHelpB() {
+	double scale = customFont->hetuwGetScaleFactor();
+	customFont->hetuwSetScaleFactor(scale * guiScale);
+
+	doublePair drawPos = lastScreenViewCenter;
+	drawPos.y += viewHeight*0.15;
+	drawPos = drawCustomTextWithBckgr(drawPos, "Type the X value of the coord");
+	drawPos = drawCustomTextWithBckgr(drawPos, "Press ESC to abort");
+
+	customFont->hetuwSetScaleFactor(scale);
+}
+
+void HetuwMod::drawCoordsHelpC() {
+	double scale = customFont->hetuwGetScaleFactor();
+	customFont->hetuwSetScaleFactor(scale * guiScale);
+
+	doublePair drawPos = lastScreenViewCenter;
+	drawPos.y += viewHeight*0.15;
+	drawPos = drawCustomTextWithBckgr(drawPos, "Type the Y value of the coord");
+	drawPos = drawCustomTextWithBckgr(drawPos, "Press ESC to abort");
+
+	customFont->hetuwSetScaleFactor(scale);
+}
+
+void HetuwMod::drawSearchHelpText() {
+	double scale = customFont->hetuwGetScaleFactor();
+	customFont->hetuwSetScaleFactor(scale * guiScale);
+
+	float lineHeight = customFont->getFontHeight();
+	doublePair drawPos = lastScreenViewCenter;
+	drawPos.y += viewHeight*0.37;
+	drawPos = drawCustomTextWithBckgr(drawPos, helpTextSearch[0].c_str());
+	drawPos = drawCustomTextWithBckgr(drawPos, helpTextSearch[1].c_str());
+	drawPos.y -= lineHeight;
+	drawPos = drawCustomTextWithBckgr(drawPos, helpTextSearch[2].c_str());
+	drawPos = drawCustomTextWithBckgr(drawPos, helpTextSearch[3].c_str());
+	drawPos.y -= lineHeight;
+	drawPos = drawCustomTextWithBckgr(drawPos, helpTextSearch[4].c_str());
+	drawPos = drawCustomTextWithBckgr(drawPos, helpTextSearch[5].c_str());
+
+	customFont->hetuwSetScaleFactor(scale);
+}
+
+void HetuwMod::drawCustomCoordHelpText() {
+	double scale = customFont->hetuwGetScaleFactor();
+	customFont->hetuwSetScaleFactor(scale * guiScale);
+
+	float lineHeight = customFont->getFontHeight();
+	doublePair drawPos = lastScreenViewCenter;
+	drawPos.y += viewHeight*0.2;
+	drawPos = drawCustomTextWithBckgr(drawPos, helpTextCustomCoord[0].c_str());
+	drawPos = drawCustomTextWithBckgr(drawPos, helpTextCustomCoord[1].c_str());
+	drawPos.y -= lineHeight;
+	drawPos = drawCustomTextWithBckgr(drawPos, helpTextCustomCoord[2].c_str());
+	drawPos.y -= lineHeight;
+	drawPos = drawCustomTextWithBckgr(drawPos, helpTextCustomCoord[3].c_str());
+	drawPos = drawCustomTextWithBckgr(drawPos, helpTextCustomCoord[4].c_str());
+
+	customFont->hetuwSetScaleFactor(scale);
 }
 
 void HetuwMod::drawBiomeIDs() {
@@ -2021,6 +2131,18 @@ void HetuwMod::drawBiomeIDs() {
 			livingLifePage->hetuwDrawScaledHandwritingFont( str.c_str(), startPos, guiScale );
 		}
 	}
+}
+
+doublePair HetuwMod::drawCustomTextWithBckgr(doublePair pos, const char* text) {
+	float textWidth = customFont->measureString(text);
+	float lineHeight = customFont->getFontHeight() * 1.1;
+	float spaceWidth = customFont->hetuwGetSpaceWidth();
+	setDrawColor( 0, 0, 0, 0.8 );
+	drawRect( pos, (textWidth/2) + spaceWidth*2, lineHeight/2 );
+	setDrawColor( 1, 1, 1, 1 );
+	customFont->drawString( text, pos, alignCenter );
+	pos.y -= lineHeight;
+	return pos;
 }
 
 void HetuwMod::drawTextWithBckgr( doublePair pos, const char* text ) {

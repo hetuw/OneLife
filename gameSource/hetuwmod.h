@@ -369,6 +369,9 @@ public:
 
 	static HetuwFont *customFont;
 
+	static std::string helpTextSearch[];
+	static std::string helpTextCustomCoord[];
+
 	static SimpleVector<LiveObject> *gameObjects;
 	static std::vector<PlayerInMap*> playersInMap;
 	static SimpleVector<int> *mMapContainedStacks;
@@ -401,6 +404,7 @@ public:
 	static void writeLineToLogs(string name, string str);
 
 	static void init();
+	static void initHelpText();
 	static void initOnBirth();
 	static void initOnServerJoin();
 
@@ -446,6 +450,12 @@ public:
 	static void sendEmote(string emoteName);
 	static void sendEmote(int emoteId);
 
+	static void drawCoordsHelpA();
+	static void drawCoordsHelpB();
+	static void drawCoordsHelpC();
+	static void drawSearchHelpText();
+	static void drawCustomCoordHelpText();
+
 	static void setMoveDirection(int &x, int &y, int direction);
 	static int getMoveDirection();
 	static int getNextMoveDir(int direction, int add);
@@ -465,6 +475,7 @@ public:
 
 	static bool charArrEqualsCharArr(const char *a, const char *b);
 	static void drawTextWithBckgr( doublePair pos, const char* text );
+	static doublePair drawCustomTextWithBckgr(doublePair pos, const char* text);
 
 	static doublePair getFromMapToViewCoordsVec();
 	static doublePair getFromViewToMapCoordsVec();
