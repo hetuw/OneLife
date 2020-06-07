@@ -1835,11 +1835,15 @@ void HetuwMod::addHomeLocation( int x, int y, homePosType type, char c, int pers
 
 void HetuwMod::setHomeLocationText(int x, int y, homePosType type, char *text) {
 	for (unsigned i=0; i<homePosStack.size(); i++) {
-		if (homePosStack[i]->type != type) continue;
-		if (homePosStack[i]->x != x) continue;
-		if (homePosStack[i]->y != y) continue;
-		homePosStack[i]->text = string(text);
-		logHomeLocation(homePosStack[i]);
+		HomePos *home = homePosStack[i];
+		if (home->type != type) continue;
+		if (home->x != x) continue;
+		if (home->y != y) continue;
+		home->text = string(text);
+		if (home->text[0] == ':' && home->text.length() > 1) {
+			home->text = home->text.substr(1, home->text.length()-1);
+		}
+		logHomeLocation(home);
 		return;
 	}
 	printf("hetuw Warning: Could not find coord in list with x: %d, y: %d, text: %s\n", x, y, text);
