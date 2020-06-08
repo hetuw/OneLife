@@ -96,6 +96,8 @@ class HetuwMod
 		char* name;
 		int count;
 		int youngWomenCount;
+		std::string raceName = "UNKNOWN";
+		int generation = 0;
 		FamilyInRange() {
 			name = new char[hetuwMaxFamilyNameLen];
 			count = 0;
@@ -372,6 +374,15 @@ public:
 	static std::string helpTextSearch[];
 	static std::string helpTextCustomCoord[];
 
+	static std::string hexRaceColor_brown;
+	static std::string hexRaceColor_ginger;
+	static std::string hexRaceColor_white;
+	static std::string hexRaceColor_black;
+	static float raceColor_brown[];
+	static float raceColor_ginger[];
+	static float raceColor_white[];
+	static float raceColor_black[];
+
 	static SimpleVector<LiveObject> *gameObjects;
 	static std::vector<PlayerInMap*> playersInMap;
 	static SimpleVector<int> *mMapContainedStacks;
@@ -475,6 +486,7 @@ public:
 
 	static bool charArrEqualsCharArr(const char *a, const char *b);
 	static void drawTextWithBckgr( doublePair pos, const char* text );
+	static void drawTextWithBckgr( doublePair pos, const char* text, float rgba[] );
 	static doublePair drawCustomTextWithBckgr(doublePair pos, const char* text);
 
 	static doublePair getFromMapToViewCoordsVec();
@@ -516,6 +528,7 @@ public:
 	static void removeLastName(char *newName, const char* name );
 	static void getLastName( char* lastName, const char* name );
 	static void setLastNameColor( const char* lastName, float alpha );
+	static void getLastNameColor(const char* lastName, float rgba[]);
 
 	static int playersInRangeNum;
 
@@ -628,6 +641,7 @@ public:
 	static bool bDrawBiomeInfo;
 
 	static void getSkinColor(float *rgba, ObjectRecord *obj);
+	static std::string getRaceName(ObjectRecord *obj);
 
 private:
 

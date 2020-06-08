@@ -268,6 +268,15 @@ HetuwFont *HetuwMod::customFont = NULL;
 std::string HetuwMod::helpTextSearch[6];
 std::string HetuwMod::helpTextCustomCoord[5];
 
+std::string HetuwMod::hexRaceColor_brown = "a85e3d";
+std::string HetuwMod::hexRaceColor_ginger = "f2cac1";
+std::string HetuwMod::hexRaceColor_white = "ddaf93";
+std::string HetuwMod::hexRaceColor_black = "3f2a2a";
+float HetuwMod::raceColor_brown[] = {0.658824, 0.372549, 0.243137};
+float HetuwMod::raceColor_ginger[] = {0.952941, 0.796078, 0.756863};
+float HetuwMod::raceColor_white[] = {0.866667, 0.690196, 0.576471};
+float HetuwMod::raceColor_black[] = {0.250980, 0.168627, 0.164706};
+
 extern doublePair lastScreenViewCenter;
 
 void HetuwMod::init() {
@@ -2157,6 +2166,14 @@ void HetuwMod::drawTextWithBckgr( doublePair pos, const char* text ) {
 	livingLifePage->hetuwDrawScaledHandwritingFont( text, pos, guiScale, alignCenter );
 }
 
+void HetuwMod::drawTextWithBckgr( doublePair pos, const char* text, float rgba[] ) {
+	float textWidth = livingLifePage->hetuwMeasureScaledHandwritingFont( text, guiScale );
+	setDrawColor( 0, 0, 0, 0.8 );
+	drawRect( pos, (textWidth/2) + 6*guiScale, 14*guiScale );
+	hSetDrawColor(rgba);
+	livingLifePage->hetuwDrawScaledHandwritingFont( text, pos, guiScale, alignCenter );
+}
+
 void HetuwMod::drawPointFromPercent(float x, float y) {
 	pointFromPercentToMapCoords(x, y);
 	drawRect({x, y}, 5., 5.);
@@ -2613,6 +2630,8 @@ void HetuwMod::setOurFamilyName(const char* lastName) {
 	bFoundFamilyName = true;
 	ourFamilyName = string(lastName);
 	familiesInRange[0]->setName(ourFamilyName.c_str());
+	familiesInRange[0]->generation = ourLiveObject->lineage.size()+1;
+	familiesInRange[0]->raceName = getRaceName(getObject(ourLiveObject->displayID)); 
 }
 
 void HetuwMod::getOurFamilyName() {
@@ -3887,20 +3906,26 @@ void HetuwMod::getLastName(char* lastName, const char* name) {
 	else lastName[k] = 0;
 }
 
-void HetuwMod::setLastNameColor( const char* lastName, float alpha ) {
+void HetuwMod::getLastNameColor(const char* lastName, float rgba[]) {
 	if (!lastName) {
-		setDrawColor( 1, 1, 1, alpha );
+		rgba[0] = 1.0f; rgba[1] = 1.0f;
+		rgba[2] = 1.0f; rgba[3] = 1.0f;
 		return;
 	}
 	int num = 0;
 	for (int i=0; lastName[i] != 0; i++) {
 		num += (int)lastName[i];
 	}
-	setDrawColor(
-		0.15 + (num%100)/70.0f,  
-		0.15 + (num%182)/140.0f,  
-		0.15 + (num%77)/50.0f,  
-		alpha );
+	rgba[0] = 0.15 + (num%100)/70.0f;
+	rgba[1] = 0.15 + (num%182)/140.0f;
+	rgba[2] = 0.15 + (num%77)/50.0f;
+	rgba[3] = 1.0;
+}
+
+void HetuwMod::setLastNameColor( const char* lastName, float alpha ) {
+	float rgba[4];
+	getLastNameColor(lastName, rgba);
+	setDrawColor(rgba[0], rgba[1], rgba[2], alpha);
 }
 
 void HetuwMod::getSkinColor(float *rgba, ObjectRecord *obj) {
@@ -3915,6 +3940,20 @@ void HetuwMod::getSkinColor(float *rgba, ObjectRecord *obj) {
 		}
 	}
 	for (int i=0; i<3; i++) rgba[i] = 1.0f;
+}
+
+
+std::string HetuwMod::getRaceName(ObjectRecord *obj) {
+	float rgba[4];
+	getSkinColor(rgba, obj);
+	//printf("hetuw skinColor %f %f %f", rgba[0], rgba[1], rgba[2]);
+	//printf(" %s\n", Phex::colorsToHex(rgba, 3).c_str());
+	std::string hexColor = Phex::colorsToHex(rgba, 3);
+	if (Phex::strEquals(hexColor, hexRaceColor_brown)) return "BROWN";
+	if (Phex::strEquals(hexColor, hexRaceColor_ginger)) return "GINGER";
+	if (Phex::strEquals(hexColor, hexRaceColor_white)) return "WHITE";
+	if (Phex::strEquals(hexColor, hexRaceColor_black)) return "BLACK";
+	return "UNKOWN";
 }
 
 void HetuwMod::updatePlayerToMap(LiveObject *o, bool deathMsg) {
@@ -3989,8 +4028,9 @@ void HetuwMod::updatePlayersInRangePanel() {
 
 		playersInRangeNum++;
 
+		ObjectRecord *obj = getObject(o->displayID);
 		int youngWoman = 0;
-		if ( !getObject( o->displayID )->male )
+		if ( !obj->male )
 			if ( livingLifePage->hetuwGetAge( o ) < 40 )
 				youngWoman = 1;
 
@@ -3999,6 +4039,7 @@ void HetuwMod::updatePlayersInRangePanel() {
 			familiesInRange[0]->youngWomenCount += youngWoman;
 			continue;
 		}
+
 
 		getLastName(lastName, o->name);
 		if (lastName[0] != 0) {
@@ -4012,6 +4053,8 @@ void HetuwMod::updatePlayersInRangePanel() {
 			if (!fam) {
 				fam = new FamilyInRange();
 				fam->setName(lastName);
+				fam->generation = o->lineage.size()+1;
+				fam->raceName = getRaceName(obj); 
 				familiesInRange.push_back(fam);
 			}
 			fam->count++;
@@ -4417,14 +4460,34 @@ void HetuwMod::drawPlayersInRangePanel() {
 	}
 	livingLifePage->hetuwDrawScaledHandwritingFont( text, textPos, guiScale, alignRight );
 
+	int mouseX, mouseY;
+	livingLifePage->hetuwGetMouseXY( mouseX, mouseY );
+	float recStartX = bckgrRecPos.x - bckgrRecWidthHalf;
+	float recEndX = bckgrRecPos.x + bckgrRecWidthHalf;
+	float recStartY, recEndY;
+
+	float lineHeight = 25*guiScale;
 	for (int k=0; (unsigned)k < familiesInRange.size(); k++) {
 		FamilyInRange* fam = familiesInRange[k];
 		if (k != 0 && fam->count <= 0) continue;
-		textPos.y -= 25*guiScale;
+		textPos.y -= lineHeight;
 		setLastNameColor(fam->name, 1.0f);
 		char text[32];
 		sprintf( text, "%s  F:%i  %i", fam->name, fam->youngWomenCount, fam->count);
 		livingLifePage->hetuwDrawScaledHandwritingFont( text, textPos, guiScale, alignRight );
+
+		recStartY = textPos.y - lineHeight/2;
+		recEndY = textPos.y + lineHeight/2;
+		if (mouseX >= recStartX && mouseX <= recEndX) {
+			if (mouseY >= recStartY && mouseY <= recEndY) {
+				doublePair descDrawPos = { (double)mouseX, (double)mouseY };
+				sprintf( text, "%s GEN:%i", fam->raceName.c_str(), fam->generation);
+				float rgba[4];
+				getLastNameColor(fam->name, rgba);
+				drawTextWithBckgr(descDrawPos, text, rgba);
+			}
+		}
+
 	}
 
 }
