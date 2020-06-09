@@ -4467,6 +4467,8 @@ void HetuwMod::drawPlayersInRangePanel() {
 	float recStartY, recEndY;
 
 	float lineHeight = 25*guiScale;
+
+	doublePair drawPos = { textPos.x, textPos.y };
 	for (int k=0; (unsigned)k < familiesInRange.size(); k++) {
 		FamilyInRange* fam = familiesInRange[k];
 		if (k != 0 && fam->count <= 0) continue;
@@ -4475,9 +4477,14 @@ void HetuwMod::drawPlayersInRangePanel() {
 		char text[32];
 		sprintf( text, "%s  F:%i  %i", fam->name, fam->youngWomenCount, fam->count);
 		livingLifePage->hetuwDrawScaledHandwritingFont( text, textPos, guiScale, alignRight );
+	}
+	for (int k=0; (unsigned)k < familiesInRange.size(); k++) {
+		FamilyInRange* fam = familiesInRange[k];
+		if (k != 0 && fam->count <= 0) continue;
+		drawPos.y -= lineHeight;
 
-		recStartY = textPos.y - lineHeight/2;
-		recEndY = textPos.y + lineHeight/2;
+		recStartY = drawPos.y - lineHeight/2;
+		recEndY = drawPos.y + lineHeight/2;
 		if (mouseX >= recStartX && mouseX <= recEndX) {
 			if (mouseY >= recStartY && mouseY <= recEndY) {
 				doublePair descDrawPos = { (double)mouseX, (double)mouseY };
@@ -4487,7 +4494,6 @@ void HetuwMod::drawPlayersInRangePanel() {
 				drawTextWithBckgr(descDrawPos, text, rgba);
 			}
 		}
-
 	}
 
 }
