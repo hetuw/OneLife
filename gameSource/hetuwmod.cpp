@@ -375,7 +375,7 @@ void HetuwMod::initHelpText() {
 	helpTextSearch[2] = "Type in the name of the object you want to find";
 	helpTextSearch[3] = "Put a . at the end for an exact search";
 
-	helpTextSearch[4] = "Remove the last search term with CTRL + ";
+	helpTextSearch[4] = "Remove the last search term with SHIFT + ";
 	helpTextSearch[4] += toupper(charKey_Search);
 
 	helpTextSearch[5] = "Or click on it in the list";
