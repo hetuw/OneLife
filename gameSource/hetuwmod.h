@@ -368,6 +368,7 @@ public:
 	static bool phexIsEnabled;
 	static std::string phexIp;
 	static int phexPort;
+	static bool debugPhex;
 
 	static HetuwFont *customFont;
 

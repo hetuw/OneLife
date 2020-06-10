@@ -260,6 +260,7 @@ HetuwMod::IntervalTimed HetuwMod::intervalVogMove(0.1);
 bool HetuwMod::phexIsEnabled = true;
 std::string HetuwMod::phexIp = "phexonelife.duckdns.org";
 int HetuwMod::phexPort = 6567;
+bool HetuwMod::debugPhex = false;
 
 bool HetuwMod::bDrawBiomeInfo = false;
 
@@ -886,6 +887,10 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 		Phex::allowServerCoords = bool(value[0]-48);
 		return true;
 	}
+	if (strstr(name, "phex_debug")) {
+		debugPhex = bool(value[0]-48);
+		return true;
+	}
 	if (strstr(name, "drawbiomeinfo")) {
 		bDrawBiomeInfo = bool(value[0]-48);
 		return true;
@@ -1051,6 +1056,7 @@ void HetuwMod::initSettings() {
 	ofs << "phex_ip = " << phexIp << endl;
 	ofs << "phex_port = " << phexPort << endl;
 	ofs << "phex_coords = " << (char)(Phex::allowServerCoords+48) << endl;
+	if (debugPhex) ofs << "phex_debug = " << (char)(debugPhex+48) << endl;
 	ofs << endl;
 	ofs << "keep_button_pressed_to_fixcamera = " << (char)(bHoldDownTo_FixCamera+48) << endl;
 	ofs << "keep_button_pressed_to_findyum = " << (char)(bHoldDownTo_FindYum+48) << endl;

@@ -110,7 +110,7 @@ void Phex::init() {
 	tcp.init(HetuwMod::phexIp, HetuwMod::phexPort, &onReceivedMessage, &onConnectionStatusChanged);
 	tcp.logTag = "Phex";
 	tcp.charEnd = PHEX_CHAR_END;
-	tcp.verbose = false;
+	tcp.verbose = HetuwMod::debugPhex;
 	tcp.connect();
 
 	textInRecPaddingX = 0.01;
