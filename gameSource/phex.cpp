@@ -81,7 +81,7 @@ Phex::ChatWindow Phex::mainChatWindow;
 
 HetuwMod::KeyHandler Phex::keyHandler(&onKey);
 
-bool Phex::allowServerCoords = false;
+bool Phex::allowServerCoords = true;
 
 bool Phex::sendBiomeDataActive = false;
 char Phex::biomeChunksSent[biomeChunksSentSize][biomeChunksSentSize];
@@ -846,6 +846,10 @@ void Phex::handleChatCommand(std::string input) {
 		//addCmdMessageToChatWindow("invalid command", CMD_MSG_ERROR);
 		return;
 	}
+
+	std::string sendToServer = "USER_CMD "+input.substr(1, input.length()-1);
+	tcp.send(sendToServer);
+
 	if (chatCommands.find(command) == chatCommands.end()) {
 		addCmdMessageToChatWindow("unknown command "+command, CMD_MSG_ERROR);
 		return;

@@ -311,6 +311,7 @@ public:
 	static int tutMessageOffsetX2;
 	
 	static int cfgVersionNumber;
+	static int cfgVersionRead;
 
 	static unsigned char charKey_Up;
 	static unsigned char charKey_Down;

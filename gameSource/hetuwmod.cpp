@@ -57,7 +57,8 @@ int HetuwMod::magnetMoveDir = -1;
 int HetuwMod::magnetWrongMoveDir = -1;
 int HetuwMod::magnetMoveCount = 0;
 
-int HetuwMod::cfgVersionNumber = 1;
+int HetuwMod::cfgVersionNumber = 2;
+int HetuwMod::cfgVersionRead = 2;
 
 unsigned char HetuwMod::charKey_Up;
 unsigned char HetuwMod::charKey_Down;
@@ -815,6 +816,11 @@ bool HetuwMod::setCharKey( char unsigned &key, const char *value ) {
 bool HetuwMod::setSetting( const char* name, const char* value ) {
 	if (strlen(value) < 1) return false;
 
+	if (strstr(name, "cfg_version")) {
+		cfgVersionRead = stoi(value);
+		return true;
+	}
+
 	if (strstr(name, "key_up")) return setCharKey( charKey_Up, value );
 	if (strstr(name, "key_down")) return setCharKey( charKey_Down, value );
 	if (strstr(name, "key_left")) return setCharKey( charKey_Left, value );
@@ -992,6 +998,10 @@ void HetuwMod::initSettings() {
 		}
 	}
 	ifs.close();
+
+	if (cfgVersionRead < 2) {
+		Phex::allowServerCoords = true;
+	}
 
 	ofstream ofs( hetuwSettingsFileName, ofstream::out );
 
