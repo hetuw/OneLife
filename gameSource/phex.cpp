@@ -1181,14 +1181,19 @@ bool Phex::onKeyDown(unsigned char inASCII) {
 		else onPhexKeyPressed();
 		return true;
 	}
-	keyHandler.onKeyDown(inASCII);
+
+	// 8 = backspace -> disable keyHandler except for backspace because of unknown bug
+	if (inASCII != 8) onKey(inASCII);
+	else keyHandler.onKeyDown(inASCII);
+
 	if (!hasFocus) return false;
 	return true;
 }
 
 bool Phex::onKeyUp(unsigned char inASCII) {
 	if (!HetuwMod::phexIsEnabled) return false;
-	keyHandler.onKeyUp(inASCII);
+	// 8 = backspace -> disable keyHandler except for backspace because of unknown bug
+	if (inASCII == 8) keyHandler.onKeyUp(inASCII);
 	if (!hasFocus) return false;
 	return true;
 }
