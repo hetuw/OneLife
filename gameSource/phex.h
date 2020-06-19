@@ -303,6 +303,7 @@ public:
 	static void serverCmdUSERNAME(std::vector<std::string> input);
 	static void serverCmdUSERNAME_ERR(std::vector<std::string> input);
 	static void serverCmdSAY(std::vector<std::string> input);
+	static void serverCmdSAY_RAW(std::vector<std::string> input);
 	static void serverCmdHASH_USERNAME(std::vector<std::string> input);
 	static void serverCmdONLINE(std::vector<std::string> input);
 	static void serverCmdOFFLINE(std::vector<std::string> input);

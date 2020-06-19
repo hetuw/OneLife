@@ -277,6 +277,8 @@ void Phex::initServerCommands() {
 	serverCommands["USERNAME_ERR"].minWords = 2;
 	serverCommands["SAY"].func = &serverCmdSAY;
 	serverCommands["SAY"].minWords = 5;
+	serverCommands["SAY_RAW"].func = &serverCmdSAY_RAW;
+	serverCommands["SAY_RAW"].minWords = 2;
 	serverCommands["HASH_USERNAME"].func = serverCmdHASH_USERNAME;
 	serverCommands["HASH_USERNAME"].minWords = 2;
 	serverCommands["ONLINE"].func = serverCmdONLINE;
@@ -346,6 +348,10 @@ void Phex::serverCmdSAY(std::vector<std::string> input) {
 
 	chatElement.textToDraw = colorCodeNamesInChat+chatElement.name+": "+colorCodeWhite+chatElement.text;
 	mainChatWindow.addElement(chatElement);
+}
+
+void Phex::serverCmdSAY_RAW(std::vector<std::string> input) {
+	addCmdMessageToChatWindow(joinStr(input, " ", 1));
 }
 
 void Phex::serverCmdHASH_USERNAME(std::vector<std::string> input) {
