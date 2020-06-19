@@ -365,11 +365,13 @@ void Phex::serverCmdOFFLINE(std::vector<std::string> input) {
 }
 
 void Phex::serverCmdJOINED_CHANNEL(std::vector<std::string> input) {
-
+	createUser(input[1]);
+	users[input[1]].channel = input[2];
 }
 
 void Phex::serverCmdLEFT_CHANNEL(std::vector<std::string> input) {
-
+	createUser(input[1]);
+	users[input[1]].channel = "";
 }
 
 void Phex::serverCmdDISCONNECT(std::vector<std::string> input) {

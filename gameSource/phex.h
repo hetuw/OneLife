@@ -208,6 +208,7 @@ public:
 		std::string hash = "";
 		std::string name = ""; // might be empty
 		std::string displayName = ""; // to read call getUserDisplayName(User user), might be hash or name
+		std::string channel = ""; // might be empty
 		bool online = false;
 		int inGameServerPlayerID = -1;
 	};
