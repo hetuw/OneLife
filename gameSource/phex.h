@@ -1,7 +1,7 @@
 #ifndef PHEX_H
 #define PHEX_H
 
-#define PHEX_VERSION 4
+#define PHEX_VERSION 5
 #define PHEX_CHAR_END 4
 #define PHEX_MAX_INPUT_STR_LENGTH 127
 
