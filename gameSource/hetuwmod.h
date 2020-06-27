@@ -375,6 +375,8 @@ public:
 	static int phexPort;
 	static bool debugPhex;
 
+	static bool sendKeyEvents;
+
 	static HetuwFont *customFont;
 
 	static std::string helpTextSearch[];

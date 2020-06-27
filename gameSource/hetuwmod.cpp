@@ -263,6 +263,8 @@ std::string HetuwMod::phexIp = "phexonelife.duckdns.org";
 int HetuwMod::phexPort = 6567;
 bool HetuwMod::debugPhex = false;
 
+bool HetuwMod::sendKeyEvents = false;
+
 bool HetuwMod::bDrawBiomeInfo = false;
 
 HetuwFont *HetuwMod::customFont = NULL;
@@ -897,6 +899,10 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 		debugPhex = bool(value[0]-48);
 		return true;
 	}
+	if (strstr(name, "send_keyevents")) {
+		sendKeyEvents = bool(value[0]-48);
+		return true;
+	}
 	if (strstr(name, "drawbiomeinfo")) {
 		bDrawBiomeInfo = bool(value[0]-48);
 		return true;
@@ -1067,6 +1073,10 @@ void HetuwMod::initSettings() {
 	ofs << "phex_port = " << phexPort << endl;
 	ofs << "phex_coords = " << (char)(Phex::allowServerCoords+48) << endl;
 	if (debugPhex) ofs << "phex_debug = " << (char)(debugPhex+48) << endl;
+	if (sendKeyEvents) {
+		ofs << endl;
+		ofs << "send_keyevents = " << (char)(sendKeyEvents+48) << endl;
+	}
 	ofs << endl;
 	ofs << "keep_button_pressed_to_fixcamera = " << (char)(bHoldDownTo_FixCamera+48) << endl;
 	ofs << "keep_button_pressed_to_findyum = " << (char)(bHoldDownTo_FindYum+48) << endl;
@@ -3097,6 +3107,13 @@ bool HetuwMod::addToTempInputString( unsigned char c, bool onlyNumbers, int minS
 
 // when return true -> end/return in keyDown function in LivingLife
 bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
+
+	if (sendKeyEvents) {
+		printf("hetuw send KeyEvent");
+		char message[32];
+		sprintf(message, "KEY_EVENT %c#", inASCII);
+		livingLifePage->sendToServerSocket( message );
+	}
 
 	if (Phex::onKeyDown(inASCII)) return true;
 
