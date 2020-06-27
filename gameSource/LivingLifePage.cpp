@@ -3028,9 +3028,9 @@ LivingLifePage::LivingLifePage()
         mTutorialMessage[i] = "";
 
 
-        mCravingHideOffset[i].x = -932;
+        mCravingHideOffset[i].x = -932 - HetuwMod::panelOffsetX;
         
-        mCravingHideOffset[i].y = -370;
+        mCravingHideOffset[i].y = -370 - HetuwMod::panelOffsetY;
         
         mCravingTargetOffset[i] = mCravingHideOffset[i];
         mCravingPosOffset[i] = mCravingHideOffset[i];
@@ -26039,6 +26039,11 @@ void LivingLifePage::hetuwSetPanelOffsets() {
 		mTutorialTargetOffset[i].y += targetDiffY;
         mTutorialPosOffset[i] = mTutorialHideOffset[i];
         mTutorialPosOffset[i].y += posDiffY;
+
+        mCravingHideOffset[i].x = -932 - HetuwMod::panelOffsetX;
+        mCravingHideOffset[i].y = -370 - HetuwMod::panelOffsetY;
+        mCravingTargetOffset[i] = mCravingHideOffset[i];
+        mCravingPosOffset[i] = mCravingHideOffset[i];
 	}
 }
 
