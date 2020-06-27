@@ -26040,10 +26040,14 @@ void LivingLifePage::hetuwSetPanelOffsets() {
         mTutorialPosOffset[i] = mTutorialHideOffset[i];
         mTutorialPosOffset[i].y += posDiffY;
 
+		targetDiffY = mCravingTargetOffset[i].y - mCravingHideOffset[i].y;
+		posDiffY = mCravingPosOffset[i].y - mCravingHideOffset[i].y;
         mCravingHideOffset[i].x = -932 - HetuwMod::panelOffsetX;
         mCravingHideOffset[i].y = -370 - HetuwMod::panelOffsetY;
         mCravingTargetOffset[i] = mCravingHideOffset[i];
+		mCravingTargetOffset[i].y += targetDiffY;
         mCravingPosOffset[i] = mCravingHideOffset[i];
+		mCravingPosOffset[i].y += posDiffY;
 	}
 }
 
