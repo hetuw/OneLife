@@ -1344,6 +1344,7 @@ typedef enum messageType {
     TOOL_SLOTS,
     HOMELAND,
     FLIP,
+    CRAVING,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1511,6 +1512,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "FL" ) == 0 ) {
         returnValue = FLIP;
+        }
+    else if( strcmp( copy, "CR" ) == 0 ) {
+        returnValue = CRAVING;
         }
     
     delete [] copy;
@@ -3022,11 +3026,25 @@ LivingLifePage::LivingLifePage()
         mTutorialExtraOffset[i].y = 0;
         
         mTutorialMessage[i] = "";
+
+
+        mCravingHideOffset[i].x = -932;
+        
+        mCravingHideOffset[i].y = -370;
+        
+        mCravingTargetOffset[i] = mCravingHideOffset[i];
+        mCravingPosOffset[i] = mCravingHideOffset[i];
+
+        mCravingExtraOffset[i].x = 0;
+        mCravingExtraOffset[i].y = 0;
+        
+        mCravingMessage[i] = NULL;        
         }
     
     mLiveTutorialSheetIndex = -1;
     mLiveTutorialTriggerNumber = -1;
-
+    
+    mLiveCravingSheetIndex = -1;
 
 
     mMap = new int[ mMapD * mMapD ];
@@ -3371,6 +3389,9 @@ LivingLifePage::~LivingLifePage() {
         
         if( mHintMessage[i] != NULL ) {
             delete [] mHintMessage[i];
+            }
+        if( mCravingMessage[i] != NULL ) {
+            delete [] mCravingMessage[i];
             }
         }
     
@@ -9505,174 +9526,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
-    int lineSpacing = 20;
 
-    doublePair notePos = add( mNotePaperPosOffset, lastScreenViewCenter );
-
-    if( ! equal( mNotePaperPosOffset, mNotePaperHideOffset ) ) {
-        setDrawColor( 1, 1, 1, 1 );
-        drawSprite( mNotePaperSprite, notePos );
-        
-
-        doublePair drawPos = notePos;
-
-        drawPos.x += 160;
-        drawPos.y += 79;
-        drawPos.y += 22;
-        
-        drawPos.x += 27;
-
-        setDrawColor( 0, 0, 0, 1 );
-        
-        handwritingFont->drawString( translate( "enterHint" ), 
-                                     drawPos,
-                                     alignRight );
-        }
-        
-
-    
-
-    doublePair paperPos = add( mNotePaperPosOffset, lastScreenViewCenter );
-
-    if( mSayField.isFocused() ) {
-        char *partialSay = mSayField.getText();
-
-        char *strUpper = stringToUpperCase( partialSay );
-        
-        delete [] partialSay;
-
-        SimpleVector<char*> *lines = splitLines( strUpper, 345 );
-        
-        mNotePaperPosTargetOffset.y = mNotePaperHideOffset.y + 58;
-        
-        if( lines->size() > 1 ) {    
-            mNotePaperPosTargetOffset.y += 20 * ( lines->size() - 1 );
-            }
-        
-        doublePair drawPos = paperPos;
-
-        drawPos.x -= 160;
-        drawPos.y += 79;
-
-
-        doublePair drawPosTemp = drawPos;
-        
-
-        for( int i=0; i<mLastKnownNoteLines.size(); i++ ) {
-            char *oldString = mLastKnownNoteLines.getElementDirect( i );
-            int oldLen = strlen( oldString );
-            
-            SimpleVector<doublePair> charPos;        
-                    
-            pencilFont->getCharPos( &charPos, 
-                                    oldString,
-                                    drawPosTemp,
-                                    alignLeft );
-            
-            int newLen = 0;
-            
-            if( i < lines->size() ) {
-                // compare lines
-
-                newLen = strlen( lines->getElementDirect( i ) );
-                
-                }
-            
-
-            // any extra chars?
-                    
-            for( int j=newLen; j<oldLen; j++ ) {
-                mErasedNoteChars.push_back( oldString[j] );
-                       
-                mErasedNoteCharOffsets.push_back(
-                    sub( charPos.getElementDirect( j ),
-                         paperPos ) );
-                
-                mErasedNoteCharFades.push_back( 1.0f );
-                }
-            
-            drawPosTemp.y -= lineSpacing;
-            }
-        mLastKnownNoteLines.deallocateStringElements();
-        
-        for( int i=0; i<lines->size(); i++ ) {
-            mLastKnownNoteLines.push_back( 
-                stringDuplicate( lines->getElementDirect(i) ) );
-            }
-        
-
-    
-        delete [] strUpper;
-
-        
-        
-        setDrawColor( 0, 0, 0, 1 );
-        
-        mCurrentNoteChars.deleteAll();
-        mCurrentNoteCharOffsets.deleteAll();
-        
-        for( int i=0; i<lines->size(); i++ ) {
-            char *line = lines->getElementDirect( i );
-            
-            pencilFont->drawString( line, drawPos,
-                                    alignLeft );
-
-            SimpleVector<doublePair> charPos;        
-                    
-            pencilFont->getCharPos( &charPos, 
-                                    line,
-                                    drawPos,
-                                    alignLeft );
-
-            int lineSize = strlen( line );
-            
-            for( int j=0; j<lineSize; j++ ) {
-                mCurrentNoteChars.push_back( line[j] );
-                mCurrentNoteCharOffsets.push_back( 
-                    sub( charPos.getElementDirect( j ), paperPos ) );
-                }
-
-            drawPos.y -= lineSpacing;
-            }
-        lines->deallocateStringElements();
-        delete lines;
-        }
-    else {
-        mNotePaperPosTargetOffset = mNotePaperHideOffset;
-
-        doublePair drawPos = paperPos;
-
-        drawPos.x -= 160;
-        drawPos.y += 79;
-
-        for( int i=0; i<mLastKnownNoteLines.size(); i++ ) {
-            // whole line gone
-            
-            char *oldString = mLastKnownNoteLines.getElementDirect( i );
-            int oldLen = strlen( oldString );
-            
-            SimpleVector<doublePair> charPos;        
-                    
-            pencilFont->getCharPos( &charPos, 
-                                    oldString,
-                                    drawPos,
-                                    alignLeft );
-                    
-            for( int j=0; j<oldLen; j++ ) {
-                mErasedNoteChars.push_back( oldString[j] );
-                        
-                mErasedNoteCharOffsets.push_back(
-                    sub( charPos.getElementDirect( j ),
-                         paperPos ) );
-                
-                mErasedNoteCharFades.push_back( 1.0f );
-                }
-            
-            drawPos.y -= lineSpacing;
-
-            }
-        mLastKnownNoteLines.deallocateStringElements();
-        }
     
     
     const char *shiftHintKey = "shiftHint";
@@ -9863,18 +9717,24 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
+
+
+
+    double highestCravingYOffset = 0;
     
-    setDrawColor( 0, 0, 0, 1 );
-    for( int i=0; i<mErasedNoteChars.size(); i++ ) {
-        setDrawFade( mErasedNoteCharFades.getElementDirect( i ) *
-                     pencilErasedFontExtraFade );
-        
-        pencilErasedFont->
-            drawCharacterSprite( 
-                mErasedNoteChars.getElementDirect( i ), 
-                add( paperPos, 
-                     mErasedNoteCharOffsets.getElementDirect( i ) ) );
+    if( mLiveCravingSheetIndex != -1 ) {
+        // craving showing
+        // find highest one
+        highestCravingYOffset = 0;
+                
+        for( int c=0; c<NUM_HINT_SHEETS; c++ ) {
+            double offset = mCravingPosOffset[c].y - mCravingHideOffset[c].y;
+            if( offset > highestCravingYOffset ) {
+                highestCravingYOffset = offset;
+                }
+            }
         }
+    
 
 
 
@@ -9935,6 +9795,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
                     }
                 }
             
+            slipPos.y += lrint( highestCravingYOffset / 1.75 );
 
             drawSprite( mHungerSlipSprites[i], slipPos );
             }
@@ -9947,6 +9808,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
         if( ! equal( mYumSlipPosOffset[i], mYumSlipHideOffset[i] ) ) {
             doublePair slipPos = 
                 add( mYumSlipPosOffset[i], lastScreenViewCenter );
+        
+            slipPos.y += lrint( highestCravingYOffset / 1.75 );
+            
             setDrawColor( 1, 1, 1, 1 );
             drawSprite( mYumSlipSprites[i], slipPos );
             
@@ -9977,10 +9841,232 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
 
+    
+    
+    // now draw craving sheets
+    if( mLiveCravingSheetIndex > -1 )
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        if( ! equal( mCravingPosOffset[i], mCravingHideOffset[i] ) ) {
+            
+            doublePair cravingPos  = 
+                add( mCravingPosOffset[i], lastScreenViewCenter );
+            
+            cravingPos = add( cravingPos, mCravingExtraOffset[i] );
+            
+            setDrawColor( 1, 1, 1, 1.0 );
+            // flip, don't rotate
+            drawSprite( mHintSheetSprites[i], cravingPos, 1.0, 0.0, true );
+                
+            setDrawColor( 0, 0, 0, 1.0f );
+            
+            doublePair lineStart = cravingPos;
+            
+            lineStart.x += 298;
+            lineStart.x -= mCravingExtraOffset[i].x;
+            
+            lineStart.y += 26;
+                
+            handwritingFont->drawString( mCravingMessage[i],
+                                         lineStart, alignLeft );
+            
+            }
+        }
+
 
 
     
-    // info panel at bottom
+    // finally, draw chat note sheet, so that it covers craving sheet
+    // whenever it is up.
+
+    int lineSpacing = 20;
+
+    doublePair notePos = add( mNotePaperPosOffset, lastScreenViewCenter );
+
+    if( ! equal( mNotePaperPosOffset, mNotePaperHideOffset ) ) {
+        setDrawColor( 1, 1, 1, 1 );
+        drawSprite( mNotePaperSprite, notePos );
+        
+
+        doublePair drawPos = notePos;
+
+        drawPos.x += 160;
+        drawPos.y += 79;
+        drawPos.y += 22;
+        
+        drawPos.x += 27;
+
+        setDrawColor( 0, 0, 0, 1 );
+        
+        handwritingFont->drawString( translate( "enterHint" ), 
+                                     drawPos,
+                                     alignRight );
+        }
+        
+
+    
+
+    doublePair paperPos = add( mNotePaperPosOffset, lastScreenViewCenter );
+
+    if( mSayField.isFocused() ) {
+        char *partialSay = mSayField.getText();
+
+        char *strUpper = stringToUpperCase( partialSay );
+        
+        delete [] partialSay;
+
+        SimpleVector<char*> *lines = splitLines( strUpper, 345 );
+        
+        mNotePaperPosTargetOffset.y = mNotePaperHideOffset.y + 58;
+        
+        if( lines->size() > 1 ) {    
+            mNotePaperPosTargetOffset.y += 20 * ( lines->size() - 1 );
+            }
+        
+        doublePair drawPos = paperPos;
+
+        drawPos.x -= 160;
+        drawPos.y += 79;
+
+
+        doublePair drawPosTemp = drawPos;
+        
+
+        for( int i=0; i<mLastKnownNoteLines.size(); i++ ) {
+            char *oldString = mLastKnownNoteLines.getElementDirect( i );
+            int oldLen = strlen( oldString );
+            
+            SimpleVector<doublePair> charPos;        
+                    
+            pencilFont->getCharPos( &charPos, 
+                                    oldString,
+                                    drawPosTemp,
+                                    alignLeft );
+            
+            int newLen = 0;
+            
+            if( i < lines->size() ) {
+                // compare lines
+
+                newLen = strlen( lines->getElementDirect( i ) );
+                
+                }
+            
+
+            // any extra chars?
+                    
+            for( int j=newLen; j<oldLen; j++ ) {
+                mErasedNoteChars.push_back( oldString[j] );
+                       
+                mErasedNoteCharOffsets.push_back(
+                    sub( charPos.getElementDirect( j ),
+                         paperPos ) );
+                
+                mErasedNoteCharFades.push_back( 1.0f );
+                }
+            
+            drawPosTemp.y -= lineSpacing;
+            }
+        mLastKnownNoteLines.deallocateStringElements();
+        
+        for( int i=0; i<lines->size(); i++ ) {
+            mLastKnownNoteLines.push_back( 
+                stringDuplicate( lines->getElementDirect(i) ) );
+            }
+        
+
+    
+        delete [] strUpper;
+
+        
+        
+        setDrawColor( 0, 0, 0, 1 );
+        
+        mCurrentNoteChars.deleteAll();
+        mCurrentNoteCharOffsets.deleteAll();
+        
+        for( int i=0; i<lines->size(); i++ ) {
+            char *line = lines->getElementDirect( i );
+            
+            pencilFont->drawString( line, drawPos,
+                                    alignLeft );
+
+            SimpleVector<doublePair> charPos;        
+                    
+            pencilFont->getCharPos( &charPos, 
+                                    line,
+                                    drawPos,
+                                    alignLeft );
+
+            int lineSize = strlen( line );
+            
+            for( int j=0; j<lineSize; j++ ) {
+                mCurrentNoteChars.push_back( line[j] );
+                mCurrentNoteCharOffsets.push_back( 
+                    sub( charPos.getElementDirect( j ), paperPos ) );
+                }
+
+            drawPos.y -= lineSpacing;
+            }
+        lines->deallocateStringElements();
+        delete lines;
+        }
+    else {
+        mNotePaperPosTargetOffset = mNotePaperHideOffset;
+
+        doublePair drawPos = paperPos;
+
+        drawPos.x -= 160;
+        drawPos.y += 79;
+
+        for( int i=0; i<mLastKnownNoteLines.size(); i++ ) {
+            // whole line gone
+            
+            char *oldString = mLastKnownNoteLines.getElementDirect( i );
+            int oldLen = strlen( oldString );
+            
+            SimpleVector<doublePair> charPos;        
+                    
+            pencilFont->getCharPos( &charPos, 
+                                    oldString,
+                                    drawPos,
+                                    alignLeft );
+                    
+            for( int j=0; j<oldLen; j++ ) {
+                mErasedNoteChars.push_back( oldString[j] );
+                        
+                mErasedNoteCharOffsets.push_back(
+                    sub( charPos.getElementDirect( j ),
+                         paperPos ) );
+                
+                mErasedNoteCharFades.push_back( 1.0f );
+                }
+            
+            drawPos.y -= lineSpacing;
+
+            }
+        mLastKnownNoteLines.deallocateStringElements();
+        }
+    
+
+
+    setDrawColor( 0, 0, 0, 1 );
+    for( int i=0; i<mErasedNoteChars.size(); i++ ) {
+        setDrawFade( mErasedNoteCharFades.getElementDirect( i ) *
+                     pencilErasedFontExtraFade );
+        
+        pencilErasedFont->
+            drawCharacterSprite( 
+                mErasedNoteChars.getElementDirect( i ), 
+                add( paperPos, 
+                     mErasedNoteCharOffsets.getElementDirect( i ) ) );
+        }
+
+
+
+
+
+
+    // info panel at bottom, over top of all the other slips
     setDrawColor( 1, 1, 1, 1 );
     doublePair panelPos = lastScreenViewCenter;
     panelPos.y -= 242 + 32 + 16 + 6;
@@ -12329,6 +12415,51 @@ void LivingLifePage::displayGlobalMessage( char *inMessage ) {
 
 
 
+
+void LivingLifePage::setNewCraving( int inFoodID, int inYumBonus ) {
+    char *foodDescription = 
+        stringToUpperCase( getObject( inFoodID )->description );
+                
+    stripDescriptionComment( foodDescription );
+
+    char *message = 
+        autoSprintf( "%s: %s (+%d)", translate( "craving"), 
+                     foodDescription, inYumBonus );
+    
+    delete [] foodDescription;
+    
+    
+    if( mLiveCravingSheetIndex > -1 ) {
+        // hide old craving sheet
+        mCravingTargetOffset[ mLiveCravingSheetIndex ] =
+            mCravingHideOffset[ mLiveCravingSheetIndex ];
+        }
+    mLiveCravingSheetIndex ++;
+    
+    if( mLiveCravingSheetIndex >= NUM_HINT_SHEETS ) {
+        mLiveCravingSheetIndex -= NUM_HINT_SHEETS;
+        }
+    
+    if( mCravingMessage[ mLiveCravingSheetIndex ] != NULL ) {
+        delete [] mCravingMessage[ mLiveCravingSheetIndex ];
+        mCravingMessage[ mLiveCravingSheetIndex ] = NULL;
+        }
+
+    mCravingMessage[ mLiveCravingSheetIndex ] = message;
+    
+    mCravingTargetOffset[ mLiveCravingSheetIndex ] =
+        mCravingHideOffset[ mLiveCravingSheetIndex ];
+    
+    mCravingTargetOffset[ mLiveCravingSheetIndex ].y += 64;
+    
+    double longestLine = getLongestLine( 
+        (char*)( mCravingMessage[ mLiveCravingSheetIndex ] ) );
+    
+    mCravingExtraOffset[ mLiveCravingSheetIndex ].x = longestLine;
+    }
+
+
+
 // color list from here:
 // https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
 
@@ -13351,6 +13482,49 @@ void LivingLifePage::step() {
                 }
             }
         }
+
+
+
+
+    // pos for craving sheets
+    // don't start sliding first sheet until map loaded
+    if( mLiveCravingSheetIndex >= 0 && mDoneLoadingFirstObjectSet )
+    for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
+        
+        if( ! equal( mCravingPosOffset[i], mCravingTargetOffset[i] ) ) {
+            doublePair delta = 
+                sub( mCravingTargetOffset[i], mCravingPosOffset[i] );
+            
+            double d = distance( mCravingTargetOffset[i], 
+                                 mCravingPosOffset[i] );
+            
+            
+            if( d <= 1 ) {
+                mCravingPosOffset[i] = mCravingTargetOffset[i];
+                }
+            else {
+                int speed = frameRateFactor * 4;
+                
+                if( d < 8 ) {
+                    speed = lrint( frameRateFactor * d / 2 );
+                    }
+                
+                if( speed > d ) {
+                    speed = floor( d );
+                    }
+                
+                if( speed < 1 ) {
+                    speed = 1;
+                    }
+                
+                doublePair dir = normalize( delta );
+                
+                mCravingPosOffset[i] = 
+                    add( mCravingPosOffset[i],
+                         mult( dir, speed ) );
+                }
+            }
+        }
     
 
 
@@ -13837,6 +14011,17 @@ void LivingLifePage::step() {
                 }
             
             delete [] lines;
+            }
+        else if( type == CRAVING ) {
+            int foodID = -1;
+            int bonus = 0;
+            
+            int numRead = 
+                sscanf( message, "CR\n%d %d", &foodID, &bonus );
+            
+            if( numRead == 2 ) {
+                setNewCraving( foodID, bonus );
+                }
             }
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
@@ -15192,6 +15377,18 @@ void LivingLifePage::step() {
                             
                             delete [] ints[0];
 
+                            SimpleVector<int> oldContained;
+                            // player triggered
+                            // with no changed to container
+                            // look for contained change
+                            if( speed == 0 &&
+                                old == newID && 
+                                responsiblePlayerID < 0 ) {
+                            
+                                oldContained.push_back_other( 
+                                    &( mMapContainedStacks[mapI] ) );
+                                }
+                            
                             mMapContainedStacks[mapI].deleteAll();
                             mMapSubContainedStacks[mapI].deleteAll();
                             
@@ -15233,6 +15430,93 @@ void LivingLifePage::step() {
                                 delete [] ints[ c + 1 ];
                                 }
                             delete [] ints;
+
+                            if( speed == 0 &&
+                                old == newID && 
+                                responsiblePlayerID < 0
+                                &&
+                                oldContained.size() ==
+                                mMapContainedStacks[mapI].size() ) {
+                                // no change in number of items
+                                // count number that change
+                                int changeCount = 0;
+                                int changeIndex = -1;
+                                for( int i=0; i<oldContained.size(); i++ ) {
+                                    if( oldContained.
+                                        getElementDirect( i ) 
+                                        !=
+                                        mMapContainedStacks[mapI].
+                                        getElementDirect( i ) ) {
+                                        changeCount++;
+                                        changeIndex = i;
+                                        }
+                                    }
+                                if( changeCount == 1 ) {
+                                    // single item changed
+                                    // play sound for it?
+
+                                    int oldContID =
+                                        oldContained.
+                                        getElementDirect( changeIndex );
+                                    int newContID =
+                                        mMapContainedStacks[mapI].
+                                        getElementDirect( changeIndex );
+                                    
+                                    
+                                    // watch out for swap case, with single
+                                    // item
+                                    // don't play sound then
+                                    LiveObject *causingPlayer =
+                                        getLiveObject( - responsiblePlayerID );
+
+                                    if( causingPlayer != NULL &&
+                                        causingPlayer->holdingID 
+                                        != oldContID ) {
+                                        
+
+                                        ObjectRecord *newObj = 
+                                            getObject( newContID );
+                                        
+                                        if( shouldCreationSoundPlay(
+                                                oldContID, newContID ) ) {
+                                            if( newObj->
+                                                creationSound.numSubSounds 
+                                                > 0 ) {
+                                                
+                                                playSound( 
+                                                    newObj->creationSound,
+                                                    getVectorFromCamera( 
+                                                        x, y ) );
+                                                }
+                                            }
+                                        else if(
+                                            causingPlayer != NULL &&
+                                            causingPlayer->holdingID == 0 &&
+                                            bothSameUseParent( newContID,
+                                                               oldContID ) &&
+                                            newObj->
+                                            usingSound.numSubSounds > 0 ) {
+                                        
+                                            ObjectRecord *oldObj = 
+                                                getObject( oldContID );
+                                        
+                                            // only play sound if new is
+                                            // less used than old (filling back
+                                            // up sound)
+                                            if( getObjectParent( oldContID ) ==
+                                                newContID ||
+                                                oldObj->thisUseDummyIndex <
+                                                newObj->thisUseDummyIndex ) {
+                                        
+                                                playSound( 
+                                                    newObj->usingSound,
+                                                    getVectorFromCamera( 
+                                                        x, y ) );
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         else {
                             // a single int
@@ -16834,7 +17118,8 @@ void LivingLifePage::step() {
                             //existing->lastAnimFade = 0;
                             if( oldHeld != 0 ) {
                                 if( o.id == ourID ) {
-                                    if( existing->curAnim == doing ) {
+                                    if( existing->curAnim == doing ||
+                                        existing->curAnim == eating ) {
                                         addNewAnimPlayerOnly( 
                                             existing, ground );
                                         }
@@ -20133,7 +20418,7 @@ void LivingLifePage::step() {
                         // show either full or starving
                         // only show starving at 2 food or lower
                         // starving means you can nurse/eat
-                        if( ourLiveObject->foodStore <= 2 ) {
+                        if( ourLiveObject->foodStore + mYumBonus <= 2 ) {
                              setMusicLoudness( 0 );
                              mHungerSlipVisible = 2;
                              mPulseHungerSound = true;
@@ -20146,12 +20431,12 @@ void LivingLifePage::step() {
 
                         mHungerSlipVisible = 0;
                         }
-                    else if( ourLiveObject->foodStore <= 4 &&
+                    else if( ourLiveObject->foodStore + mYumBonus <= 4 &&
                              curAge >= 10000 ) { // hetuw mod - always play hunger sounds
                         mHungerSlipVisible = 2;
                         mPulseHungerSound = false;
                         }
-                    else if( ourLiveObject->foodStore <= 4 &&
+                    else if( ourLiveObject->foodStore + mYumBonus <= 4 &&
                              curAge < 10000 ) { // hetuw mod - always play hunger sounds
                         
                         // don't play hunger sounds at end of life
@@ -20182,7 +20467,7 @@ void LivingLifePage::step() {
                                 }
                             }
                         }
-                    else if( ourLiveObject->foodStore <= 8 ) {
+                    else if( ourLiveObject->foodStore + mYumBonus <= 8 ) {
                         mHungerSlipVisible = 1;
                         mPulseHungerSound = false;
                         }
@@ -20190,7 +20475,7 @@ void LivingLifePage::step() {
                         mHungerSlipVisible = -1;
                         }
 
-                    if( ourLiveObject->foodStore > 4 ||
+                    if( ourLiveObject->foodStore + mYumBonus > 4 ||
                         computeCurrentAge( ourLiveObject ) >= 60 ) {
                         // restore music
                         setMusicLoudness( musicLoudness );
@@ -20586,6 +20871,29 @@ void LivingLifePage::step() {
         
         if( o->currentEmot != NULL ) {
             if( game_getCurrentTime() > o->emotClearETATime ) {
+                
+                // play decay sounds for this emot
+
+                if( !o->outOfRange ) {
+                    for( int s=0; s<getEmotionNumObjectSlots(); s++ ) {
+                                    
+                        int id = getEmotionObjectByIndex( o->currentEmot, s );
+                                    
+                        if( id > 0 ) {
+                            ObjectRecord *obj = getObject( id );
+                                        
+                            if( obj->decaySound.numSubSounds > 0 ) {    
+                                    
+                                playSound( 
+                                    obj->decaySound,
+                                    getVectorFromCamera( 
+                                        o->currentPos.x,
+                                        o->currentPos.y ) );
+                                }
+                            }
+                        }
+                    }
+                
                 o->currentEmot = NULL;
                 }
             }
@@ -21833,11 +22141,19 @@ void LivingLifePage::makeActive( char inFresh ) {
         }
 
     mLiveTutorialSheetIndex = -1;
+    mLiveCravingSheetIndex = -1;
     
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {    
         mTutorialTargetOffset[i] = mTutorialHideOffset[i];
         mTutorialPosOffset[i] = mTutorialHideOffset[i];
         mTutorialMessage[i] = "";
+
+        mCravingTargetOffset[i] = mCravingHideOffset[i];
+        mCravingPosOffset[i] = mCravingHideOffset[i];
+        if( mCravingMessage[i] != NULL ) {
+            delete [] mCravingMessage[i];
+            mCravingMessage[i] = NULL;
+            }
         }
     
     
@@ -23815,6 +24131,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         }
 
     
+    // for USE actions that specify a slot number
+    int useExtraIParam = -1;
+    
 
     if( !killMode && 
         destID == 0 && !modClick && !tryingToPickUpBaby && !useOnBabyLater && 
@@ -24228,6 +24547,19 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                             }
                         }
                     }
+                else {
+                    // in case of mod-click, if we clicked a contained item
+                    // directly, and it has a bare hand transition,
+                    // consider doing that as a USE
+                    ObjectRecord *destObj = getObject( destID );
+                    
+                    if( destObj->numSlots > p.hitSlotIndex &&
+                        strstr( destObj->description, "+useOnContained" )
+                        != NULL ) {
+                        action = "USE";
+                        useExtraIParam = p.hitSlotIndex;
+                        }
+                    }
                 
 
                 send = true;
@@ -24285,7 +24617,20 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                             }
                         }
                     }
+                else if( ourLiveObject->holdingID > 0 &&
+                         p.hitSlotIndex != -1 &&
+                         getNumContainerSlots( destID ) > p.hitSlotIndex ) {
+                    
+                    // USE on a slot?  Only if allowed by container
 
+                    ObjectRecord *destObj = getObject( destID );
+                    
+                    if( strstr( destObj->description, "+useOnContained" )
+                        != NULL ) {
+                        useExtraIParam = p.hitSlotIndex;
+                        }
+                    }
+                
                 send = true;
                 }
             
@@ -24300,7 +24645,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 // optional ID param for USE, specifying that we clicked
                 // on something
                 delete [] extra;
-                extra = autoSprintf( " %d", destID );
+                
+                if( useExtraIParam != -1 ) {
+                    extra = autoSprintf( " %d %d", destID, useExtraIParam );
+                    }
+                else {
+                    extra = autoSprintf( " %d", destID );
+                    }
                 }
             
             
