@@ -899,6 +899,10 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 		debugPhex = bool(value[0]-48);
 		return true;
 	}
+	if (strstr(name, "phex_channel")) {
+		Phex::forceChannel = string(value);
+		return true;
+	}
 	if (strstr(name, "send_keyevents")) {
 		sendKeyEvents = bool(value[0]-48);
 		return true;
@@ -1072,6 +1076,7 @@ void HetuwMod::initSettings() {
 	ofs << "phex_ip = " << phexIp << endl;
 	ofs << "phex_port = " << phexPort << endl;
 	ofs << "phex_coords = " << (char)(Phex::allowServerCoords+48) << endl;
+	if (Phex::forceChannel.length() > 1) ofs << "phex_channel = " << Phex::forceChannel << endl;
 	if (debugPhex) ofs << "phex_debug = " << (char)(debugPhex+48) << endl;
 	if (sendKeyEvents) {
 		ofs << endl;
@@ -3109,7 +3114,6 @@ bool HetuwMod::addToTempInputString( unsigned char c, bool onlyNumbers, int minS
 bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 
 	if (sendKeyEvents) {
-		printf("hetuw send KeyEvent");
 		char message[32];
 		sprintf(message, "KEY_EVENT %c#", inASCII);
 		livingLifePage->sendToServerSocket( message );

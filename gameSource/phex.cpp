@@ -83,6 +83,8 @@ HetuwMod::KeyHandler Phex::keyHandler(&onKey);
 
 bool Phex::allowServerCoords = true;
 
+std::string Phex::forceChannel = "";
+
 bool Phex::sendBiomeDataActive = false;
 char Phex::biomeChunksSent[biomeChunksSentSize][biomeChunksSentSize];
 HetuwMod::IntervalTimed Phex::intervalSendBiomeData = HetuwMod::IntervalTimed(1.0);
@@ -1084,7 +1086,8 @@ void Phex::onConnectionStatusChanged(TCPConnection::statusType status) {
 				sendFirstMessage();
 				bSendFirstMsg = false;
 			}
-			joinChannel(string(HetuwMod::serverIP));
+			if (forceChannel.length() > 1) joinChannel(forceChannel);
+			else joinChannel(string(HetuwMod::serverIP));
 			break;
 	}
 }
@@ -1106,10 +1109,6 @@ void Phex::onClickTurnOff() {
 
 void Phex::onServerJoin() {
 	if (!HetuwMod::phexIsEnabled) return;
-
-	if (tcp.status == TCPConnection::ONLINE) {
-		//joinChannel(string(HetuwMod::serverIP));
-	}
 }
 
 void Phex::onPhexKeyPressed() {
