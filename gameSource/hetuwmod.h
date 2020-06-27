@@ -194,6 +194,10 @@ public:
 		double timePressedSince = -1;
 	};
 
+	// WARNING: unknown bugs will make this not work correctly
+	// sometimes key down events will be receveived but not key up events,
+	// causing it to spam a key, this will be different on different computer / OSs
+	// idk the cause of this, might also be related to the underlying engine / sdl lib
 	struct KeyHandler {
 		KeyboardKey lastKeyPressed;
 		void (*onKeyEvent)(unsigned char);

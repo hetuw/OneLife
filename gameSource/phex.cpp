@@ -1198,8 +1198,7 @@ bool Phex::onKeyDown(unsigned char inASCII) {
 
 bool Phex::onKeyUp(unsigned char inASCII) {
 	if (!HetuwMod::phexIsEnabled) return false;
-	// 8 = backspace -> disable keyHandler except for backspace because of unknown bug
-	if (inASCII == 8) keyHandler.onKeyUp(inASCII);
+	keyHandler.onKeyUp(inASCII);
 	if (!hasFocus) return false;
 	return true;
 }
