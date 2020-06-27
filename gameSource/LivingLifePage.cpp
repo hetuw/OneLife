@@ -9735,6 +9735,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
     
+	highestCravingYOffset = 0.0; // hetuw mod - so hungerSlip and Yum indicator are not drawn higher
 
 
 
