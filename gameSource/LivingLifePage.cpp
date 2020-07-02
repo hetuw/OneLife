@@ -2891,7 +2891,7 @@ LivingLifePage::LivingLifePage()
 
 
     for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
-        mYumSlipHideOffset[i].x = -600;
+        mYumSlipHideOffset[i].x = -100; // hetuw mod - vanilla is -600
         mYumSlipHideOffset[i].y = -330 - HetuwMod::panelOffsetY;
         }
     
@@ -9722,20 +9722,20 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     double highestCravingYOffset = 0;
     
-    if( mLiveCravingSheetIndex != -1 ) {
+	// hetuw mod commented out - so hungerSlip and Yum indicator are not drawn higher
+    //if( mLiveCravingSheetIndex != -1 ) {
         // craving showing
         // find highest one
-        highestCravingYOffset = 0;
+    //    highestCravingYOffset = 0;
                 
-        for( int c=0; c<NUM_HINT_SHEETS; c++ ) {
-            double offset = mCravingPosOffset[c].y - mCravingHideOffset[c].y;
-            if( offset > highestCravingYOffset ) {
-                highestCravingYOffset = offset;
-                }
-            }
-        }
+    //    for( int c=0; c<NUM_HINT_SHEETS; c++ ) {
+    //        double offset = mCravingPosOffset[c].y - mCravingHideOffset[c].y;
+    //        if( offset > highestCravingYOffset ) {
+    //            highestCravingYOffset = offset;
+    //            }
+    //        }
+    //    }
     
-	highestCravingYOffset = 0.0; // hetuw mod - so hungerSlip and Yum indicator are not drawn higher
 
 
 
