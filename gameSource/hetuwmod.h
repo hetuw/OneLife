@@ -584,8 +584,10 @@ public:
 	static bool charArrContainsCharArr(const char* arr1, const char* arr2);
 	static void strToUpper(const char* src, char* dest, int maxSize);
 	static void objDescrToUpper(const char* arr, char* output, int maxSize);
+	static void getObjSearchDescr(const char* arr, char* output, int maxSize);
 	static void objGetDescrWithoutHashtag(const char* arr, char* output, int maxSize);
 	
+	static bool searchIncludeHashText;
 	static bool *objIsBeingSearched;
 	static void setSearchArray();
 

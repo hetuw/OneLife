@@ -2891,12 +2891,12 @@ LivingLifePage::LivingLifePage()
 
 
     for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
-        mYumSlipHideOffset[i].x = -100; // hetuw mod - vanilla is -600
+        mYumSlipHideOffset[i].x = -140; // hetuw mod - vanilla is -600
         mYumSlipHideOffset[i].y = -330 - HetuwMod::panelOffsetY;
         }
     
-    mYumSlipHideOffset[2].x += 70;
-    mYumSlipHideOffset[3].x += 80;
+    mYumSlipHideOffset[2].x += 60; // hetuw mod - vanilla is 70
+    mYumSlipHideOffset[3].x += 70; // hetuw mod - vanilla is 80
 
     for( int i=0; i<NUM_YUM_SLIPS; i++ ) {    
         mYumSlipPosOffset[i] = mYumSlipHideOffset[i];

@@ -179,6 +179,7 @@ char HetuwMod::tempCordChar;
 int HetuwMod::tempCordX;
 int HetuwMod::tempCordY;
 
+bool HetuwMod::searchIncludeHashText = false;
 bool *HetuwMod::objIsBeingSearched;
 int HetuwMod::getSearchInput;
 std::vector<char*> HetuwMod::searchWordList;
@@ -942,6 +943,10 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 		b_drawYumPulsate = bool(value[0]-48);
 		return true;
 	}
+	if (strstr(name, "search_include_hash_text")) {
+		searchIncludeHashText = bool(value[0]-48);
+		return true;
+	}
 	if (strstr(name, "draw_searchtext")) {
 		b_drawSearchText = bool(value[0]-48);
 		return true;
@@ -1092,6 +1097,8 @@ void HetuwMod::initSettings() {
 	ofs << endl;
 	ofs << "draw_yumcolor = " << (char)(b_drawYumColor+48) << endl;
 	ofs << "draw_yumpulsate = " << (char)(b_drawYumPulsate+48) << endl;
+	ofs << endl;
+	ofs << "search_include_hash_text = " << (char)(searchIncludeHashText+48) << endl;
 	ofs << "draw_searchtext = " << (char)(b_drawSearchText+48) << endl;
 	ofs << "draw_searchrec = " << (char)(b_drawSearchTileRec+48) << endl;
 	ofs << "draw_searchpulsate = " << (char)(b_drawSearchPulsate+48) << endl;
@@ -1268,12 +1275,12 @@ bool HetuwMod::charArrEqualsCharArr(const char *a, const char *b) {
 void HetuwMod::setSearchArray() {
 	int descrSize = 32;
 	char descr[descrSize];
+	char exactSearchArr[64];
 	for (int i=0; i<maxObjects; i++) {
 		objIsBeingSearched[i] = false;
 		ObjectRecord *o = getObject( i );
 		if (!o) continue;
 		bool exactSearch = false;
-		char exactSearchArr[64];
 		for (unsigned k=0; k<searchWordList.size(); k++) {
 			exactSearch = false;
 			for (int m=0; m < 64; m++) {
@@ -1286,7 +1293,9 @@ void HetuwMod::setSearchArray() {
 					break;
 				}
 			}
-			objGetDescrWithoutHashtag(o->description, descr, descrSize);
+
+			getObjSearchDescr(o->description, descr, descrSize);
+
 			if (exactSearch) {
 				if (charArrEqualsCharArr(descr, exactSearchArr)) {
 					objIsBeingSearched[i] = true;
@@ -2335,6 +2344,13 @@ void HetuwMod::objDescrToUpper(const char* arr, char* output, int maxSize) {
 	output[i] = 0;
 }
 
+void HetuwMod::getObjSearchDescr(const char* arr, char* output, int maxSize) {
+	if (searchIncludeHashText) {
+		strncpy(output, arr, maxSize);
+		output[maxSize-1] = '\0';
+	} else objGetDescrWithoutHashtag(arr, output, maxSize);
+}
+
 void HetuwMod::objGetDescrWithoutHashtag(const char* arr, char* output, int maxSize) {
 	int i=0;
 	for (; arr[i] != 0; i++) {
@@ -2376,7 +2392,7 @@ void HetuwMod::drawSearchTilesLoop(bool drawText) {
 				else {
 					ObjectRecord *obj = getObject(objId);
 					if (obj && obj->description) {
-						objGetDescrWithoutHashtag(obj->description, descr, descrSize);
+						getObjSearchDescr(obj->description, descr, descrSize);
 						livingLifePage->hetuwDrawScaledMainFont( descr, textPos, 1.2, alignCenter );
 						//customFont->drawString( descr, textPos, alignCenter );
 						textPos.y += 24;
@@ -2401,7 +2417,7 @@ void HetuwMod::drawSearchTilesLoop(bool drawText) {
 						} else {
 							ObjectRecord *obj = getObject(objId);
 							if (obj && obj->description) {
-								objGetDescrWithoutHashtag(obj->description, descr, descrSize);
+								getObjSearchDescr(obj->description, descr, descrSize);
 								livingLifePage->hetuwDrawMainFont( descr, textPos, alignCenter );
 								//customFont->drawString( descr, textPos, alignCenter );
 								textPos.y += 24;
@@ -2434,7 +2450,7 @@ void HetuwMod::drawSearchTilesLoop(bool drawText) {
 							} else {
 								ObjectRecord *obj = getObject(objId);
 								if (obj && obj->description) {
-									objGetDescrWithoutHashtag(obj->description, descr, descrSize);
+									getObjSearchDescr(obj->description, descr, descrSize);
 									livingLifePage->hetuwDrawMainFont( descr, textPos, alignCenter );
 									//customFont->drawString( descr, textPos, alignCenter );
 									textPos.y += 24;
