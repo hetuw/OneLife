@@ -57,8 +57,8 @@ int HetuwMod::magnetMoveDir = -1;
 int HetuwMod::magnetWrongMoveDir = -1;
 int HetuwMod::magnetMoveCount = 0;
 
-int HetuwMod::cfgVersionNumber = 2;
-int HetuwMod::cfgVersionRead = 2;
+int HetuwMod::cfgVersionNumber = 3;
+int HetuwMod::cfgVersionRead = 3;
 
 unsigned char HetuwMod::charKey_Up;
 unsigned char HetuwMod::charKey_Down;
@@ -68,6 +68,7 @@ unsigned char HetuwMod::charKey_TileStandingOn;
 
 unsigned char HetuwMod::charKey_Backpack;
 unsigned char HetuwMod::charKey_TakeOffBackpack;
+unsigned char HetuwMod::charKey_Pocket;
 unsigned char HetuwMod::charKey_Eat;
 unsigned char HetuwMod::charKey_Baby;
 unsigned char HetuwMod::charKey_ShowHelp;
@@ -312,13 +313,14 @@ void HetuwMod::init() {
 
 	charKey_Backpack = 'q';
 	charKey_TakeOffBackpack = 'b';
+	charKey_Pocket = 't';
 	charKey_Eat = 'e';
 	charKey_Baby = 'c';
 	charKey_ShowHelp = 'h';
 	charKey_ShowNames = 'n';
 	charKey_ShowCords = 'z';
 	charKey_ShowPlayersInRange = 'p';
-	charKey_ShowDeathMessages = 't';
+	charKey_ShowDeathMessages = 254;
 	charKey_ShowHomeCords = 'g';
 	charKey_ShowHostileTiles = 'u';
 
@@ -327,7 +329,7 @@ void HetuwMod::init() {
 	charKey_TeachLanguage = 'l';
 	charKey_FindYum = 'y';
 	charKey_HidePlayers = 254;
-	charKey_ShowGrid = 'v';
+	charKey_ShowGrid = 'k';
 	charKey_MakePhoto = 254;
 	charKey_Phex = '#';
 
@@ -831,6 +833,7 @@ bool HetuwMod::setSetting( const char* name, const char* value ) {
 	if (strstr(name, "key_center")) return setCharKey( charKey_TileStandingOn, value );
 	if (strstr(name, "key_backpack")) return setCharKey( charKey_Backpack, value );
 	if (strstr(name, "key_takeOffBackpack")) return setCharKey( charKey_TakeOffBackpack, value );
+	if (strstr(name, "key_pocket")) return setCharKey( charKey_Pocket, value );
 	if (strstr(name, "key_eat")) return setCharKey( charKey_Eat, value );
 	if (strstr(name, "key_baby")) return setCharKey( charKey_Baby, value );
 	if (strstr(name, "key_show_help")) return setCharKey( charKey_ShowHelp, value );
@@ -1017,6 +1020,9 @@ void HetuwMod::initSettings() {
 	if (cfgVersionRead < 2) {
 		Phex::allowServerCoords = true;
 	}
+	if (cfgVersionRead < 3) {
+		charKey_ShowDeathMessages = 254;
+	}
 
 	ofstream ofs( hetuwSettingsFileName, ofstream::out );
 
@@ -1056,6 +1062,7 @@ void HetuwMod::initSettings() {
 	writeCharKeyToStream( ofs, "key_findyum", charKey_FindYum );
 	writeCharKeyToStream( ofs, "key_hideplayers", charKey_HidePlayers );
 	writeCharKeyToStream( ofs, "key_takeOffBackpack", charKey_TakeOffBackpack );
+	writeCharKeyToStream( ofs, "key_pocket", charKey_Pocket );
 	writeCharKeyToStream( ofs, "key_showgrid", charKey_ShowGrid );
 	writeCharKeyToStream( ofs, "key_phex", charKey_Phex );
 	ofs << endl;
@@ -2976,16 +2983,21 @@ void HetuwMod::actionBetaRelativeToMe( int x, int y ) {
 	if (!remove) livingLifePage->hetuwSetNextActionDropping( true );
 }
 
+void HetuwMod::setOurSendPosXY(int &x, int &y) {
+	x = round( ourLiveObject->xd );
+	y = round( ourLiveObject->yd );
+	x = livingLifePage->sendX(x);
+	y = livingLifePage->sendY(y);
+}
+
 void HetuwMod::useBackpack(bool replace) {
 	int clothingSlot = 5; // backpack clothing slot
 
-	int x = round( ourLiveObject->xd );
-	int y = round( ourLiveObject->yd );
-	x = livingLifePage->sendX(x);
-	y = livingLifePage->sendY(y);
+	int x, y;
+	setOurSendPosXY(x, y);
 
+	char msg[32];
 	if( ourLiveObject->holdingID > 0 ) {
-		char msg[32];
 		if (replace) {
 			sprintf( msg, "DROP %d %d %d#", x, y, clothingSlot );
 		} else {
@@ -2994,17 +3006,37 @@ void HetuwMod::useBackpack(bool replace) {
 		livingLifePage->hetuwSetNextActionMessage( msg, x, y );
 		livingLifePage->hetuwSetNextActionDropping(true);
 	} else {
-		char msg[32];
 		sprintf( msg, "SREMV %d %d %d %d#", x, y, clothingSlot, -1 );
 		livingLifePage->hetuwSetNextActionMessage( msg, x, y );
 	}
 }
 
+void HetuwMod::useApronPocket() {
+	usePocket(1);
+}
+
+void HetuwMod::usePantsPocket() {
+	usePocket(4);
+}
+
+void HetuwMod::usePocket(int clothingID) {
+	int x, y;
+	setOurSendPosXY(x, y);
+
+	char msg[32];
+	if( ourLiveObject->holdingID > 0 ) {
+		sprintf( msg, "DROP %d %d %d#", x, y, clothingID );
+		livingLifePage->hetuwSetNextActionMessage( msg, x, y );
+		livingLifePage->hetuwSetNextActionDropping(true);
+	} else {
+		sprintf( msg, "SREMV %d %d %d %d#", x, y, clothingID, -1 );
+		livingLifePage->hetuwSetNextActionMessage( msg, x, y );
+	}
+}
+
 void HetuwMod::useOnSelf() {
-	int x = round( ourLiveObject->xd );
-	int y = round( ourLiveObject->yd );
-	x = livingLifePage->sendX(x);
-	y = livingLifePage->sendY(y);
+	int x, y;
+	setOurSendPosXY(x, y);
 
 	if( ourLiveObject->holdingID <= 0 ) return;
 
@@ -3109,7 +3141,8 @@ void HetuwMod::causeDisconnect() {
 }
 
 bool HetuwMod::isCharKey(unsigned char c, unsigned char key) {
-	return (c == key || c == toupper(key));
+	char tKey = key;
+	return (c == key || c == toupper(tKey));
 }
 
 bool HetuwMod::addToTempInputString( unsigned char c, bool onlyNumbers, int minStrLen ) {
@@ -3142,10 +3175,10 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	}
 	// player is not trying to say something
 
-	//printf("hetuw key pressed %c, value: %i\n", inASCII, (int)inASCII);
-
 	bool commandKey = isCommandKeyDown();
 	bool shiftKey = isShiftKeyDown();
+
+	//printf("hetuw key pressed %c, value: %i, shiftKey %i, commandKey %i\n", inASCII, (int)inASCII, (int)shiftKey, (int)commandKey);
 
 	if (!commandKey && !shiftKey && inASCII == 27) { // ESCAPE KEY
 		upKeyDown = false;
@@ -3473,11 +3506,17 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 	}
 
 	if (!shiftKey && isCharKey(inASCII, charKey_Backpack)) {
-		useBackpack();
+		if (weAreWearingABackpack()) useBackpack();
+		else if (weAreWearingPantsWithPocket()) usePantsPocket();
+		else if (weAreWearingShirtWithPocket()) useApronPocket();
+		else useBackpack();
 		return true;
 	}
 	if ((shiftKey || commandKey) && isCharKey(inASCII, charKey_Backpack)) {
-		useBackpack(true);
+		if (weAreWearingABackpack()) useBackpack(true);
+		else if (weAreWearingPantsWithPocket()) usePantsPocket();
+		else if (weAreWearingShirtWithPocket()) useApronPocket();
+		else useBackpack(true);
 		return true;
 	}
 	if (isCharKey(inASCII, charKey_Eat)) {
@@ -3488,8 +3527,16 @@ bool HetuwMod::livingLifeKeyDown(unsigned char inASCII) {
 		pickUpBabyInRange();
 		return true;
 	}
-	if (isCharKey(inASCII, charKey_TakeOffBackpack)) {
+	if (!commandKey && !shiftKey && isCharKey(inASCII, charKey_TakeOffBackpack)) {
 		takeOffBackpack();
+		return true;
+	}
+	if (shiftKey && isCharKey(inASCII, charKey_Pocket)) {
+		useApronPocket();
+		return true;
+	}
+	if (!shiftKey && isCharKey(inASCII, charKey_Pocket)) {
+		usePantsPocket();
 		return true;
 	}
 
@@ -3981,6 +4028,39 @@ void HetuwMod::setLastNameColor( const char* lastName, float alpha ) {
 	setDrawColor(rgba[0], rgba[1], rgba[2], alpha);
 }
 
+bool HetuwMod::isWearingABackpack(LiveObject *obj) {
+	if (!obj) return false;
+	if (obj->clothing.backpack)
+		if (obj->clothing.backpack->numSlots > 0) return true;
+	return false;
+}
+
+bool HetuwMod::isWearingPantsWithPocket(LiveObject *obj) {
+	if (!obj) return false;
+	if (obj->clothing.bottom)
+		if (obj->clothing.bottom->numSlots > 0) return true;
+	return false;
+}
+
+bool HetuwMod::isWearingShirtWithPocket(LiveObject *obj) {
+	if (!obj) return false;
+	if (obj->clothing.tunic)
+		if (obj->clothing.tunic->numSlots > 0) return true;
+	return false;
+}
+
+bool HetuwMod::weAreWearingABackpack() {
+	return isWearingABackpack(ourLiveObject);
+}
+
+bool HetuwMod::weAreWearingPantsWithPocket() {
+	return isWearingPantsWithPocket(ourLiveObject);
+}
+
+bool HetuwMod::weAreWearingShirtWithPocket() {
+	return isWearingShirtWithPocket(ourLiveObject);
+}
+
 void HetuwMod::getSkinColor(float *rgba, ObjectRecord *obj) {
 	if (!obj) return;
 	rgba[3] = 1.0f;
@@ -3994,7 +4074,6 @@ void HetuwMod::getSkinColor(float *rgba, ObjectRecord *obj) {
 	}
 	for (int i=0; i<3; i++) rgba[i] = 1.0f;
 }
-
 
 std::string HetuwMod::getRaceName(ObjectRecord *obj) {
 	float rgba[4];
@@ -4817,11 +4896,11 @@ void HetuwMod::drawHelp() {
 	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
 	drawPos.y -= lineHeight;
 
-	if (bDrawDeathMessages) setHelpColorSpecial();
-	else setHelpColorNormal();
-	sprintf(str, "%c TOGGLE SHOW DEATH MESSAGES", toupper(charKey_ShowDeathMessages));
-	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
-	drawPos.y -= lineHeight;
+	//if (bDrawDeathMessages) setHelpColorSpecial();
+	//else setHelpColorNormal();
+	//sprintf(str, "%c TOGGLE SHOW DEATH MESSAGES", toupper(charKey_ShowDeathMessages));
+	//livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	//drawPos.y -= lineHeight;
 
 	if (bDrawHomeCords) setHelpColorSpecial();
 	else setHelpColorNormal();
@@ -4854,6 +4933,14 @@ void HetuwMod::drawHelp() {
 	drawPos.y -= lineHeight;
 
 	setHelpColorNormal();
+
+	sprintf(str, "%c - USE SHORTS POCKET", toupper(charKey_Pocket));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
+
+	sprintf(str, "SHIFT+%c - USE APRON POCKET", toupper(charKey_Pocket));
+	livingLifePage->hetuwDrawScaledHandwritingFont( str, drawPos, guiScale );
+	drawPos.y -= lineHeight;
 
 	drawPos = lastScreenViewCenter;
 	drawPos.x -= viewWidth/2 - 640*guiScale;

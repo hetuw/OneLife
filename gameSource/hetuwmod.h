@@ -325,6 +325,7 @@ public:
 
 	static unsigned char charKey_Backpack;
 	static unsigned char charKey_TakeOffBackpack;
+	static unsigned char charKey_Pocket;
 	static unsigned char charKey_Eat;
 	static unsigned char charKey_Baby;
 
@@ -447,7 +448,11 @@ public:
 	static void actionAlphaRelativeToMe( int x, int y );
 	static void actionBetaRelativeToMe( int x, int y );
 
-	static void useBackpack( bool replace=false);
+	static void setOurSendPosXY(int &x, int &y);
+	static void useBackpack(bool replace=false);
+	static void useApronPocket();
+	static void usePantsPocket();
+	static void usePocket(int clothingID);
 	static void useOnSelf();
 
 	static void stepLoopTroughObjectsInRange();
@@ -650,6 +655,12 @@ public:
 
 	static bool bDrawBiomeInfo;
 
+	static bool isWearingABackpack(LiveObject *obj);
+	static bool isWearingPantsWithPocket(LiveObject *obj);
+	static bool isWearingShirtWithPocket(LiveObject *obj);
+	static bool weAreWearingABackpack();
+	static bool weAreWearingPantsWithPocket();
+	static bool weAreWearingShirtWithPocket();
 	static void getSkinColor(float *rgba, ObjectRecord *obj);
 	static std::string getRaceName(ObjectRecord *obj);
 
