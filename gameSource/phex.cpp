@@ -17,7 +17,9 @@ bool Phex::bSendFirstMsg = true;
 std::unordered_map<std::string, Phex::ServerCommand> Phex::serverCommands;
 std::unordered_map<std::string, Phex::ChatCommand> Phex::chatCommands;
 
-char Phex::chatCmdChar = '/';
+char Phex::chatServerCmdChar = '/';
+
+char Phex::chatCmdChar = '.';
 std::string Phex::strCmdChar;
 
 std::string Phex::publicHash = "";
@@ -853,12 +855,9 @@ void Phex::handleChatCommand(std::string input) {
 	command = command.substr(1, command.length());
 	strToUpper(command);
 	if (command.length() <= 0) {
-		//addCmdMessageToChatWindow("invalid command", CMD_MSG_ERROR);
+		addCmdMessageToChatWindow("invalid command", CMD_MSG_ERROR);
 		return;
 	}
-
-	std::string sendToServer = "USER_CMD "+input.substr(1, input.length()-1);
-	tcp.send(sendToServer);
 
 	if (chatCommands.find(command) == chatCommands.end()) {
 		addCmdMessageToChatWindow("unknown command "+command, CMD_MSG_ERROR);
@@ -873,6 +872,11 @@ void Phex::handleChatCommand(std::string input) {
 
 void Phex::sendInputStr() {
 	if (inputText.str.length() < 1) return;
+	if (inputText.str[0] == chatServerCmdChar) {
+		std::string sendToServer = "USER_CMD "+inputText.str.substr(1, inputText.str.length()-1);
+		tcp.send(sendToServer);
+		return;
+	}
 	if (inputText.str[0] == chatCmdChar) {
 		handleChatCommand(inputText.str);
 		return;

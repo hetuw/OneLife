@@ -219,6 +219,8 @@ public:
 	static std::unordered_map<std::string, ServerCommand> serverCommands;
 	static std::unordered_map<std::string, ChatCommand> chatCommands;
 
+	static char chatServerCmdChar;
+
 	static char chatCmdChar;
 	static std::string strCmdChar;
 
