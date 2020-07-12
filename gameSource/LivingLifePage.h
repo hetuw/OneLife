@@ -988,8 +988,8 @@ class LivingLifePage : public GamePage, public ActionListener {
 
         double computePathSpeedMod( LiveObject *inObject, int inPathLength );
         
-        // check if same floor is present when we take a step in x or y
-        char isSameFloor( int inFloor, GridPos inFloorPos, int inDX, int inDY );
+        // check if same road is present when we take a step in x or y
+        char isSameRoad( int inFloor, GridPos inFloorPos, int inDX, int inDY );
         
         // forces next pointerDown call to avoid everything but ground clicks
         char mForceGroundClick;
@@ -1138,6 +1138,10 @@ class LivingLifePage : public GamePage, public ActionListener {
 
         void displayGlobalMessage( char *inMessage );
 
+        
+        // true if tile index is covered by a floor tile that doesn't
+        // have a +noCover tag
+        char isCoveredByFloor( int inTileIndex );
 
     };
 
