@@ -226,6 +226,7 @@ public:
 
 	static std::string publicHash;
 	static std::unordered_map<std::string, User> users;
+	static std::unordered_map<int, std::string> playerIdToHash;
 	
 	static bool hasFocus;
 	static bool isMinimized;
@@ -340,8 +341,8 @@ public:
 	static double getLineHeight(HetuwFont *font);
 	static void drawString(std::string str, doublePair startPos);
 
-	static void createUser(std::string hash);
-	static std::string* getUserDisplayName(User &user);
+	static void createUser(std::string &hash);
+	static std::string* getUserDisplayName(std::string &hash);
 
 	static time_t strToTimeT(std::string str);
 	static void addCmdMessageToChatWindow(std::string msg, int type = 1);

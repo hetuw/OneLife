@@ -24,6 +24,7 @@ std::string Phex::strCmdChar;
 
 std::string Phex::publicHash = "";
 std::unordered_map<std::string, Phex::User> Phex::users;
+std::unordered_map<int, std::string> Phex::playerIdToHash;
 
 bool Phex::hasFocus = false;
 bool Phex::isMinimized = false;
@@ -351,7 +352,7 @@ void Phex::serverCmdSAY(std::vector<std::string> input) {
 	chatElement.text = joinStr(input, " ", 4);
 
 	createUser(chatElement.hash);
-	chatElement.name = string(*getUserDisplayName(users[chatElement.hash]));
+	chatElement.name = string(*getUserDisplayName(chatElement.hash));
 
 	chatElement.textToDraw = colorCodeNamesInChat+chatElement.name+": "+colorCodeWhite+chatElement.text;
 	mainChatWindow.addElement(chatElement);
@@ -448,8 +449,8 @@ void Phex::serverCmdHASH_SERVER_LIFE(std::vector<std::string> input) {
 			printf("Phex cant find player with id: %d\n", playerID);
 			return;
 		}
-		player->phexHash = string(input[1]);
 		createUser(input[1]);
+		playerIdToHash[playerID] = input[1];
 		users[input[1]].inGameServerPlayerID = playerID;
 	} catch(std::exception const & ex) {
 		printf("Phex EXCEPTION when receiving HASH_SERVER_LIFE command\n");
@@ -702,20 +703,21 @@ void Phex::Text::draw() {
 	HetuwMod::hDrawRecFromPercent(drawRec);
 }
 
-void Phex::createUser(std::string hash) {
+void Phex::createUser(std::string &hash) {
 	users[hash].hash = hash;
 	//if (users.find(hash) == users.end()) return; 
 }
 
-std::string* Phex::getUserDisplayName(User &user) {
-	if (user.displayName.length() > 0) return &user.displayName;
-	user.displayName = string(user.name);
-	if (user.displayName.length() < 1) {
-		user.displayName = user.hash;
-		if (user.displayName.length() > ChatElement::maxHashDisplayLength)
-			user.displayName = user.displayName.substr(0, ChatElement::maxHashDisplayLength);
+std::string* Phex::getUserDisplayName(std::string &hash) {
+	createUser(hash);
+	if (users[hash].displayName.length() > 0) return &users[hash].displayName;
+	users[hash].displayName = string(users[hash].name);
+	if (users[hash].displayName.length() < 1) {
+		users[hash].displayName = users[hash].hash;
+		if (users[hash].displayName.length() > ChatElement::maxHashDisplayLength)
+			users[hash].displayName = users[hash].displayName.substr(0, ChatElement::maxHashDisplayLength);
 	}
-	return &user.displayName;
+	return &users[hash].displayName;
 }
 
 time_t Phex::strToTimeT(std::string str) {
