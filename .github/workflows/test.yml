@@ -24,14 +24,13 @@ jobs:
           haxe-version: ${{ matrix.haxe }}
       - run: haxe -version
       - name: get tag
-        run: echo "##[set-output name=last;]$(cat tag.txt)"
-        run: echo "##[set-output name=tag;]$(haxe --run actions/Tag.hx)"
-      - name: check tag
+        run: |
+          echo "##[set-output name=last;]$(cat tag.txt)"
+          echo "##[set-output name=tag;]$(haxe --run actions/Tag.hx)"
         if: steps.git-check.outputs.tag != steps.git-check.outputs.last
         run: |
           sudo apt-get install git g++ imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
-          cd scripts/hetuwScripts
-          sh hetuwCompileAll.sh
+          sh scripts/hetuwScripts/hetuwCompileAll.sh
         - name: create release
           uses: actions/create-release@v1
           env:
