@@ -25,12 +25,12 @@ jobs:
         run: |
           last=$(<"tag.txt")
           tag=$(haxe --run actions/Tag.hx)
-          echo "::set-env name=last::${last}"
-          echo "::set-env name=tag::${tag}"
+          echo "::set-env name=last::$env:last"
+          echo "::set-env name=tag::$env:tag"
       - name: trace tag
-        run: echo tag= ${tag} last= ${last}
+        run: echo tag= $env:tag last= $env:last
       - name: build and compile
-        if: ${tag} != ${last} #update
+        if: $env:tag != $env:last #update
         run: |
           sudo apt-get install git g++ imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
           chmod +x hetuwPullLatest.sh
@@ -41,17 +41,17 @@ jobs:
           ./hetuwPullLatest.sh windows 3
           sh hetuwCompileAll.sh
       - name: create release
-        if: ${tag} != ${last} #update
+        if: $env:tag != $env:last #update
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${tag}
-          release_name: ${tag}
+          tag_name: $env:tag
+          release_name: $env:tag
           draft: false
           prerelease: false
       - name: upload windows #WINDOWS
-        if: ${tag} != ${last} #update
+        if: $env:tag != $env:last #update
         id: windows
         uses: actions/upload-release-asset@v1
         env:
@@ -62,7 +62,7 @@ jobs:
           asset_name: OneLifeApp_H_windows.exe
           asset_content_type: application/zip
       - name: upload linux #LINUX
-        if: ${tag} != ${last} #update
+        if: $env:tag != $env:last #update
         id: linux
         uses: actions/upload-release-asset@v1
         env:
@@ -75,4 +75,4 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
-          title: Update ${tag}
+          title: Update $env:tag
