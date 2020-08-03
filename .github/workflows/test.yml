@@ -23,8 +23,10 @@ jobs:
       - run: haxe -version
       - name: get tag
         run: |
-          echo "##[set-output name=last;]$(cat tag.txt)"
-          echo "##[set-output name=tag;]$(haxe --run actions/Tag.hx)"
+          last=$(<"tag.txt")
+          tag=$(haxe --run actions/Tag.h)
+          echo "::set-output name=last::$last"
+          echo "::set-output name=tag::$tag"
       - name: trace tag
         run: echo tag= ${{ steps.git-check.outputs.tag }} last= ${{ steps.git-check.outputs.last }}
       - name: install packages 
