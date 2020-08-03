@@ -41,10 +41,17 @@ jobs:
           echo "1"
           ls
           chmod +x hetuwPullLatest.sh
-          ./hetuwPullFromJason.sh
-          ./runToBuild 1
+          echo "2"
+          ls
           ./hetuwPullLatest.sh windows 3
+          echo "3"
+          ls
+          ./hetuwPullLatest.sh linux 1
+          echo "4"
+          ls
           ./hetuwCompileAll.sh
+          echo "5"
+          ls
           ./hetuwClearCache.sh
       - name: create release
         if: ${{env.tag}} != ${{env.last}} #update
