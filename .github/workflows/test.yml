@@ -29,7 +29,7 @@ jobs:
           echo "::set-output name=tag::$tag"
       - name: trace tag
         run: echo tag= ${{ steps.git-check.outputs.tag }} last= ${{ steps.git-check.outputs.last }}
-      - name: install packages 
+      - name: build and compile
         if: steps.git-check.outputs.tag != steps.git-check.outputs.last
         run: |
           sudo apt-get install git g++ imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
@@ -74,4 +74,5 @@ jobs:
           asset_content_type: application/zip
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
-        title: ${{steps.git-check.outputs.tag}}
+        with:
+          title: ${{steps.git-check.outputs.tag}}
