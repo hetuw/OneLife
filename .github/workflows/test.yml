@@ -24,10 +24,10 @@ jobs:
           haxe-version: ${{ matrix.haxe }}
       - run: haxe -version
       - name: get tag
-          run: echo ::set-output name=old::$([-z "cat tag.txt`"])
-          run: echo ::set-output name=tag::$([-z "`haxe --run actions/Tag.hx`"])
+          run: echo "##[set-output name=last;]$(cat tag.txt)"
+          run: echo "##[set-output name=tag;]$(haxe --run actions/Tag.hx)"
       - name: check tag
-          if: steps.git-check.outputs.tag != steps.git-check.outputs.old
+          if: steps.git-check.outputs.tag != steps.git-check.outputs.last
           run: |
             sudo apt-get install git g++ imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
             cd scripts/hetuwScripts
