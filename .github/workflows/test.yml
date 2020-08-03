@@ -1,0 +1,63 @@
+name: CI
+
+on: 
+  #schedule:
+  #  - cron: '0 10 * * * '
+  #  - cron: '0 * * * * '
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: ubuntu-latest
+        haxe: [4.1.0]
+      fail-fast: true
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.REPO_SCOPED_TOKEN }}
+      - uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: ${{ matrix.haxe }}
+      - run: haxe -version
+      - name: get tag
+          run: echo ::set-output name=old::$([-z "cat tag.txt`"])
+          run: echo ::set-output name=tag::$([-z "`haxe --run actions/Tag.hx`"])
+      - name: check tag
+          if: steps.git-check.outputs.tag != steps.git-check.outputs.old
+          run: |
+            sudo apt-get install git g++ imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
+            cd scripts/hetuwScripts
+            sh hetuwCompileAll.sh
+          - name: create release
+            uses: actions/create-release@v1
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            with:
+              tag_name: ${{steps.git-check.outputs.tag}}
+              release_name: ${{steps.git-check.outputs.tag}}
+              draft: false
+              prerelease: false
+          - name: upload windows #WINDOWS
+            id: windows
+            uses: actions/upload-release-asset@v1
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            with:
+              upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+              asset_path: ./bin/OneLifeApp_H_windows.exe
+              asset_name: OneLifeApp_H_windows.exe
+              asset_content_type: application/zip
+          - name: upload linux #LINUX
+          id: linux
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+            asset_path: ./bin/OneLifeApp_H_linux
+            asset_name: OneLifeApp_H_linux
+            asset_content_type: application/zip
