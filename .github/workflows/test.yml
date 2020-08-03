@@ -23,18 +23,18 @@ jobs:
       - run: haxe -version
       - name: get tag
         run: |
-          last=$(<"tag.txt")
-          tag=$(haxe --run actions/Tag.hx)
-          echo "::set-env name=last::${{env.last}}"
-          echo "::set-env name=tag::${{env.tag}}"
+          $last= $(<"tag.txt")
+          $tag= $(haxe --run actions/Tag.hx)
+          echo "::set-env name=last::$last"
+          echo "::set-env name=tag::$tag"
       - name: trace tag
-        run: echo tag= ${{env.tag}} last= ${{env.last}}
+        run: echo tag= "$env.tag last= $env.last"
       - name: build and compile
         if: ${{env.tag}} != ${{env.last}} #update
         run: |
           sudo apt-get install git g++ imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
-          chmod +x hetuwPullLatest.sh
           cd scripts/hetuwScripts
+          chmod +x hetuwPullLatest.sh
           ./hetuwPullFromJason.sh
           ./runToBuild 1
           ./hetuwPullLatest.sh linux 1
