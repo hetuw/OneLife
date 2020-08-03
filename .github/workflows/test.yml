@@ -52,7 +52,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: Auto ${{env.tag}}
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
           body_path: |
             In order to install, you already need to have the normal version of the game.
             Then download the binary "OneLifeApp_H_windows" and place it inside your One Hour One Life folder.
@@ -62,7 +63,6 @@ jobs:
 
             If you run into problems, please search in your ohol folder for cache.fcz and delete all that contain that name.
             Then log in once with the normal client, before starting the mod.
-          release_name: ${{env.tag}}
           draft: false
           prerelease: false
       - name: upload windows #WINDOWS
