@@ -26,7 +26,7 @@ jobs:
           last=$(<"tag.txt")
           tag=$(haxe --run actions/Tag.hx)
           echo "::set-env name=last::$last"
-          echo "::set-env name=tag::$env.tag"
+          echo "::set-env name=tag::$tag"
       - name: trace tag
         run: echo tag= "$env.tag last= $env.last"
       - name: build and compile
