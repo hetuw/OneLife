@@ -28,10 +28,10 @@ jobs:
           echo "::set-env name=last::$last"
           echo "::set-env name=tag::$tag"
       - name: trace tag
-        run: echo "tag= "$tag} last= $last""
+        run: echo "tag= "$tag last= $last""
       - name: packages
         if: ${{env.tag}} != ${{env.last}} #update
-        run: sudo apt-get install git g++ imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
+        run: sudo apt-get install git g++ imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev mingw-w64
       - name: scripts
         if: ${{env.tag}} != ${{env.last}} #update
         run: |
