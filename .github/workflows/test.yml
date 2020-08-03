@@ -28,12 +28,14 @@ jobs:
           echo "::set-env name=last::$last"
           echo "::set-env name=tag::$tag"
       - name: trace tag
-        run: echo tag= "$env.tag last= $env.last"
+        run: echo tag= "${env.tag} last= ${env.last}"
       - name: build and compile
         if: ${{env.tag}} != ${{env.last}} #update
         run: |
           sudo apt-get install git g++ imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
+          ls
           cd scripts/hetuwScripts
+          ls
           chmod +x hetuwPullLatest.sh
           ./hetuwPullFromJason.sh
           ./runToBuild 1
