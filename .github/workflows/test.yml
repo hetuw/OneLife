@@ -25,8 +25,8 @@ jobs:
         run: |
           echo "##[set-output name=last;]$(cat tag.txt)"
           echo "##[set-output name=tag;]$(haxe --run actions/Tag.hx)"
-      - name: tag ${{ steps.git-check.outputs.tag }}
-        run: echo {{}}
+      - name: tag check
+        run: echo tag= ${{ steps.git-check.outputs.tag }} last= ${{ steps.git-check.outputs.last }} 
         if: steps.git-check.outputs.tag != steps.git-check.outputs.last
         run: |
           sudo apt-get install git g++ imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
