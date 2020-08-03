@@ -31,6 +31,7 @@ jobs:
           sudo apt-get install git g++ imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
           sh scripts/hetuwScripts/hetuwCompileAll.sh
       - name: create release
+        if: steps.git-check.outputs.tag != steps.git-check.outputs.last #update
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -40,6 +41,7 @@ jobs:
           draft: false
           prerelease: false
       - name: upload windows #WINDOWS
+        if: steps.git-check.outputs.tag != steps.git-check.outputs.last #update
         id: windows
         uses: actions/upload-release-asset@v1
         env:
@@ -50,6 +52,7 @@ jobs:
           asset_name: OneLifeApp_H_windows.exe
           asset_content_type: application/zip
       - name: upload linux #LINUX
+        if: steps.git-check.outputs.tag != steps.git-check.outputs.last #update
         id: linux
         uses: actions/upload-release-asset@v1
         env:
