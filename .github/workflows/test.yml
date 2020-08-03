@@ -25,12 +25,12 @@ jobs:
         run: |
           last=$(<"tag.txt")
           tag=$(haxe --run actions/Tag.hx)
-          echo "::set-output name=last::$last"
-          echo "::set-output name=tag::$tag"
+          echo "::set-env name=last::$last"
+          echo "::set-env name=tag::$tag"
       - name: trace tag
-        run: echo tag= ${{ steps.git-check.outputs.tag }} last= ${{ steps.git-check.outputs.last }}
+        run: echo tag= $tag last= $last
       - name: build and compile
-        if: steps.git-check.outputs.tag != steps.git-check.outputs.last
+        if: $tag != $last #update
         run: |
           sudo apt-get install git g++ imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
           chmod +x hetuwPullLatest.sh
@@ -41,17 +41,17 @@ jobs:
           ./hetuwPullLatest.sh windows 3
           sh hetuwCompileAll.sh
       - name: create release
-        if: steps.git-check.outputs.tag != steps.git-check.outputs.last #update
+        if: $tag != $last #update
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{steps.git-check.outputs.tag}}
-          release_name: ${{steps.git-check.outputs.tag}}
+          tag_name: $tag
+          release_name: $tag
           draft: false
           prerelease: false
       - name: upload windows #WINDOWS
-        if: steps.git-check.outputs.tag != steps.git-check.outputs.last #update
+        if: $tag != $last #update
         id: windows
         uses: actions/upload-release-asset@v1
         env:
@@ -62,7 +62,7 @@ jobs:
           asset_name: OneLifeApp_H_windows.exe
           asset_content_type: application/zip
       - name: upload linux #LINUX
-        if: steps.git-check.outputs.tag != steps.git-check.outputs.last #update
+        if: $tag != $last #update
         id: linux
         uses: actions/upload-release-asset@v1
         env:
@@ -75,4 +75,4 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
-          title: ${{steps.git-check.outputs.tag}}
+          title: Update $tag
