@@ -1,0 +1,8 @@
+In order to install, you already need to have the normal version of the game.
+Then download the binary "OneLifeApp_H_windows" and place it inside your One Hour One Life folder.
+For steam users this folder is at C:\Program Files (86x)\Steam\steamapps\common\One Hour One Life
+
+Then execute the downloaded binary
+
+If you run into problems, please search in your ohol folder for cache.fcz and delete all that contain that name.
+Then log in once with the normal client, before starting the mod.

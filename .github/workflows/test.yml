@@ -52,7 +52,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{env.tag}}
+          tag_name: Auto ${{env.tag}}
+          body_path: body.txt
           release_name: ${{env.tag}}
           draft: false
           prerelease: false
