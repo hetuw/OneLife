@@ -28,7 +28,7 @@ jobs:
           echo "::set-env name=last::$last"
           echo "::set-env name=tag::$tag"
       - name: trace tag
-        run: echo tag= "${env.tag} last= ${env.last}"
+        run: echo "tag= "$tag} last= $last""
       - name: build and compile
         if: ${{env.tag}} != ${{env.last}} #update
         run: |
