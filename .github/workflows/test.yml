@@ -35,24 +35,17 @@ jobs:
       - name: scripts
         if: ${{env.tag}} != ${{env.last}} #update
         run: |
-          ls
           echo "0"
           cd scripts/hetuwScripts
           echo "1"
-          ls
           chmod +x hetuwPullLatest.sh
           echo "2"
-          ls
           ./hetuwPullLatest.sh windows 3
           echo "3"
-          ls
           ./hetuwPullLatest.sh linux 1
           echo "4"
-          ls
           ./hetuwCompileAll.sh
           echo "5"
-          ls
-          ./hetuwClearCache.sh
       - name: create release
         if: ${{env.tag}} != ${{env.last}} #update
         uses: actions/create-release@v1
