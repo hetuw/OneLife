@@ -35,7 +35,6 @@ jobs:
       - name: scripts
         if: ${{env.tag}} != ${{env.last}} #update
         run: |
-          echo "0"
           cd scripts/hetuwScripts
           echo "1"
           chmod +x hetuwPullLatest.sh
