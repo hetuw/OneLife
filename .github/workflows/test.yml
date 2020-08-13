@@ -44,13 +44,13 @@ jobs:
           ./hetuwCompileAll.sh
           echo "5"
       - name: create release
-        if: ${{env.tag}} != ${{env.last}} #update
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}2
-          release_name: ${{ github.ref }}2
+          tag_name: ${{ github.ref }}3
+          release_name: ${{ github.ref }}3
           body: |
             In order to install, you already need to have the normal version of the game.
             Then download the binary "OneLifeApp_H_windows" and place it inside your One Hour One Life folder.
@@ -60,11 +60,7 @@ jobs:
 
             If you run into problems, please search in your ohol folder for cache.fcz and delete all that contain that name.
             Then log in once with the normal client, before starting the mod.
-          draft: false
-          prerelease: false
       - name: upload windows #WINDOWS
-        if: ${{env.tag}} != ${{env.last}} #update
-        id: windows
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -74,8 +70,6 @@ jobs:
           asset_name: OneLifeApp_H_windows.exe
           asset_content_type: application/zip
       - name: upload linux #LINUX
-        if: ${{env.tag}} != ${{env.last}} #update
-        id: linux
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
