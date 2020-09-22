@@ -43,6 +43,12 @@ jobs:
           echo "4"
           ./hetuwCompileAll.sh
           echo "5"
+      - name: test dir
+        run: |
+          ls
+          cd bin
+          ls
+          cd ..
       - name: create release
         id: create_release
         uses: actions/create-release@v1
@@ -50,7 +56,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}3
-          release_name: ${{ github.ref }}3
+          release_name: OneLife_v$tag
           body: |
             In order to install, you already need to have the normal version of the game.
             Then download the binary "OneLifeApp_H_windows" and place it inside your One Hour One Life folder.
@@ -60,15 +66,6 @@ jobs:
 
             If you run into problems, please search in your ohol folder for cache.fcz and delete all that contain that name.
             Then log in once with the normal client, before starting the mod.
-      - name: upload windows #WINDOWS
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ./bin/OneLifeApp_H_windows.exe
-          asset_name: OneLifeApp_H_windows.exe
-          asset_content_type: application/zip
       - name: upload linux #LINUX
         uses: actions/upload-release-asset@v1
         env:
@@ -78,7 +75,16 @@ jobs:
           asset_path: ./bin/OneLifeApp_H_linux
           asset_name: OneLifeApp_H_linux
           asset_content_type: application/zip
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+      - name: upload windows #WINDOWS
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          title: Auto Pull ${{env.tag}}
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./bin/OneLifeApp_H_windows.exe
+          asset_name: OneLifeApp_H_windows.exe
+          asset_content_type: application/zip
+#      - name: Create Pull Request
+#        uses: peter-evans/create-pull-request@v3
+#        with:
+#          title: Auto Pull ${{env.tag}}
