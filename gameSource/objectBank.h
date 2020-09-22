@@ -451,6 +451,19 @@ typedef struct ObjectRecord {
         // for floor objects that don't completely cover ground
         char noCover;
         
+        // are objects in container slots invisible?
+        char slotsInvis;
+
+        
+        // alternate x pos for no-flip sprites if object drawn flipped
+        // (instead of just -x from normal pos)
+        // this can be NULL if not used for an object
+        double *spriteNoFlipXPos;
+        
+        // if true, when parent object is constructed in the world
+        // it is replaced by the next var object child in line
+        char useVarSerialNumbers;
+        
     } ObjectRecord;
 
 
@@ -889,6 +902,13 @@ void setupSpriteUseVis( ObjectRecord *inObject, int inUsesRemaining,
                         char *inSpriteVis );
 
 
+// sets vis flags in inSpriteVis based on inVarNumber
+// pass 0 for inVarNumber to show all
+void setupNumericSprites( ObjectRecord *inObject, int inVarNumber,
+                          int inMax,
+                          char *inSpriteVis );
+
+
 
 char bothSameUseParent( int inAObjectID, int inBObjectID );
 
@@ -970,6 +990,10 @@ int getMaxFoodValue();
 
 
 char sameRoadClass( int inFloorA, int inFloorB );
+
+
+// gets next var child in line for a serial numbered object ID
+int getNextVarSerialNumberChild( ObjectRecord *inO );
 
 
 

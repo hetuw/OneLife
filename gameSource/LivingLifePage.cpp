@@ -25152,6 +25152,27 @@ static void showPlayerLabel( LiveObject *inPlayer, const char *inLabel,
 
 
 
+static char commandTyped( char *inTyped, const char *inCommandTransKey ) {
+    const char *command = translate( inCommandTransKey );
+    
+    if( strstr( inTyped, command ) == inTyped ) {
+        
+        char *trimmedCommand = trimWhitespace( inTyped );
+        
+        unsigned int lengthTrim = strlen( trimmedCommand );
+        
+        delete [] trimmedCommand;
+        
+        if( lengthTrim == strlen( command ) ) {
+            return true;
+            }
+        }
+    return false;
+    }
+
+
+
+
 void LivingLifePage::keyDown( unsigned char inASCII ) {
     
     registerTriggerKeyCommand( inASCII, this );
@@ -25468,9 +25489,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 sendToServerSocket( message );
                                 delete [] message;
                                 }
-                            else if( strstr( typedText,
-                                             translate( "dieCommand" ) ) 
-                                     == typedText &&
+                            else if( commandTyped( typedText, "dieCommand" ) 
+                                     &&
                                      computeCurrentAge( ourLiveObject ) < 2 ) {
                                 // die command issued from baby
                                 char *message = 
@@ -25479,9 +25499,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 sendToServerSocket( message );
                                 delete [] message;
                                 }
-                            else if( strstr( typedText,
-                                             translate( "fpsCommand" ) ) 
-                                     == typedText ) {
+                            else if( commandTyped( typedText, "fpsCommand" ) ) {
                                 showFPS = !showFPS;
                                 frameBatchMeasureStartTime = -1;
                                 framesInBatch = 0;
@@ -25495,9 +25513,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                     endCountingSpritesDrawn();
                                     }
                                 }
-                            else if( strstr( typedText,
-                                             translate( "netCommand" ) ) 
-                                     == typedText ) {
+                            else if( commandTyped( typedText, "netCommand" ) ) {
                                 showNet = !showNet;
                                 netBatchMeasureStartTime = -1;
                                 messagesInPerSec = -1;
@@ -25509,9 +25525,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 bytesInCount = 0;
                                 bytesOutCount = 0;
                                 }
-                            else if( strstr( typedText,
-                                             translate( "pingCommand" ) ) 
-                                     == typedText ) {
+                            else if( commandTyped( typedText, 
+                                                   "pingCommand" ) ) {
 
                                 waitingForPong = true;
                                 lastPingSent ++;
@@ -25526,14 +25541,12 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 pongDeltaTime = -1;
                                 pingDisplayStartTime = -1;
                                 }
-                            else if( strstr( typedText,
-                                             translate( "disconnectCommand" ) ) 
-                                     == typedText ) {
+                            else if( commandTyped( typedText, 
+                                                   "disconnectCommand" ) ) {
                                 forceDisconnect = true;
                                 }
-                            else if( strstr( typedText,
-                                             translate( "familyCommand" ) ) 
-                                     == typedText ) {
+                            else if( commandTyped( typedText, 
+                                                   "familyCommand" ) ) {
                                 
                                 const char *famLabel = 
                                     translate( "familyLabel" );
@@ -25552,9 +25565,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                         }
                                     }
                                 }
-                            else if( strstr( typedText,
-                                             translate( "leaderCommand" ) ) 
-                                     == typedText ) {
+                            else if( commandTyped( typedText, 
+                                                   "leaderCommand" ) ) {
                                 
                                 const char *leaderLabel = 
                                     translate( "leaderLabel" );
@@ -25577,9 +25589,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                     }
                                 sendToServerSocket( (char*)"LEAD 0 0#" );
                                 }
-                            else if( strstr( typedText,
-                                             translate( "followerCommand" ) ) 
-                                     == typedText ) {
+                            else if( commandTyped( typedText, 
+                                                   "followerCommand" ) ) {
                                 
                                 const char *followerLabel = 
                                     translate( "followerLabel" );
@@ -25622,9 +25633,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 displayGlobalMessage( message );
                                 delete [] message;
                                 }
-                            else if( strstr( typedText,
-                                             translate( "allyCommand" ) ) 
-                                     == typedText ) {
+                            else if( commandTyped( typedText, 
+                                                   "allyCommand" ) ) {
                                 
                                 const char *allyLabel = 
                                     translate( "allyLabel" );
@@ -25679,9 +25689,8 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 displayGlobalMessage( message );
                                 delete [] message;
                                 }
-                            else if( strstr( typedText,
-                                             translate( "unfollowCommand" ) ) 
-                                     == typedText ) {
+                            else if( commandTyped( typedText, 
+                                                   "unfollowCommand" ) ) {
                                 sendToServerSocket( (char*)"UNFOL 0 0#" );
                                 }
                             else {
