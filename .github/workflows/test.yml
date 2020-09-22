@@ -55,7 +55,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}3
+          tag_name: $tag
           release_name: OneLife_v$tag
           body: |
             In order to install, you already need to have the normal version of the game.
