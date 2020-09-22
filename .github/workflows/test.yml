@@ -5,8 +5,6 @@ on:
   #  - cron: '0 10 * * * '
   #  - cron: '0 * * * * '
   push:
-    branches:
-      - master
 jobs:
   build:
     strategy:
@@ -35,7 +33,6 @@ jobs:
       - name: scripts
         if: ${{env.tag}} != ${{env.last}} #update
         run: |
-          echo "0"
           cd scripts/hetuwScripts
           echo "1"
           chmod +x hetuwPullLatest.sh
@@ -47,14 +44,14 @@ jobs:
           ./hetuwCompileAll.sh
           echo "5"
       - name: create release
-        if: ${{env.tag}} != ${{env.last}} #update
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          body_path: |
+          tag_name: ${{ github.ref }}3
+          release_name: ${{ github.ref }}3
+          body: |
             In order to install, you already need to have the normal version of the game.
             Then download the binary "OneLifeApp_H_windows" and place it inside your One Hour One Life folder.
             For steam users this folder is at C:\Program Files (86x)\Steam\steamapps\common\One Hour One Life
@@ -63,11 +60,7 @@ jobs:
 
             If you run into problems, please search in your ohol folder for cache.fcz and delete all that contain that name.
             Then log in once with the normal client, before starting the mod.
-          draft: false
-          prerelease: false
       - name: upload windows #WINDOWS
-        if: ${{env.tag}} != ${{env.last}} #update
-        id: windows
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -77,8 +70,6 @@ jobs:
           asset_name: OneLifeApp_H_windows.exe
           asset_content_type: application/zip
       - name: upload linux #LINUX
-        if: ${{env.tag}} != ${{env.last}} #update
-        id: linux
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -90,4 +81,4 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
-          title: Update ${{env.tag}}
+          title: Auto Pull ${{env.tag}}
