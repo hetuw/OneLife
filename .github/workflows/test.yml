@@ -43,6 +43,12 @@ jobs:
           echo "4"
           ./hetuwCompileAll.sh
           echo "5"
+      - name: test dir
+        run: |
+          ls
+          cd bin
+          ls
+          cd ..
       - name: create release
         id: create_release
         uses: actions/create-release@v1
@@ -50,7 +56,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}3
-          release_name: ${{ github.ref }}3
+          release_name: OneLife_v$tag
           body: |
             In order to install, you already need to have the normal version of the game.
             Then download the binary "OneLifeApp_H_windows" and place it inside your One Hour One Life folder.
