@@ -2486,7 +2486,18 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             }
 
 
+        char spriteNoFlip = false;
+        
+        if( inFlipH && getNoFlip( obj->sprites[i] ) ) {
+            spriteNoFlip = true;
+            }
+
         if( inFlipH ) {
+            
+            if( spriteNoFlip && obj->spriteNoFlipXPos != NULL ) {
+                spritePos.x = obj->spriteNoFlipXPos[i];
+                }
+
             spritePos.x *= -1;
             rot *= -1;
             }
@@ -3003,8 +3014,14 @@ HoldingPos drawObjectAnim( int inObjectID, int inDrawBehindSlots,
             else {
                 SpriteHandle sh = getSprite( spriteID );
                 if( sh != NULL ) {
-                    drawSprite( sh, pos, scale, rot, // hetuw mod added scale
-                                logicalXOR( inFlipH, obj->spriteHFlip[i] ) );
+                    char f = inFlipH;
+                    
+                    if( f && spriteNoFlip ) {
+                        f = false;
+                        }
+                    
+                    drawSprite( sh, pos, 1.0, rot, 
+                                logicalXOR( f, obj->spriteHFlip[i] ) );
                     }
                 }
             
@@ -3590,7 +3607,8 @@ void drawObjectAnim( int inObjectID, AnimationRecord *inAnim,
     // all of these are in contained mode
     setDrawnObjectContained( true );
     
-
+    
+    if( ! obj->slotsInvis )
     for( int i=0; i<obj->numSlots; i++ ) {
         if( i < inNumContained ) {
 
