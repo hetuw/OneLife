@@ -745,6 +745,36 @@ static void setupBlocksMoving( ObjectRecord *inR ) {
 
 
 
+static void setupBlocksNonAlly( ObjectRecord *inR ) {
+    inR->blocksNonAlly = false;    
+    
+    char *pos = strstr( inR->description, "+blocksNonAlly" );
+
+    if( pos != NULL ) {
+        inR->blocksNonAlly = true;
+        }
+    }
+
+
+
+static void setupBadgePos( ObjectRecord *inR ) {
+    inR->hasBadgePos = false;    
+    inR->badgePos.x = 0;
+    inR->badgePos.y = 0;
+    
+    char *pos = strstr( inR->description, "+badgePos" );
+
+    if( pos != NULL ) {
+        inR->hasBadgePos = true;
+        
+        sscanf( pos, "+badgePos%lf,%lf", 
+                &( inR->badgePos.x ),
+                &( inR->badgePos.y ) );
+        }
+    }
+
+
+
 static void setupFamHomeland( ObjectRecord *inR ) {
     inR->famUseDist = 0;
 
@@ -843,6 +873,17 @@ static void setupVarSerialNumber( ObjectRecord *inR ) {
         }
     }
 
+
+
+static void setupVarIsNumeral( ObjectRecord *inR ) {
+    inR->varIsNumeral = false;
+    char *pos = strstr( inR->description, "+varNumeral" );
+
+    if( pos != NULL ) {
+        inR->varIsNumeral = true;    
+        }
+    }
+
     
 
 
@@ -930,7 +971,9 @@ float initObjectBankStep() {
                 setupSlotsInvis( r );
                 
                 setupVarSerialNumber( r );
-                
+
+                setupVarIsNumeral( r );
+
 
                 // do this later, after we parse floorHugging
                 // setupWall( r );
@@ -1058,7 +1101,8 @@ float initObjectBankStep() {
 
                 
                 setupBlocksMoving( r );
-
+                setupBlocksNonAlly( r );
+                setupBadgePos( r );
 
                 
                 
@@ -1727,10 +1771,13 @@ static char *getVarObjectLabel( int inNumber ) {
 // includes - 01 hyphen offset character
 static char *getVarObjectNumeral( int inNumber, int inMax ) {
 
-    const char *formatString = "- %02d";
+    const char *formatString;
     
     if( inMax < 10 ) {
         formatString = "- %d";
+        }
+    else if( inMax > 9 && inMax < 100 ) {
+        formatString = "- %02d";
         }
     else if( inMax > 99 && inMax < 1000 ) {
         formatString = "- %03d";
@@ -2166,7 +2213,7 @@ void initObjectBankFinish() {
 
                     char numericLabel = false;
                     
-                    if( strstr( o->description, "+varNumeral" ) != NULL ) {
+                    if( o->varIsNumeral ) {
                         numericLabel = true;
                         }
                     
@@ -3993,10 +4040,15 @@ int addObject( const char *inDescription,
     setupSlotsInvis( r );
 
     setupVarSerialNumber( r );
-                
+    
+    setupVarIsNumeral( r );
+
+    
     setupWall( r );
 
     setupBlocksMoving( r );
+    setupBlocksNonAlly( r );
+    setupBadgePos( r );
     
     
     r->toolSetIndex = -1;

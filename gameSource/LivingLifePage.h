@@ -503,7 +503,7 @@ class LivingLifePage : public GamePage, public ActionListener {
         void clearMap();
         
         // enabled tutorail next time a connection loads
-        void runTutorial();
+        void runTutorial( int inNumber );
         
 
         char isMapBeingPulled();
@@ -583,7 +583,7 @@ class LivingLifePage : public GamePage, public ActionListener {
         
         int mRequiredVersion;
 
-        char mForceRunTutorial;
+        int mForceRunTutorial;
         int mTutorialNumber;
 
         char mGlobalMessageShowing;
@@ -1139,6 +1139,8 @@ class LivingLifePage : public GamePage, public ActionListener {
         // true if tile index is covered by a floor tile that doesn't
         // have a +noCover tag
         char isCoveredByFloor( int inTileIndex );
+
+        int getBadgeObjectID( LiveObject *inPlayer );
 
     };
 
