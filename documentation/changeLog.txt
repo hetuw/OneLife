@@ -4,6 +4,58 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 363    ???
+
+--Network stats command is now /NETWORK to avoid blocking crafting filter
+  for /NET.  Fixes #692
+
+--Tweaked hint sheet paper sprite position to keep text from getting too close
+  to edge.
+
+
+
+
+Server Fixes
+
+--Expert waystones no longer point you to an expert in a low population
+  situation where specialist biomes are disabled.  Fixes #695
+
+--Fixed so that non-follower gates don't accidentally work like follower gates.
+  Forgot to check a separate case when testing for gate ownership.  Fixes #689
+
+--Fixed so that shaky gates can be destroyed by non-owners (whoops) and so that
+  follower gates can be opened by followers, but can only be destroyed by the
+  actual owners.  Fixes #688
+
+--Apocalypse is impossible if there are less than 15 players on server.
+  Fixes #693
+
+--Fixed so that deadly animal passing over an empty tile (in a 2 or more tile
+  jump) can still attack you if you're standing there (before, it could only
+  attack you if the tile was non-empty).  Fixes #690
+
+--Fixed so that you can't set a blocking object down in a sliver of good biome,
+  surrounded by bad biome, in such a way that you are blocked from reaching it
+  to pick it back up again.  Fixes #694
+
+--Special biomes now occur in horizontal bands, 200 tiles thick, with snow to
+  the north, then mountain, then jungle, and then desert to the south, and
+  mountain outside of those bands farther north and south.
+
+--Homelands for birth now coincide with the special biome bands.  Outside of
+  your home band, you can't have babies.
+ 
+--Eve Y location shifted up into center of her homeland biome band.
+
+--When an outsider (non family member) follows you, who you haven't exiled yet,
+  you get a notice about it and an arrow pointing toward them.  A visitor to
+  your follower gate can see your name and follow you to come through your
+  gate, so now you get a notice that they've done this, and you can go to deal
+  with them if needed.
+
+
+
+
 Version 361    2020-September-25
 
 NOTE:  Must update server and data this week before client.

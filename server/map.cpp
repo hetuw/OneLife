@@ -169,6 +169,8 @@ timeSec_t slowTime() {
 
 extern GridPos getClosestPlayerPos( int inX, int inY );
 
+extern int getNumPlayers();
+
 
 
 // track recent placements to determine camp where
@@ -293,6 +295,23 @@ static int numSpecialBiomes;
 static int *specialBiomes;
 static float *specialBiomeCumuWeights;
 static float specialBiomeTotalWeight;
+
+
+static int specialBiomeBandMode;
+static int specialBiomeBandThickness;
+static SimpleVector<int> specialBiomeBandOrder;
+// contains indices into biomes array instead of biome numbers
+static SimpleVector<int> specialBiomeBandIndexOrder;
+
+static SimpleVector<int> specialBiomeBandYCenter;
+
+static int minActivePlayersForBirthlands;
+
+
+
+// the biome index to use in place of special biomes outside of the north-most
+// or south-most band
+static int specialBiomeBandDefaultIndex;
 
 
 
@@ -869,6 +888,22 @@ static void biomePutCached( int inX, int inY, int inBiome, int inSecondPlace,
 
 
 
+static int getSpecialBiomeIndexForYBand( int inY, char *outOfBand = NULL ) {
+    // new method, use y centers and thickness
+    int radius = specialBiomeBandThickness / 2;
+    
+    for( int i=0; i<specialBiomeBandYCenter.size(); i++ ) {
+        int yCenter = specialBiomeBandYCenter.getElementDirect( i );
+        
+        if( abs( inY - yCenter ) <= radius ) {
+            return specialBiomeBandIndexOrder.getElementDirect( i );
+            }
+        }
+    
+    // else not in radius of any band
+    return specialBiomeBandDefaultIndex;
+    }
+
 
 
 
@@ -978,46 +1013,56 @@ static int computeMapBiomeIndex( int inX, int inY,
     if( pickedBiome >= regularBiomeLimit && numSpecialBiomes > 0 ) {
         // special case:  on a peak, place a special biome here
 
-        // use patches mode for these
-        pickedBiome = -1;
 
-
-        double maxValue = -10;
-        double secondMaxVal = -10;
-        
-        for( int i=regularBiomeLimit; i<numBiomes; i++ ) {
-            int biome = biomes[i];
-        
-            setXYRandomSeed( biome * 263 + biomeRandSeedA + 38475,
-                             biomeRandSeedB );
-
-            double randVal = getXYFractal(  inX,
-                                            inY,
-                                            0.55, 
-                                            2.4999 + 
-                                            0.2499 * numSpecialBiomes );
-        
-            if( randVal > maxValue ) {
-                if( maxValue != -10 ) {
-                    secondMaxVal = maxValue;
-                    }
-                maxValue = randVal;
-                pickedBiome = i;
-                }
-            }
-        
-        if( maxValue - secondMaxVal < 0.03 ) {
-            // close!  that means we're on a boundary between special biomes
+        if( specialBiomeBandMode ) {
+            // use band mode for these
+            pickedBiome = getSpecialBiomeIndexForYBand( inY );
             
-            // stick last regular biome on this boundary, so special
-            // biomes never touch
-            secondPlace = pickedBiome;
-            secondPlaceGap = 0.1;
-            pickedBiome = regularBiomeLimit - 1;
-            }        
-        else {
             secondPlace = regularBiomeLimit - 1;
             secondPlaceGap = 0.1;
+            }
+        else {
+            // use patches mode for these
+            pickedBiome = -1;
+            
+            
+            double maxValue = -10;
+            double secondMaxVal = -10;
+            
+            for( int i=regularBiomeLimit; i<numBiomes; i++ ) {
+                int biome = biomes[i];
+                
+                setXYRandomSeed( biome * 263 + biomeRandSeedA + 38475,
+                                 biomeRandSeedB );
+                
+                double randVal = getXYFractal(  inX,
+                                                inY,
+                                                0.55, 
+                                                2.4999 + 
+                                                0.2499 * numSpecialBiomes );
+                
+                if( randVal > maxValue ) {
+                    if( maxValue != -10 ) {
+                        secondMaxVal = maxValue;
+                        }
+                    maxValue = randVal;
+                    pickedBiome = i;
+                    }
+                }
+            
+            if( maxValue - secondMaxVal < 0.03 ) {
+                // close!  that means we're on a boundary between special biomes
+                
+                // stick last regular biome on this boundary, so special
+                // biomes never touch
+                secondPlace = pickedBiome;
+                secondPlaceGap = 0.1;
+                pickedBiome = regularBiomeLimit - 1;
+                }        
+            else {
+                secondPlace = regularBiomeLimit - 1;
+                secondPlaceGap = 0.1;
+                }
             }
         }
     else {
@@ -3863,7 +3908,61 @@ char initMap() {
         }
 
 
+    specialBiomeBandMode = 
+        SettingsManager::getIntSetting( "specialBiomeBandMode", 0 );
+    
+    specialBiomeBandThickness = 
+        SettingsManager::getIntSetting( "specialBiomeBandThickness",
+                                        300 );
+    
+    SimpleVector<int> *specialBiomeOrderList =
+        SettingsManager::getIntSettingMulti( "specialBiomeBandOrder" );
 
+    specialBiomeBandOrder.push_back_other( specialBiomeOrderList );
+    
+    // look up biome index for each special biome
+    for( int i=0; i<specialBiomeBandOrder.size(); i++ ) {
+        int biomeNumber = specialBiomeBandOrder.getElementDirect( i );
+    
+        int biomeIndex = 0;
+
+        for( int j=0; j<numBiomes; j++ ) {
+            if( biomes[j] == biomeNumber ) {
+                biomeIndex = j;
+                break;
+                }
+            }
+        specialBiomeBandIndexOrder.push_back( biomeIndex );
+        }
+
+    delete specialBiomeOrderList;
+
+
+    int specialBiomeBandDefault = 
+        SettingsManager::getIntSetting( "specialBiomeBandDefault", 0 );
+    
+    // look up biome index
+    specialBiomeBandDefaultIndex = 0;
+    for( int j=0; j<numBiomes; j++ ) {
+        if( biomes[j] == specialBiomeBandDefault ) {
+            specialBiomeBandDefaultIndex = j;
+            break;
+            }
+        }
+    
+
+    SimpleVector<int> *specialBiomeBandYCenterList =
+        SettingsManager::getIntSettingMulti( "specialBiomeBandYCenter" );
+
+    specialBiomeBandYCenter.push_back_other( specialBiomeBandYCenterList );
+
+    delete specialBiomeBandYCenterList;
+
+
+    minActivePlayersForBirthlands = 
+        SettingsManager::getIntSetting( "minActivePlayersForBirthlands", 15 );
+
+    
 
     naturalMapIDs = new SimpleVector<int>[ numBiomes ];
     naturalMapChances = new SimpleVector<float>[ numBiomes ];
@@ -4746,7 +4845,10 @@ static void dbPut( int inX, int inY, int inSlot, int inValue,
     if( apocalypsePossible && inValue > 0 && inSlot == 0 && inSubCont == 0 ) {
         // a primary tile put
         // check if this triggers the apocalypse
-        if( isApocalypseTrigger( inValue ) ) {
+        if( isApocalypseTrigger( inValue ) &&
+            getNumPlayers() >=
+            SettingsManager::getIntSetting( "minActivePlayersForApocalypse", 
+                                            15 ) ) {
             apocalypseTriggered = true;
             apocalypseLocation.x = inX;
             apocalypseLocation.y = inY;
@@ -9719,6 +9821,97 @@ int isHomeland( int inX, int inY, int inLineageEveID ) {
     // report that they don't have one
     return 0;
     }
+
+
+
+
+#include "specialBiomes.h"
+
+
+int isBirthland( int inX, int inY, int inLineageEveID, int inDisplayID ) {
+    if( specialBiomeBandMode && 
+        getNumPlayers() >= minActivePlayersForBirthlands ) {
+        
+        char outOfBand = false;
+        
+        int pickedBiome = getSpecialBiomeIndexForYBand( inY, &outOfBand );
+        
+        if( pickedBiome == -1 || outOfBand ) {
+            return -1;
+            }
+        
+        int biomeNumber = biomes[ pickedBiome ];
+        
+        int personRace = getObject( inDisplayID )->race;
+
+        int specialistRace = getSpecialistRace( biomeNumber );
+        
+        if( specialistRace != -1 ) {
+            if( personRace == specialistRace ) {
+                return 1;
+                }
+            else {
+                return -1;
+                }
+            }
+        else {
+            // in-band, but no specialist race defined
+            // "language expert" band?
+            if( personRace == getPolylingualRace( true ) ) {
+                return 1;
+                }
+            else {
+                return -1;
+                }
+            }
+
+        }
+    else {
+        return isHomeland( inX, inY, inLineageEveID );
+        }
+    }
+
+
+
+
+int getSpecialBiomeBandYCenterForRace( int inRace ) {
+    int bandIndex = -1;
+    
+    for( int i=0; i<specialBiomeBandOrder.size(); i++ ) {
+        
+        int biomeNumber = specialBiomeBandOrder.getElementDirect( i );
+        
+        if( getSpecialistRace( biomeNumber ) == inRace ) {
+            // hit
+            bandIndex = i;
+            break;
+            }
+        }
+    
+    if( bandIndex == -1 ) {
+        // no hit...
+        // treat as polylingual
+        for( int i=0; i<specialBiomeBandOrder.size(); i++ ) {
+        
+            int biomeNumber = specialBiomeBandOrder.getElementDirect( i );
+            
+            // find non-specialist specialBiomeBand for polylingual race
+            if( getSpecialistRace( biomeNumber ) == -1 ) {
+                bandIndex = i;
+                break;
+                }
+            }
+        }
+    
+
+    if( bandIndex == -1 ) {
+        AppLog::errorF( "Could not find biome band for race %d", inRace );
+        return 0;
+        }
+    
+    return specialBiomeBandYCenter.getElementDirect( bandIndex );
+    }
+
 
 
 

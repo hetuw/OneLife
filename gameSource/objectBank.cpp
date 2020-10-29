@@ -542,11 +542,26 @@ static void setupFlight( ObjectRecord *inR ) {
 
 static void setupOwned( ObjectRecord *inR ) {
     inR->isOwned = false;
+    inR->isTempOwned = false;
+    inR->isFollowerOwned = false;
     
     char *ownedPos = strstr( inR->description, "+owned" );
     if( ownedPos != NULL ) {
         inR->isOwned = true;
         }
+
+    char *tempOwnedPos = strstr( inR->description, "+tempOwned" );
+    if( tempOwnedPos != NULL ) {
+        inR->isOwned = true;
+        inR->isTempOwned = true;
+        }
+
+    char *followerOwnedPos = strstr( inR->description, "+followerOwned" );
+    if( followerOwnedPos != NULL ) {
+        inR->isOwned = true;
+        inR->isFollowerOwned = true;
+        }
+
     }
 
 
@@ -745,13 +760,13 @@ static void setupBlocksMoving( ObjectRecord *inR ) {
 
 
 
-static void setupBlocksNonAlly( ObjectRecord *inR ) {
-    inR->blocksNonAlly = false;    
+static void setupBlocksNonFollower( ObjectRecord *inR ) {
+    inR->blocksNonFollower = false;    
     
-    char *pos = strstr( inR->description, "+blocksNonAlly" );
+    char *pos = strstr( inR->description, "+blocksNonFollower" );
 
     if( pos != NULL ) {
-        inR->blocksNonAlly = true;
+        inR->blocksNonFollower = true;
         }
     }
 
@@ -1101,7 +1116,7 @@ float initObjectBankStep() {
 
                 
                 setupBlocksMoving( r );
-                setupBlocksNonAlly( r );
+                setupBlocksNonFollower( r );
                 setupBadgePos( r );
 
                 
@@ -4047,7 +4062,7 @@ int addObject( const char *inDescription,
     setupWall( r );
 
     setupBlocksMoving( r );
-    setupBlocksNonAlly( r );
+    setupBlocksNonFollower( r );
     setupBadgePos( r );
     
     
