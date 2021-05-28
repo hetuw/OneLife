@@ -562,6 +562,11 @@ typedef struct Homeland {
         // should Eve placement ignore this homeland?
         char ignoredForEve;
 
+        // was this homeland the first for this lineageEveID?
+        // this can be true even if not primary, if eve resettles an old village
+        // and does not tapout trigger anything
+        char firstHomelandForFamily;
+
     } Homeland;
 
 
@@ -889,6 +894,10 @@ static void biomePutCached( int inX, int inY, int inBiome, int inSecondPlace,
 
 
 static int getSpecialBiomeIndexForYBand( int inY, char *outOfBand = NULL ) {
+    if( outOfBand != NULL ) {
+        *outOfBand = false;
+        }
+    
     // new method, use y centers and thickness
     int radius = specialBiomeBandThickness / 2;
     
@@ -900,7 +909,12 @@ static int getSpecialBiomeIndexForYBand( int inY, char *outOfBand = NULL ) {
             }
         }
     
+
     // else not in radius of any band
+    if( outOfBand != NULL ) {
+        *outOfBand = true;
+        }
+    
     return specialBiomeBandDefaultIndex;
     }
 
@@ -2074,7 +2088,7 @@ static DBTimeCacheRecord dbTimeCache[ DB_CACHE_SIZE ];
 typedef struct BlockingCacheRecord {
         int x, y;
         // -1 if not present
-        char blocking;
+        signed char blocking;
     } BlockingCacheRecord;
     
 static BlockingCacheRecord blockingCache[ DB_CACHE_SIZE ];
@@ -2160,7 +2174,7 @@ static void dbTimePutCached( int inX, int inY, int inSlot, int inSubCont,
 
 
 // returns -1 on miss
-static char blockingGetCached( int inX, int inY ) {
+static signed char blockingGetCached( int inX, int inY ) {
     BlockingCacheRecord r =
         blockingCache[ computeBLCacheHash( inX, inY ) ];
 
@@ -6740,7 +6754,7 @@ unsigned char *getChunkMessage( int inStartX, int inStartY,
 
 char isMapSpotBlocking( int inX, int inY ) {
     
-    char cachedVal = blockingGetCached( inX, inY );
+    signed char cachedVal = blockingGetCached( inX, inY );
     if( cachedVal != -1 ) {
         
         return cachedVal;
@@ -7455,6 +7469,21 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
             double t = Time::getCurrentTime();
                                   
             if( h == NULL ) {
+
+                // is this the family's first homeland?
+                char firstHomelandForFamily = true;
+                
+                for( int i=0; i<homelands.size(); i++ ) {
+                    Homeland *h = homelands.getElement( i );
+                    
+                    // watch for stale
+                    if( ! h->expired &&
+                        h->lineageEveID == lineage ) {
+                        firstHomelandForFamily = false;
+                        break;
+                        }
+                    }
+                
                 Homeland newH = { inX, inY, o->famUseDist,
                                   lineage,
                                   t,
@@ -7462,7 +7491,8 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                                   // changed
                                   true,
                                   tappedOutPrimaryHomeland,
-                                  isPlayerIgnoredForEvePlacement( p ) };
+                                  isPlayerIgnoredForEvePlacement( p ),
+                                  firstHomelandForFamily };
                 homelands.push_back( newH );
                 }
             else if( h->expired ) {
@@ -8616,43 +8646,116 @@ void getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             // now move her farther west, to avoid plopping her down
             // in middle of active homelands
             
-            int homelandXSum = 0;
-            int homelandXCount = 0;
+            FILE *tempLog = fopen( "evePlacementHomelandLog.txt", "a" );
             
+            fprintf( tempLog, "Placing Eve for %s at time %.f:\n",
+                     inEmail, Time::timeSec() );
+
+
+            fprintf( tempLog, "    First homeland list:  " );
+
+
+            int homelandXSum = 0;
+
+            SimpleVector<Homeland*> consideredHomelands;
+
             for( int i=0; i<homelands.size(); i++ ) {
                 Homeland *h = homelands.getElement( i );
                 
+                // only first homelands are considered
                 // any d-town or tutorial homelands are ignored
-                if( ! h->expired && ! h->ignoredForEve ) {
-                    homelandXCount ++;
+                if( h->firstHomelandForFamily && 
+                    ! h->expired && ! h->ignoredForEve ) {
                     homelandXSum += h->x;
+                    consideredHomelands.push_back( h );
+                    
+                    fprintf( tempLog, "(%d,%d)  ", h->x, h->y );
                     }
+                }            
+
+            fprintf( tempLog, "\n" );
+
+
+            int homelandXAve = 0;
+            int maxAveDistance = 9999999;
+
+            int outlierDist = 500;
+            
+            
+            if( consideredHomelands.size() > 0 ) {
+                homelandXAve = homelandXSum / consideredHomelands.size();
                 }
             
-            if( homelandXCount > 0 ) {
-                int homelandXAve = homelandXSum / homelandXCount;
+            fprintf( tempLog, "    Found %d first homelands with average "
+                     "x position %d\n",
+                     consideredHomelands.size(), homelandXAve );
+
             
-                for( int i=0; i<homelands.size(); i++ ) {
+            // keep discarding the homeland that is max distance from the ave
+            // until all we have left is homelands that are within 500 from ave
+            // and keep adjusting ave as we go along
+            // (Essentially, we discard farthest outlier repeatedly, until
+            //  there are no far outliers left).
+            while( consideredHomelands.size() > 0 && 
+                   maxAveDistance > outlierDist ) {
+                
+                homelandXAve = homelandXSum / consideredHomelands.size();
+                
+                int maxDist = 0;
+                int maxIndex = -1;
+                for( int i=0; i<consideredHomelands.size(); i++ ) {
+                    Homeland *h = consideredHomelands.getElementDirect( i );
                     
-                    Homeland *h = homelands.getElement( i );
+                    int dist = abs( h->x - homelandXAve );
+                    if( dist > maxDist ) {
+                        maxDist = dist;
+                        maxIndex = i;
+                        }
+                    }
+                if( maxDist > outlierDist ) {
+                    Homeland *h = 
+                        consideredHomelands.getElementDirect( maxIndex );
                     
-                    // avoid extreme outlier homelands that are more
-                    // than 1500 to the West of the average homeland location
-                    if( ! h->expired && ! h->ignoredForEve &&
-                        h->x > homelandXAve - 1500 ) {
+                    homelandXSum -= h->x;
+                    
+                    fprintf( tempLog, "    Discarding outlier (%d,%d)\n",
+                             h->x, h->y );
+
+                    consideredHomelands.deleteElement( maxIndex );
+                    }
+                maxAveDistance = maxDist;
+                }
+
+            
+            fprintf( tempLog, "    After discarding outliers, "
+                     "have %d first homelands with average x position %d\n",
+                     consideredHomelands.size(), homelandXAve );
+
+
+
+            if( consideredHomelands.size() > 0 ) {
+                for( int i=0; i<consideredHomelands.size(); i++ ) {
+                    
+                    Homeland *h = consideredHomelands.getElementDirect( i );
+                    
+                    int xBoundary = h->x - 2 * h->radius;
                         
-                        int xBoundary = h->x - 2 * h->radius;
+                    if( xBoundary < ave.x ) {
+                        ave.x = xBoundary;
                         
-                        if( xBoundary < ave.x ) {
-                            ave.x = xBoundary;
-                            
-                            AppLog::infoF( 
-                                "Pushing Eve to west of homeland at x=%d\n",
-                                h->x );
-                            }
+                        AppLog::infoF( 
+                            "Pushing Eve to west of homeland %d at x=%d\n",
+                            i, h->x );
+
+                        fprintf( 
+                            tempLog, 
+                            "    Pushing Eve to west of homeland %d at x=%d\n",
+                            i, h->x );
                         }
                     }
                 }
+
+            fclose( tempLog );
             }
         }
     else {
