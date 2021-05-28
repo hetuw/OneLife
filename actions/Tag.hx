@@ -11,9 +11,9 @@ class Tag
 {
     public static function main()
     {
-        Sys.println(tagname());
+        tagname();
     }
-    public static function tagname():String
+    public static function tagname()
     {
         var r = null;
         var http = new Http("https://api.github.com/repos/jasonrohrer/OneLife/tags");
@@ -26,8 +26,9 @@ class Tag
         //trace('data $data');
         var array:Array<Data> = Json.parse(data);
         var name = array[0].name;
+        Sys.setEnv("last",File.getContent("tag.txt"));
         File.saveContent("tag.txt",name); //save content
-        return name;
+        Sys.setEnv("tag",name);
     }
 }
 private typedef Data = {name:String,zipball_url:String,tarball_url:String,commit:{sha:String,url:String},node_id:String}

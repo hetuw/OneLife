@@ -20,12 +20,7 @@ jobs:
           haxe-version: ${{ matrix.haxe }}
       - run: haxe -version
       - name: get tag
-        run: |
-          last=$(<"tag.txt")
-          tag=$(haxe --run actions/Tag.hx)
-          echo "::set-env name=last::$last"
-          echo "::set-env name=tag::$tag"
-          echo ""
+        run: haxe --run actions/Tag.hx
       - name: trace tag
         run: echo "tag= "$tag last= $last""
       - name: packages
