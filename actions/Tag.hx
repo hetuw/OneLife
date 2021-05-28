@@ -26,9 +26,9 @@ class Tag
         //trace('data $data');
         var array:Array<Data> = Json.parse(data);
         var name = array[0].name;
-        Sys.setEnv("last",File.getContent("tag.txt"));
+        Sys.putEnv("last",File.getContent("tag.txt"));
         File.saveContent("tag.txt",name); //save content
-        Sys.setEnv("tag",name);
+        Sys.putEnv("tag",name);
     }
 }
 private typedef Data = {name:String,zipball_url:String,tarball_url:String,commit:{sha:String,url:String},node_id:String}
