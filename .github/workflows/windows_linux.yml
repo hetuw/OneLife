@@ -43,7 +43,7 @@ jobs:
           ./hetuwPullLatest.sh linux 1
           echo "4"
           ./hetuwCompileAll.sh
-          echo "6"
+          echo "7"
       - name: test dir
         run: |
           cd scripts/hetuwScripts
