@@ -77,15 +77,15 @@ then
 fi
 
 
-if [ ! -e minorGems ]
-then
+#if [ ! -e minorGems ]
+#then
 	git clone https://github.com/hetuw/minorGems	
-fi
+#fi
 
-if [ ! -e OneLife ]
-then
+#if [ ! -e OneLife ]
+#then
 	git clone https://github.com/hetuw/OneLife
-fi
+#fi
 
 
 cd minorGems
