@@ -15,19 +15,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - uses: krdlab/setup-haxe@v1
-        with:
-          haxe-version: ${{ matrix.haxe }}
-      - run: haxe -version
-      - name: get tag
-        run: haxe --run actions/Tag.hx
-      - name: trace tag
-        run: echo "tag= "$tag last= $last""
       - name: packages
-        if: ${{env.tag}} != ${{env.last}} #update
         run: sudo apt-get install git g++ imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev mingw-w64
       - name: scripts
-        if: ${{env.tag}} != ${{env.last}} #update
         run: |
           cd scripts/hetuwScripts
           echo "1"
@@ -52,8 +42,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{env.tag}}
-          release_name: ${{env.tag}}
+          tag_name: OneLife_v364
+          release_name: OneLife_v364
           body: |
             In order to install, you already need to have the normal version of the game.
             Then download the binary "OneLifeApp_H_windows" and place it inside your One Hour One Life folder.
@@ -81,7 +71,3 @@ jobs:
           asset_path: ./scripts/hetuwScripts/bin/OneLifeApp_H_windows.exe
           asset_name: OneLifeApp_H_windows.exe
           asset_content_type: application/zip
-#      - name: Create Pull Request
-#        uses: peter-evans/create-pull-request@v3
-#        with:
-#          title: Auto Pull ${{env.tag}}
