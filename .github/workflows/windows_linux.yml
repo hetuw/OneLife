@@ -36,6 +36,10 @@ jobs:
           echo "_________________"
           cd bin
           ls
+          echo "_____windows______"
+          cd ..
+          cd windows
+          ls
       - name: create release
         id: create_release
         uses: actions/create-release@v1
