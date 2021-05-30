@@ -28,7 +28,9 @@ jobs:
           ./hetuwPullLatest.sh linux 1
           echo "4"
       - name: compile
-        run: ./hetuwCompileAll.sh
+        run: |
+          cd scripts/hetuwScripts
+          ./hetuwCompileAll.sh
       - name: test dir
         run: |
           cd scripts/hetuwScripts
