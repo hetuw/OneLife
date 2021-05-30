@@ -30,6 +30,11 @@ then
 	git clone https://github.com/jasonrohrer/OneLifeData7	
 fi
 
+echo "clone minor gems"
+git clone https://github.com/hetuw/minorGems
+echo "clone onelife"
+git clone https://github.com/hetuw/OneLife
+
 cd OneLifeData7
 git fetch --tags
 latestTaggedVersionB=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//'`
@@ -75,18 +80,6 @@ then
 		ln -s /usr/i686-w64-mingw32/include/winsock.h Winsock.h
 	fi
 fi
-
-
-#if [ ! -e minorGems ]
-#then
-	git clone https://github.com/hetuw/minorGems	
-#fi
-
-#if [ ! -e OneLife ]
-#then
-	git clone https://github.com/hetuw/OneLife
-#fi
-
 
 cd minorGems
 git pull
