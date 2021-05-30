@@ -45,6 +45,11 @@ mkdir -p groundTileCache
 
 
 echo "Copying items from build into directories"
+echo "ls"
+ls
+echo "OneLifeApp"
+ls OneLife/gameSource/OneLife
+echo "copy"
 cp OneLife/gameSource/OneLife ./OneLifeApp
 cp OneLife/documentation/Readme.txt .
 cp OneLife/no_copyright.txt .
