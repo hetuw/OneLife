@@ -41,7 +41,9 @@ mkdir -p languages
 mkdir -p reverbCache
 mkdir -p groundTileCache
 
-
+echo "Current directory"
+pwd
+ls
 
 
 echo "Copying items from build into directories"
