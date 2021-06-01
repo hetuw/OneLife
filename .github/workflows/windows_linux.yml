@@ -29,17 +29,6 @@ jobs:
           echo "4"
           ./hetuwCompileAll.sh
           echo "5"
-      - name: test dir
-        run: |
-          cd scripts/hetuwScripts
-          ls
-          echo "_________________"
-          cd bin
-          ls
-          echo "_____windows______"
-          cd ..
-          cd windows
-          ls
       - name: create release
         id: create_release
         uses: actions/create-release@v1
