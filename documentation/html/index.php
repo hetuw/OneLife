@@ -120,7 +120,7 @@ if( $rs_reviewCount > 0 ) {
 <table border=0><tr>
 <td><?php showLogo( "noDRM.png", "No DRM" ); ?></td>
 <td><?php showLogo( "noTie.png", "No middle-person" ); ?></td>
-<td><?php showLogo( "crossPlatform.png", "Cross-platform" ); ?></td>
+<td><?php showLogo( "crossPlatformNoMac.png", "Cross-platform" ); ?></td>
 <td><?php showLogo( "openSource.png", "Open Source" ); ?></td>
 </tr></table>                                  
 </center>
@@ -204,7 +204,7 @@ You can take a look at the <a href="requirements.php">system requirements</a>.</
 <br>
 <br>
 
-<center><iframe title="YouTube video player" width="640" height="390" src="https://www.youtube.com/embed/ym1eIhprFlU?rel=0" frameborder="0" allowfullscreen></iframe></center>   
+<center><iframe title="YouTube video player" width="640" height="390" src="https://www.youtube.com/embed/Hu7kXKuShks?rel=0" frameborder="0" allowfullscreen></iframe></center>   
 
 <br>
 <br>
