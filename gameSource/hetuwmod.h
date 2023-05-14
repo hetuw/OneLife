@@ -6,8 +6,8 @@
 #define hetuwLogFileName "hetuwlog.txt"
 #define hetuwLogSeperator " | " // needs to be 3 char long
 #define hetuwFakeCoord 1977
-#define hetuwBitcoinWallet "bc1q66jzg06xxd8uup0svwhhwum23d3mqlrnsccf2j" // donate something :)
-#define hetuwGetNewestVersionFromGithub "get newest version from github https://github.com/hetuw/OneLife/releases"
+#define hetuwBitcoinWallet "bc1q66jzg06xxd8uup0svwhhwum23d3mqlrnsccf2j" // donate something :)  (this donates to hetuw, not selb/YumLife, to be clear)
+#define hetuwGetNewestVersionFromGithub "get newest version from github https://github.com/selb/YumLife/releases"
 #define hetuwPhotoSize 400
 
 #define hetuwLinkMainServer "bigserver2.onehouronelife.com"
