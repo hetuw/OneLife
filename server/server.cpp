@@ -1189,9 +1189,16 @@ char getFemale( LiveObject *inPlayer ) {
     }
 
 
+GridPos getPlayerPos( LiveObject *inPlayer );
 
-// find most fit offspring
-static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID ) {
+
+
+// find most fit offspring within maxDistance from inLocation
+// returns NULL if none found
+static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID,
+                                         GridPos inLocation,
+                                         int inMaxDistance ) {
+
     LiveObject *fittestOffspring = NULL;
     double fittestOffspringFitness = 0;
 
@@ -1202,15 +1209,20 @@ static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID ) {
             otherPlayer->id != inPlayerID &&
             otherPlayer->id != inSkipID ) {
             
-            if( otherPlayer->fitnessScore > fittestOffspringFitness ) {
+            if( distance( getPlayerPos( otherPlayer ), inLocation )
+                <= inMaxDistance ) {
                 
-                if( otherPlayer->lineage->getElementIndex( inPlayerID ) 
-                    != -1 ) {
+
+                if( otherPlayer->fitnessScore > fittestOffspringFitness ) {
+                
+                    if( otherPlayer->lineage->getElementIndex( inPlayerID ) 
+                        != -1 ) {
                     
-                    // player is direct offspring of inPlayer
-                    // (child, grandchild, etc).
-                    fittestOffspring = otherPlayer;
-                    fittestOffspringFitness = otherPlayer->fitnessScore;
+                        // player is direct offspring of inPlayer
+                        // (child, grandchild, etc).
+                        fittestOffspring = otherPlayer;
+                        fittestOffspringFitness = otherPlayer->fitnessScore;
+                        }
                     }
                 }
             }
@@ -1218,35 +1230,69 @@ static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID ) {
     
     return fittestOffspring;
     }
+
+
+
+static LiveObject *findFittestCloseRelative( LiveObject *inPlayer,
+                                             int inMaxDistance ) {
+
+    GridPos location = getPlayerPos( inPlayer );
+
+    LiveObject *offspring = NULL;
     
+    // walk up through lineage and find fittest close relative
+    // fittest person who shares our mother
+    // fittest person who shares our gma
+    // fittest person who shares our ggma
+    
+    // start with ma
+    int lineageStep = 0;
+    
+    while( offspring == NULL &&
+           lineageStep < inPlayer->lineage->size() ) {
+            
+        offspring = findFittestOffspring( 
+            inPlayer->lineage->getElementDirect( lineageStep ),
+            inPlayer->id, location, inMaxDistance );
+        
+        lineageStep++;
+        }
+    return offspring;
+    }
+
 
 
 static LiveObject *findHeir( LiveObject *inPlayer ) {
+    GridPos location = getPlayerPos( inPlayer );
+    
+    // use followDistance to limit consideration for heir
+    int maxDistance = 
+        SettingsManager::getIntSetting( "followDistance", 5000 );
+
+    int hugeDistance = 999999999;
+
+
     LiveObject *offspring = NULL;
     
     if( getFemale( inPlayer ) ) {
-        offspring = findFittestOffspring( inPlayer->id, inPlayer->id );
+        offspring = findFittestOffspring( inPlayer->id, inPlayer->id,
+                                          location, maxDistance );
+        
+        if( offspring == NULL ) {
+            // none found in maxDistance, search in much larger distance
+            offspring = findFittestOffspring( inPlayer->id, inPlayer->id,
+                                              location, hugeDistance );
+            }
         }
     
     if( offspring == NULL ) {
         // no direct offspring found
         
-        // walk up through lineage and find oldest close relative
-        // oldest person who shares our mother
-        // oldest person who shares our gma
-        // oldest person who shares our ggma
+        offspring = findFittestCloseRelative( inPlayer, maxDistance );
         
-        // start with ma
-        int lineageStep = 0;
-        
-        while( offspring == NULL &&
-               lineageStep < inPlayer->lineage->size() ) {
-            
-            offspring = findFittestOffspring( 
-                inPlayer->lineage->getElementDirect( lineageStep ),
-                inPlayer->id );
-            
-            lineageStep++;
+        if( offspring != NULL ) {
+            // none found in maxDistance, search in much larger distance
+            findFittestCloseRelative( inPlayer, hugeDistance );
             }
         }
 
@@ -16031,33 +16077,80 @@ static void leaderDied( LiveObject *inLeader ) {
 
     if( inLeader->followingID == -1 &&
         directFollowers.size() > 0 ) {
+
+        int maxDistance = 
+            SettingsManager::getIntSetting( "followDistance", 5000 );
+
+        GridPos location = getPlayerPos( inLeader );
         
+
         LiveObject *fittestFollower = directFollowers.getElementDirect( 0 );
         // -1, because lowest possible score is 0
         // we will find a non-exiled follower this way
         double fittestFitness = -1;
-        
+
         for( int i=0; i<directFollowers.size(); i++ ) {
             LiveObject *otherPlayer = directFollowers.getElementDirect( i );
             
-            if( otherPlayer->fitnessScore > fittestFitness &&
+            if( otherPlayer->fitnessScore > fittestFitness
+                &&
+                distance( location, getPlayerPos( otherPlayer ) ) <= maxDistance
+                &&
                 ! isExiled( inLeader, otherPlayer ) ) {
                 
                 fittestFitness = otherPlayer->fitnessScore;
                 fittestFollower = otherPlayer;
                 }
+            }        
+
+        if( fittestFitness == -1 ) {
+            // didn't find one within radius
+            // try again with no radius limit
+
+            for( int i=0; i<directFollowers.size(); i++ ) {
+                LiveObject *otherPlayer = directFollowers.getElementDirect( i );
+                
+                if( otherPlayer->fitnessScore > fittestFitness &&
+                    ! isExiled( inLeader, otherPlayer ) ) {
+                    
+                    fittestFitness = otherPlayer->fitnessScore;
+                    fittestFollower = otherPlayer;
+                    }
+                }
             }
         
+
         // if all are exiled, then we find fittest follower
         if( fittestFitness == -1 ) {
+            
+            // first, look in limited radius
             for( int i=0; i<directFollowers.size(); i++ ) {
                 LiveObject *otherPlayer = directFollowers.getElementDirect( i );
             
                 // ignore exile status this time
-                if( otherPlayer->fitnessScore > fittestFitness ) {
+                if( otherPlayer->fitnessScore > fittestFitness 
+                    &&
+                    distance( location, getPlayerPos( otherPlayer ) ) 
+                    <= maxDistance ) {
                 
                     fittestFitness = otherPlayer->fitnessScore;
                     fittestFollower = otherPlayer;
+                    }
+                }
+
+            if( fittestFitness == -1 ) {
+                // no exiled followers in radius
+                // try again with no radius limit
+                for( int i=0; i<directFollowers.size(); i++ ) {
+                    LiveObject *otherPlayer = 
+                        directFollowers.getElementDirect( i );
+            
+                    // ignore exile status this time
+                    if( otherPlayer->fitnessScore > fittestFitness ) {
+                        
+                        fittestFitness = otherPlayer->fitnessScore;
+                        fittestFollower = otherPlayer;
+                        }
                     }
                 }
             }
