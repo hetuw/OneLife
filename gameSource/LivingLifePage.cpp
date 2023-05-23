@@ -147,7 +147,7 @@ doublePair LivingLifePage::hetuwGetLastScreenViewCenter() { return lastScreenVie
 static char shouldMoveCamera = true;
 
 
-extern double viewWidth;
+extern double visibleViewWidth;
 extern double viewHeight;
 
 extern int screenW, screenH;
@@ -3973,7 +3973,7 @@ void LivingLifePage::drawOffScreenSounds() {
         return;
         }
     
-    double xRadius = viewWidth / 2 - 32;
+    double xRadius = visibleViewWidth / 2 - 32;
     double yRadius = viewHeight / 2 - 32;
     
     FloatColor red = { 0.65, 0, 0, 1 };
@@ -6638,11 +6638,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
     //setDrawColor( 1, 1, 1, 1 );
-    //drawSquare( lastScreenViewCenter, viewWidth );
+    //drawSquare( lastScreenViewCenter, visibleViewWidth );
     
 
     //if( currentGamePage != NULL ) {
-    //    currentGamePage->base_draw( lastScreenViewCenter, viewWidth );
+    //    currentGamePage->base_draw( lastScreenViewCenter, visibleViewWidth );
     //    }
     
     setDrawColor( 1, 1, 1, 1 );
@@ -20896,11 +20896,11 @@ void LivingLifePage::step() {
                 lrint( moveScale * 
                        cameraFollowsObject->currentMoveDirection.y );
  
-            if( screenCenterPlayerOffsetX < -viewWidth / 3 ) {
-                screenCenterPlayerOffsetX =  -viewWidth / 3;
+            if( screenCenterPlayerOffsetX < -visibleViewWidth / 3 ) {
+                screenCenterPlayerOffsetX =  -visibleViewWidth / 3;
                 }
-            if( screenCenterPlayerOffsetX >  viewWidth / 3 ) {
-                screenCenterPlayerOffsetX =  viewWidth / 3;
+            if( screenCenterPlayerOffsetX >  visibleViewWidth / 3 ) {
+                screenCenterPlayerOffsetX =  visibleViewWidth / 3;
                 }
             if( screenCenterPlayerOffsetY < -viewHeight / 5 ) {
                 screenCenterPlayerOffsetY =  -viewHeight / 5;
@@ -20978,8 +20978,8 @@ void LivingLifePage::step() {
         
         char viewChange = false;
         
-        int maxRX = 1; // hetuw mod default: viewWidth / 15
-        int maxRY = 1; // hetuw mod default: viewHeight / 15
+        int maxRX = 1; // hetuw mod (default: visibleViewWidth / 15)
+        int maxRY = 1; // hetuw mod (default: viewHeight / 15)
         int maxR = 0;
         double moveSpeedFactor = 20 * cameraFollowsObject->currentSpeed;
         
@@ -25924,6 +25924,10 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                             else if( commandTyped( typedText, 
                                                    "unfollowCommand" ) ) {
                                 sendToServerSocket( (char*)"UNFOL 0 0#" );
+                                }
+                            else if( commandTyped( typedText, 
+                                                   "propertyCommand" ) ) {
+                                sendToServerSocket( (char*)"PROP 0 0#" );
                                 }
                             else {
                                 // filter hints

@@ -4,6 +4,25 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 372    ???
+
+--Fixed so that LivingLifePage uses visibleViewWidth for all calculations (like
+  player position) instead of viewWidth.  This fixes issues with camera
+  position relative to player on ultrawide monitors.  Related to #782
+
+--Fixed calling convention for two windows callbacks.  Thanks Justin L.
+
+--New /PROPERTY command that cycles through your owned property and gives you a
+  temporary map arrow to each one in turn.  Each property location has a unique
+  two-word name assigned so that you can keep track of which property you're
+  trying to move toward.  Upon inheriting a property, this same name is also
+  displayed.  Thanks Cordy.  Fixes #800
+
+--Unique two-word name is displayed when you finish constructing a property
+  fence.
+
+
+
 Version 371    2023-05-19
 
 --Fixed so that actor-to-newTarget numUses pass-through only happens if they
