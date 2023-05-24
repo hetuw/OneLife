@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 372    ???
+Version 372    2023-05-24
 
 --Fixed so that LivingLifePage uses visibleViewWidth for all calculations (like
   player position) instead of viewWidth.  This fixes issues with camera
@@ -20,6 +20,33 @@ Version 372    ???
 
 --Unique two-word name is displayed when you finish constructing a property
   fence.
+
+
+
+
+Server Fixes
+
+--Photo server web UI now lets you page through older photos.  Thanks Cordy.
+  Fixes #802
+
+--Photo server provides width/height html hints for photos, to smooth page
+  loading.
+
+--Fixed spelling error in family tree server (Eighth).  Thanks Cordy.
+  Fixes #805
+
+--Moved curse logging calls into setDBCurse to log all cases of cursing, and
+  removed them from to mostly redundant cursePlayer call.  CURSE MY BABY, CURSE
+  YOU, and several other variants are now logged correctly.  Thanks Cordy.
+  Fixes #809
+
+--Removed use of 1000-character static buffer when loading map files, instead
+  measuring length of object/slots string before scanning it into a
+  dynamically-allocated buffer.  Complex containers were already running
+  aground on 500-character static buffers (fixed elsewhere).  We might hit the
+  1000-character limit eventually.  Fixes #810
+
+
 
 
 
