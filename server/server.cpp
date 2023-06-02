@@ -6494,8 +6494,8 @@ static void sendToolExpertMessage( LiveObject *inPlayer,
 
 
 
-void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
-                 SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout );
+GridPos handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
+                    SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout );
 
 
 
@@ -6599,8 +6599,10 @@ static int isGraveSwapDest( int inTargetX, int inTargetY,
 // doesn't check for adjacency (so works for thrown drops too)
 // if target spot blocked, will search for empty spot to throw object into
 // if inPlayerIndicesToSendUpdatesAbout is NULL, it is ignored
-void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
-                 SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
+//
+// Returns actual position of drop
+GridPos handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
+                    SimpleVector<int> *inPlayerIndicesToSendUpdatesAbout ) {
     
     
     if( ! isBiomeAllowedForPlayer( inDroppingPlayer, inX, inY, false ) ) {
@@ -6725,8 +6727,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             }
         }
 
-    int targetX = inX;
-    int targetY = inY;
+    GridPos targetPos = { inX, inY };
 
     int mapID = getMapObject( inX, inY );
     char mapSpotBlocking = false;
@@ -6758,8 +6759,8 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
 
 
         if( found && inDroppingPlayer->holdingID > 0 ) {
-            targetX = foundX;
-            targetY = foundY;
+            targetPos.x = foundX;
+            targetPos.y = foundY;
             }
         else {
             // no place to drop it, it disappears
@@ -6807,7 +6808,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
             if( inDroppingPlayer->numContained != 0 ) {
                 clearPlayerHeldContained( inDroppingPlayer );
                 }
-            return;
+            return targetPos;
             }            
         }
     
@@ -6820,11 +6821,11 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
         LiveObject *babyO = getLiveObject( babyID );
         
         if( babyO != NULL ) {
-            babyO->xd = targetX;
-            babyO->xs = targetX;
+            babyO->xd = targetPos.x;
+            babyO->xs = targetPos.x;
                     
-            babyO->yd = targetY;
-            babyO->ys = targetY;
+            babyO->yd = targetPos.y;
+            babyO->ys = targetPos.y;
             
             babyO->heldByOther = false;
             
@@ -6856,7 +6857,7 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
         inDroppingPlayer->heldOriginY = 0;
         inDroppingPlayer->heldTransitionSourceID = -1;
         
-        return;
+        return targetPos;
         }
     
     setResponsiblePlayer( inDroppingPlayer->id );
@@ -6867,9 +6868,9 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
         != NULL ) {
                                     
         setGravePlayerID( 
-            targetX, targetY, inDroppingPlayer->heldGravePlayerID );
+            targetPos.x, targetPos.y, inDroppingPlayer->heldGravePlayerID );
         
-        int swapDest = isGraveSwapDest( targetX, targetY, 
+        int swapDest = isGraveSwapDest( targetPos.x, targetPos.y, 
                                         inDroppingPlayer->id );
         
         // see if another player has target location in air
@@ -6878,17 +6879,16 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
         GraveMoveInfo g = { 
             { inDroppingPlayer->heldGraveOriginX,
               inDroppingPlayer->heldGraveOriginY },
-            { targetX,
-              targetY },
+            targetPos,
             swapDest };
         newGraveMoves.push_back( g );
         }
 
 
-    setMapObject( targetX, targetY, inDroppingPlayer->holdingID );
-    setEtaDecay( targetX, targetY, inDroppingPlayer->holdingEtaDecay );
+    setMapObject( targetPos.x, targetPos.y, inDroppingPlayer->holdingID );
+    setEtaDecay( targetPos.x, targetPos.y, inDroppingPlayer->holdingEtaDecay );
 
-    transferHeldContainedToMap( inDroppingPlayer, targetX, targetY );
+    transferHeldContainedToMap( inDroppingPlayer, targetPos.x, targetPos.y );
     
                                 
 
@@ -6907,11 +6907,11 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
     ObjectRecord *droppedObject = getObject( oldHoldingID );
    
     if( inPlayerIndicesToSendUpdatesAbout != NULL ) {    
-        handleMapChangeToPaths( targetX, targetY, droppedObject,
+        handleMapChangeToPaths( targetPos.x, targetPos.y, droppedObject,
                                 inPlayerIndicesToSendUpdatesAbout );
         }
     
-    
+    return targetPos;
     }
 
 
@@ -8541,6 +8541,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             
             o->connected = true;
             o->cravingKnown = false;
+            
+            o->curseTokenUpdate = true;
             
             if( o->heldByOther ) {
                 // they're held, so they may have moved far away from their
@@ -11150,54 +11152,77 @@ static char containmentPermitted( int inContainerID, int inContainedID ) {
         // not a limited containable object
         return true;
         }
+
+    char anyWithLimitNameFound = false;
     
-    char *limitNameLoc = &( contLoc[5] );
+    while( contLoc != NULL ) {
+        
     
-    if( limitNameLoc[0] != ' ' &&
-        limitNameLoc[0] != '\0' ) {
+        char *limitNameLoc = &( contLoc[5] );
+    
+        if( limitNameLoc[0] != ' ' &&
+            limitNameLoc[0] != '\0' ) {
 
-        // there's something after +cont
-        // scan the whole thing, including +cont
+            // there's something after +cont
+            // scan the whole thing, including +cont
+            
+            anyWithLimitNameFound = true;
 
-        char tag[100];
-        
-        int numRead = sscanf( contLoc, "%99s", tag );
-        
-        if( numRead == 1 ) {
+            char tag[100];
             
-            // clean up # character that might delimit end of string
-            int tagLen = strlen( tag );
+            int numRead = sscanf( contLoc, "%99s", tag );
             
-            for( int i=0; i<tagLen; i++ ) {
-                if( tag[i] == '#' ) {
-                    tag[i] = '\0';
-                    tagLen = i;
-                    break;
-                    }
-                }
-
-            char *locInContainerName =
-                strstr( getObject( inContainerID )->description, tag );
-            
-            if( locInContainerName != NULL ) {
-                // skip to end of tag
-                // and make sure tag isn't a sub-tag of container tag
-                // don't want contained to be +contHot
-                // and contaienr to be +contHotPlates
+            if( numRead == 1 ) {
                 
-                char end = locInContainerName[ tagLen ];
+                // clean up # character that might delimit end of string
+                int tagLen = strlen( tag );
                 
-                if( end == ' ' ||
-                    end == '\0'||
-                    end == '#' ) {
-                    return true;
+                for( int i=0; i<tagLen; i++ ) {
+                    if( tag[i] == '#' ) {
+                        tag[i] = '\0';
+                        tagLen = i;
+                        break;
+                        }
                     }
+                
+                char *locInContainerName =
+                    strstr( getObject( inContainerID )->description, tag );
+                
+                if( locInContainerName != NULL ) {
+                    // skip to end of tag
+                    // and make sure tag isn't a sub-tag of container tag
+                    // don't want contained to be +contHot
+                    // and contaienr to be +contHotPlates
+                    
+                    char end = locInContainerName[ tagLen ];
+                    
+                    if( end == ' ' ||
+                        end == '\0'||
+                        end == '#' ) {
+                        return true;
+                        }
+                    }
+                // no match with this container so far, 
+                // but we can keep trying other +cont tags
+                // in our contained object
                 }
-            return false;
             }
+        else {
+            // +cont with nothing after it, no limit based on this tag
+            }
+
+        // keep looking beyond last limit loc
+        contLoc = strstr( limitNameLoc, "+cont" );
+        }
+
+    if( anyWithLimitNameFound ) {
+        // item is limited to some types of container, and this
+        // container didn't match any of the limit names
+        return false;
         }
     
-    // +cont with nothing after it, no limit
+
+    // we get here if we found +cont in the item, but no limit name after it
     return true;
     }
 
@@ -12100,13 +12125,17 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
         if( found ) {
             
             // throw it on map temporarily
-            handleDrop( 
+            // spot may move based on biome bans and other factors
+            GridPos actualDropSpot = handleDrop( 
                 spot.x, spot.y, 
                 inPlayer,
                 // only temporary, don't worry about blocking players
                 // with this drop
                 NULL );
-                                
+
+            // use where we actually dropped it
+            spot = actualDropSpot;
+
 
             // responsible player for stuff thrown on map by shrink
             setResponsiblePlayer( inPlayer->id );
