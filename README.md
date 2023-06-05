@@ -1,64 +1,125 @@
-# What's this?
+# OneLife
 
-YumLife is a fork of [hetuw](https://github.com/hetuw/OneLife). The primary
-goal is to keep hetuw's excellent feature set while staying up to date with the
-latest changes to the vanilla OHOL client. Some additional bugfixes and "must
-have" features from other mods will also be added over time.
+This is a modified version of hetuw https://github.com/hetuw/OneLife<br>
+hetuw is a modified version of OneLife https://github.com/jasonrohrer/OneLife<br>
+Check out this forum thread to see what the mod can do and how to use it: https://onehouronelife.com/forums/viewtopic.php?pid=53465#p53465
+<br>
 
-# Installing (and updating)
+<b>Table of Contents</b><br>
+[- Installation](#heading-installation)<br>
+[- Changes](#heading-changes)<br>
+[- Compiling](#heading-compiling)<br>
+[- Other Mods](#heading-other-mods)<br>
 
-## Steam users:
+<h2 id="heading-installation">Installation:</h2>
+you can download the executable here: https://github.com/selb/YumLife/releases<br>
+for windows this would be "OneLifeApp_H_windows.exe"<br>
+place this file inside your ohol folder and then start it.
 
-1. Make sure the game is fully updated in Steam.
-2. Run the game from Steam once to ensure the Steam login details are properly set up.
-2. Download the latest version of the mod from [the Releases page](htts://github.com/selb/YumLife). For Windows, this is YumLife_windows.exe.
-3. Install the mod into the OHOL installation folder (Steam users: right click game > Manage > Browse local files)
-4. Run the mod from the OHOL installation folder.
+<h2 id="heading-changes">Changes:</h2>
+<h4>Help page</h2>
+press H in game to show all the hotkeys and commands
 
-## Direct download users:
+#### Zoom
+press -> (right-arrow-key) to zoom out <br>
+press <- (left-arrow-key) to zoom in
 
-1. Make sure you have the latest version of the game. The URL to re-download is: `http://onehouronelife.com/ticketServer/server.php?action=show_downloads&ticket_id=YOURKEYHERE`
-2. Run the vanilla `OneLife.exe` once to download any necessary updates.
-3. Install the mod into the OHOL installation folder (same folder as the vanilla `OneLife.exe`).
-4. Run the mod from the OHOL installation folder.
+#### Age
+current age will be displayed on the bottom panel
 
-# Usage
+#### Coordinates
+coordinates will be displayed in the top left corner, they are relative to your birth location
 
-Press `H` in-game to see everything the mod can do. A `hetuw.cfg` file is
-generated in the OHOL install folder and can be tweaked to your liking.
+#### Food-Value indicator
+when you are holding a food item in your hand, it will show you how much food you will gain by eating it
 
-# Troubleshooting
+#### Show player names
+all player names will be written above the players, the color depends on your relationship with that person.<br>
+your mother is green, your cousins are blue or purple, unrelated people are white.<br>
+you can show only first names / full names or no names at all, press N to change it.
 
-## Make sure the base game is updated
+#### Death messages
+if someone in your area dies you wll see a death message on your screen.<br>
+telling you the name of the person that died, their age and gender.
 
-If using Steam, launch Steam and make sure there isn't a pending update on the
-base game.
+#### Players in range panel
+in the top right corner you can see how many people are in your range<br>
+and how many of them are females under the age of 40.
 
-If not using Steam, make sure to download the latest package and then run the
-vanilla client once to fetch updates. You can download from: `http://onehouronelife.com/ticketServer/server.php?action=show_downloads&ticket_id=YOURKEYHERE`
+#### Emotions
+you can press 0-9 to make emotions<br>
+you can also write an emotion in chat, than it will last permantly, you can stop it by pressing 0-9
 
-## Clear cache files
+### Keyboard Control
 
-Search the OHOL installation folder (Steam users: right click game > Manage >
-Browse local files) for any `.fcz` files and delete all of them. They will be
-regenerated automatically the next time you launch the game.
+#### E
+press E to eat what you are holding in hand
 
-## Reinstall
+#### Q
+press Q to put something in your backpack or take something out
 
-The usual hacks used to keep outdated hetuw (and other mods) running can
-interfere with updates and leave your game directory in a state that isn't
-readily salvageable. Uninstalling, reinstalling, and then following the
-"Installation" section again carefully is the closest thing available to a 100%
-certain fix.
+#### SHIFT+Q
+switch the item in your hand with an item inside your backpack
 
-## Still not working?
+#### C
+press C to pick up or drop a baby
 
-Open a bug report using the Issues tab above, or ping me (@selb) on the OHOL
-Discord.
+#### WASD
+you can use wasd to go up/left/down/right<br>
+this makes it easier to avoid dangerous animals and it will open doors automatically 
 
-# Compiling
+#### SHIFT+WASD 
+similar to left click, will pick up an item in the choosen direction
 
-See the original [hetuw](https://github.com/hetuw/OneLife) mod's instructions
-for the most straightforward approach. If you already compile other mods or
-the base game, you can ignore the hetuw build scripts and build however you
-prefer.
+#### CTRL+WASD
+similar to right click, for example: CTRL+W can be used to pick up an item from a basket that is 1 tile above you
+
+#### SPACE
+similar to left click, can be used to pick up items from the tile you are standing on
+
+#### CTRL+SPACE
+similar to right click on the tile you are standing on
+
+#### F
+press F to stop the camera from moving, with the default client you have to keep holding SPACE to achieve this effect
+
+<h2 id="heading-compiling">Compiling:</h2>
+The following instructions are for compiling this mod with linux.<br>
+<br>
+You will need to install the following:
+<blockquote>
+sudo apt-get install git g++ make imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
+</blockquote>
+Then download this script: <a href="https://raw.githubusercontent.com/selb/YumLife/master/scripts/hetuwScripts/hetuwPullLatest.sh">hetuwPullLatest.sh</a><br>
+Put it inside an empty folder and open a terminal inside this folder.<br><br>
+First set the executeable bit by writing:<br>
+<blockquote>
+chmod +x hetuwPullLatest.sh
+</blockquote>
+Then execute the script in order to download the latest version:<br>
+<blockquote>
+./hetuwPullLatest.sh linux 1
+</blockquote>
+You can also download it for windows, like this:<br>
+<blockquote>
+./hetuwPullLatest.sh windows 3
+</blockquote>
+In order to compile you can type:
+<blockquote>
+./hetuwCompileAll.sh
+</blockquote>
+To start it type:
+<blockquote>
+cd linux<br>
+./OneLifeApp
+</blockquote>
+<br>
+<b>more information about how to compile ohol:</b><br>
+http://onehouronelife.com/compileNotes.php?nocounter=1<br>
+https://onehouronelife.com/forums/viewtopic.php?id=1438<br>
+https://onehouronelife.com/forums/viewtopic.php?id=423<br>
+<br><br><a id="heading-other-mods"><b>other mods:</b></a><br>
+https://github.com/Awbz/OneLife<br>
+https://github.com/JustinLove/onelife-client-patches<br>
+https://gitlab.com/_zed_/OneLife/<br>
+https://github.com/PXshadow/OpenLife<br>
