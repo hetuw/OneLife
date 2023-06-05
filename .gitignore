@@ -1,4 +1,6 @@
-
+scripts/hetuwScripts/windows
+scripts/hetuwScripts/linux
+scripts/hetuwScripts/SDL-1.2.15
 *.swp
 *.o
 *.dep
