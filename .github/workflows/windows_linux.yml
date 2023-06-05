@@ -10,7 +10,6 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        haxe: [4.1.0]
       fail-fast: true
     runs-on: ${{ matrix.os }}
     steps:
@@ -29,14 +28,12 @@ jobs:
           echo "4"
           ./hetuwCompileAll.sh
           echo "5"
+          cd windows
+          ./runToBuild 5
       - name: test dir
         run: |
           cd scripts/hetuwScripts
           ls
-          echo "_______w_________"
-          cd windows
-          ls
-          cd ..
           echo "_________________"
           cd bin
           ls
