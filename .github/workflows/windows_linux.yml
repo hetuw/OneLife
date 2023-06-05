@@ -18,18 +18,11 @@ jobs:
         run: sudo apt-get install git g++ imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev mingw-w64
       - name: scripts
         run: |
-          cd scripts/hetuwScripts
-          echo "1"
-          chmod +x hetuwPullLatest.sh
-          echo "2"
-          ./hetuwPullLatest.sh windows 3
-          echo "3"
-          ./hetuwPullLatest.sh linux 1
-          echo "4"
+          sudo apt-get install git g++ make imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev 
+          chmod +x hetuwPullLatest.sh 
+          ./hetuwPullLatest.sh linux 1 
+          ./hetuwPullLatest.sh windows 3 
           ./hetuwCompileAll.sh
-          echo "5"
-          cd windows
-          ./runToBuild 5
       - name: test dir
         run: |
           cd scripts/hetuwScripts
