@@ -1,8 +1,7 @@
 # OneLife
 
-This is a modified version of hetuw https://github.com/hetuw/OneLife<br>
-hetuw is a modified version of OneLife https://github.com/jasonrohrer/OneLife<br>
-Check out this forum thread to see what the mod can do and how to use it: https://onehouronelife.com/forums/viewtopic.php?pid=53465#p53465
+This is a modified version of OneLife https://github.com/jasonrohrer/OneLife<br>
+Check out this forum thread to see what it can do and how to use it: https://onehouronelife.com/forums/viewtopic.php?pid=53465#p53465<br>
 <br>
 
 <b>Table of Contents</b><br>
@@ -12,7 +11,7 @@ Check out this forum thread to see what the mod can do and how to use it: https:
 [- Other Mods](#heading-other-mods)<br>
 
 <h2 id="heading-installation">Installation:</h2>
-you can download the executable here: https://github.com/selb/YumLife/releases<br>
+you can download the executable here: https://github.com/hetuw/OneLife/releases<br>
 for windows this would be "OneLifeApp_H_windows.exe"<br>
 place this file inside your ohol folder and then start it.
 
@@ -90,7 +89,7 @@ You will need to install the following:
 <blockquote>
 sudo apt-get install git g++ make imagemagick xclip libsdl1.2-dev libglu1-mesa-dev libgl1-mesa-dev
 </blockquote>
-Then download this script: <a href="https://raw.githubusercontent.com/selb/YumLife/master/scripts/hetuwScripts/hetuwPullLatest.sh">hetuwPullLatest.sh</a><br>
+Then download this script: <a href="https://raw.githubusercontent.com/hetuw/OneLife/master/scripts/hetuwScripts/hetuwPullLatest.sh">hetuwPullLatest.sh</a><br>
 Put it inside an empty folder and open a terminal inside this folder.<br><br>
 First set the executeable bit by writing:<br>
 <blockquote>
