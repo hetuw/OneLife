@@ -998,6 +998,8 @@ void Phex::drawMinimized() {
 		mainChatWindow.drawMaxElements = 0;
 	}
 
+	butMaximize.visible = false;
+
 	double chatTop = mainChatWindow.getTopMinimum();
 	if (chatTop <= 0 && !bDrawRecInput) {
 		butPhex.visible = true;
@@ -1012,7 +1014,6 @@ void Phex::drawMinimized() {
 		recBckgr[3] = chatTop + textInRecPaddingY;
 	}
 
-	butMaximize.visible = false;
 	if (hasFocus) {
 		butMaximize.visible = true;
 		butMaximize.setY(recBckgr[3]);
